@@ -1,0 +1,6 @@
+{
+  "watch": ["src/templates"],
+  "ext": "hbs",
+  "ignore": ["src/types/template.type.ts", "dist"],
+  "exec": "npm run script && ts-node-dev -r tsconfig-paths/register src/index.ts"
+}

@@ -6,5 +6,28 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DATABSE_DIRECT_URL")
+  directUrl = env("DATABASE_DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  avatarUrl String?
+  firstName String?
+  lastName  String?
+
+  referralCode String  @unique
+  referrals    User[]  @relation("SignupReferral") // A list of users who signed up using this user's referral code.
+  referredBy   User?   @relation("SignupReferral", fields: [referredById], references: [id]) // The user who invited this user to sign up (if they used a referral code).
+  referredById String? // The ID of the user who invited this user (if a referral code was used).
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER
 }

@@ -5,6 +5,7 @@ import {
   errorMiddleware,
   notFoundMiddleware,
 } from './middlewares/errors.middleware';
+import { AuthRouter } from './routers/auth.router';
 import { HealthRouter } from './routers/health.router';
 
 export default class App {
@@ -35,8 +36,10 @@ export default class App {
 
   private routes(): void {
     const healthRouter = new HealthRouter();
+    const authRouter = new AuthRouter();
 
     this.app.use('/api', healthRouter.getRouter());
+    this.app.use('/api/auth', authRouter.getRouter());
   }
 
   public start(): void {
