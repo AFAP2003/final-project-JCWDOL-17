@@ -9,6 +9,17 @@ datasource db {
   directUrl = env("DATABASE_DIRECT_URL")
 }
 
+// This is used for signup with email 
+model SignupToken {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  token        String   @unique
+  firstName    String
+  lastName     String
+  referralCode String?
+  expiredAt    DateTime
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -20,11 +31,16 @@ model User {
   firstName String?
   lastName  String?
 
-  referralCode String  @unique
+  // User's personal referral code that others can use when signing up
+  referralCode String? @unique
+
+  // Referral relationships
   referrals    User[]  @relation("SignupReferral") // A list of users who signed up using this user's referral code.
-  referredBy   User?   @relation("SignupReferral", fields: [referredById], references: [id]) // The user who invited this user to sign up (if they used a referral code).
-  referredById String? // The ID of the user who invited this user (if a referral code was used).
+  referredBy   User?   @relation("SignupReferral", fields: [referredById], references: [id]) // The user who invited this user to sign up 
+  referredById String? // The ID of the user who invited this user.
 }
+
+// /* ---------------------- ENUM RELATED THING ---------------------- */
 
 enum Role {
   USER
