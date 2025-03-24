@@ -1,3 +1,5 @@
+import SignupConfirmationPopup from '@/components/signup-confirmation-popup';
+import SignupProvider from '@/context/signup-provider';
 import React from 'react';
 
 type Props = {
@@ -5,5 +7,12 @@ type Props = {
 };
 
 export default function UserLayout({ children }: Props) {
-  return <div>{children}</div>;
+  return (
+    <SignupProvider>
+      <main>
+        <SignupConfirmationPopup />
+        {children}
+      </main>
+    </SignupProvider>
+  );
 }

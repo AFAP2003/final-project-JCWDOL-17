@@ -13,10 +13,18 @@ export class AuthRouter {
   }
 
   private initializeRoutes(): void {
-    this.router.get(
-      '/signup/confirmation',
-      asynchandler(this.controller.signupVerification),
+    this.router.post(
+      '/signup/basic/confirm',
+      asynchandler(this.controller.signupBasicConfirmation),
     );
+    this.router.post(
+      '/signup/basic/resend',
+      asynchandler(this.controller.signupBasicResendEmail),
+    );
+
+    this.router.post('/signup', asynchandler(this.controller.signup));
+
+    this;
   }
 
   getRouter(): Router {
