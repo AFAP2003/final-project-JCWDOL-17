@@ -1,8 +1,8 @@
 'use client';
 
+import Logo from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
   CardContent,
   CardDescription,
   CardFooter,
@@ -21,12 +21,13 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { apiclient } from '@/lib/apiclient';
-import { parseBasicObjZodError } from '@/lib/parse-zod-error';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import { ArrowRight, Lock, User } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Lock } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -44,8 +45,13 @@ const formSchema = z.object({
     ),
 });
 
-export default function IdentityForm({ token }: { token: string }) {
+type Props = {
+  token: string;
+};
+
+export default function SetPasswordForm(props: Props) {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -55,48 +61,57 @@ export default function IdentityForm({ token }: { token: string }) {
 
   const { mutate: signup, isPending } = useMutation({
     mutationFn: async (payload: z.infer<typeof formSchema>) => {
-      const { data: signupResponse } = await apiclient.post('/auth/signup', {
-        type: 'basic',
-        token: token,
-        role: 'USER',
+      const { data } = await apiclient.post('/auth/signup', {
         password: payload.password,
+        token: props.token,
+        role: 'USER',
+        signupMethod: 'CREDENTIAL',
       });
+      return data;
     },
     onError: (error: AxiosError) => {
-      if (error.status! === 422) {
-        const parsederror = parseBasicObjZodError(error);
-        parsederror.forEach((err) => form.setError(err.key, err.value));
+      const body = error.response?.data as { error: { message: string } };
+      const msg = body.error.message;
+
+      if (error.status === 400 && msg.startsWith('Bad token')) {
+        toast({
+          description: 'Invalid or expired token, please sign up again!',
+          variant: 'destructive',
+        });
+        router.push('/auth/signup');
         return;
       }
 
       toast({
-        title: 'Server Error',
         description:
           'Sorry we have problem in our server, please try again later',
         variant: 'destructive',
       });
     },
 
-    onSuccess: (data) => {
+    onSuccess: () => {
+      toast({
+        description: 'Success creating account, please continue on sign in',
+      });
       form.reset();
-      router.push('/');
+      router.push('/auth/signin');
     },
   });
 
   return (
     <div className="flex size-full items-center justify-center grow">
-      <Card className="w-full max-w-md shadow-lg py-8 relative overflow-hidden">
-        <div className="absolute top-0 w-full h-2 bg-gradient-to-r from-primary to-primary/60"></div>
+      <div className="w-full max-w-md relative overflow-hidden">
+        {/* <div className="absolute top-0 w-full h-2 bg-gradient-to-r from-primary to-primary/60"></div> */}
 
         {/* Header */}
         <CardHeader className="space-y-2 pb-6">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <User className="h-6 w-6 text-primary" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <Logo showText={false} />
           </div>
-          <CardTitle className="text-center text-2xl font-bold">
+          <CardTitle className="text-2xl font-bold">
             Setup Your Password
           </CardTitle>
-          <CardDescription className="text-center text-sm">
+          <CardDescription className="text-sm">
             Please provide strong password to finish creating your account
           </CardDescription>
         </CardHeader>
@@ -120,11 +135,23 @@ export default function IdentityForm({ token }: { token: string }) {
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          type="password"
+                          type={showPassword ? 'text' : 'password'}
                           id="password"
                           className="pl-10"
                           {...field}
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3 h-4 w-4 text-muted-foreground"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -149,19 +176,26 @@ export default function IdentityForm({ token }: { token: string }) {
           </Form>
         </CardContent>
 
-        <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
-          <p>
-            By creating an account, you agree to our{' '}
-            <a href="#" className="text-primary hover:underline">
+        {/* Footer */}
+        <CardFooter className="flex flex-col space-y-4 border-t bg-slate-50/50 p-6">
+          <div className="text-xs text-muted-foreground">
+            By continue, you agree to our{' '}
+            <Link
+              href="#"
+              className="font-medium text-primary underline-offset-4 underline"
+            >
               Terms of Service
-            </a>{' '}
+            </Link>{' '}
             and{' '}
-            <a href="#" className="text-primary hover:underline">
+            <Link
+              href="#"
+              className="font-medium text-primary underline-offset-4 underline"
+            >
               Privacy Policy
-            </a>
-          </p>
+            </Link>
+          </div>
         </CardFooter>
-      </Card>
+      </div>
     </div>
   );
 }

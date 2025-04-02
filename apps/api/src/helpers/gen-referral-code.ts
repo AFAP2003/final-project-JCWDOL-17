@@ -26,7 +26,7 @@ const defaultopt = {
  * @param {number} opt.maxRetries - Maximum retries in case of collision.
  * @returns {string} - A unique referral code.
  */
-export async function generateReferralCode(
+export async function genReferralCode(
   opt: Option = defaultopt,
 ): Promise<string> {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

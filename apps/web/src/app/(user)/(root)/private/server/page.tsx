@@ -1,13 +1,14 @@
-import { getSession } from '@/actions/getSession';
+import { getSessionServer } from '@/lib/auth/server';
 
 export default async function ExamplePrivatePageServer() {
-  const session = await getSession();
+  const { data, error } = await getSessionServer();
+  if (error) throw new Error(error.message);
 
-  if (!session) return <div>Not Log in</div>;
+  if (!data) return <div>Not Log in</div>;
   return (
     <div>
-      <p>access token: {session.accessToken}</p>
-      <p>user: {JSON.stringify(session.user)}</p>
+      <p>access token: {data.session.token}</p>
+      <p>user: {JSON.stringify(data.user)}</p>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const SignupBasicConfirmationDTO = z.object({
+export const SignupCredConfirmDTO = z.object({
   email: z.string().email('Invalid email format'),
   firstName: z
     .string()
@@ -26,24 +26,14 @@ export const SignupBasicConfirmationDTO = z.object({
     .optional(),
 });
 
-export const SignupBasicResendEmailDTO = z.object({
-  email: z.string().email('Invalid email format'),
-});
-
-export const SignupBasicExchangeTokenDTO = z.object({
-  token: z
-    .string()
-    .length(26)
-    .regex(/^[A-Z2-7]+$/, 'Invalid Base32 token format'),
-});
-
 export const SignupDTO = z.union([
   z.object({
-    type: z.literal('basic'),
+    role: z.literal('USER'),
+    signupMethod: z.literal('CREDENTIAL'),
     token: z
       .string()
-      .length(26)
-      .regex(/^[A-Z2-7]+$/, 'Invalid Base32 token format'),
+      .length(25) // Must be exactly 25 characters
+      .regex(/^[a-f0-9]+$/i), // Must contain only hexadecimal characters
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
@@ -55,9 +45,11 @@ export const SignupDTO = z.union([
         /[@$!%*?&]/,
         'Password must contain at least one special character (@$!%*?&)',
       ),
-    role: z.literal('USER'),
   }),
   z.object({
-    type: z.literal('google'),
+    signupMethod: z.literal('GOOGLE'),
+    role: z.literal('USER'),
+    callbackURL: z.string().url(),
+    errorCallback: z.string().url(),
   }),
 ]);
