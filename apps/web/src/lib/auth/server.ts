@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { Session } from '../types/session';
 import { authClient } from './client';
 
 export async function getSessionServer() {
@@ -17,5 +18,6 @@ export async function getSessionServer() {
     },
   });
 
-  return session;
+  const { data, error } = session;
+  return { data: data as unknown as Session, error: error };
 }
