@@ -9,7 +9,6 @@ export default function AuthLayout({ children }: Props) {
   return (
     <div>
       <MaxWidthWrapper className="min-h-screen flex flex-col items-center justify-center">
-        <div className="mb-4">[APP LOGO]</div>
         {children}
       </MaxWidthWrapper>
     </div>

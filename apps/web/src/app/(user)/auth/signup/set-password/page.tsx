@@ -1,15 +1,22 @@
-import IdentityForm from './form';
+import { exchangeToken } from '@/actions/exchange-token';
+import { VerificationIdentifier } from '@/lib/enums';
+import SetPasswordForm from './form';
 
 type Props = {
   searchParams: {
-    token: string;
+    token?: string;
   };
 };
 
-export default async function IdentityPage({ searchParams }: Props) {
+export default async function SetPasswordPage({ searchParams }: Props) {
+  const token = await exchangeToken({
+    identifier: VerificationIdentifier.SignupConfirmation,
+    token: searchParams?.token,
+  });
+
   return (
     <div>
-      <IdentityForm token={searchParams.token} />
+      <SetPasswordForm token={token} />
     </div>
   );
 }

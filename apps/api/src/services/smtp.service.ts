@@ -30,10 +30,10 @@ export class SMTPService {
    *
    * @throws {Error} If the template does not exist.
    */
-  public sendMail = (param: SendParams) => {
+  public sendMail = async (param: SendParams) => {
     const template = TEMPLATE_CONTAINER![param.tmplname];
     const html = template(param.data);
-    mailerclient.sendMail({
+    return await mailerclient.sendMail({
       to: param.to,
       subject: param.subject,
       html: html,

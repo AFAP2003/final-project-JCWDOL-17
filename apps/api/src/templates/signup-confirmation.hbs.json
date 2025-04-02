@@ -1,5 +1,5 @@
 {
-  "receiver": "",
-  "confirmationLink": "",
-  "year": ""
+  "url": "https://www.example.com",
+  "expiredAt": "",
+  "currentYear": ""
 }

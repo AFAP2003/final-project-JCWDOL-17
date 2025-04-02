@@ -1,31 +1,21 @@
-import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { authClient } from './client';
 
-export async function createAuthClientServer() {
-  const cookieStore = await cookies();
+export async function getSessionServer() {
+  const key = 'better-auth.session_token';
+  const sessionCookie = cookies().get(key);
 
-  // Create a server's supabase client with newly configured cookie,
-  // which could be used to maintain user's session
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
-            );
-          } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
-        },
+  const session = await authClient.getSession({
+    fetchOptions: {
+      onRequest: (ctx) => {
+        ctx.headers.set(
+          'cookie',
+          `${sessionCookie?.name}=${decodeURIComponent(sessionCookie?.value || '')}`,
+        );
+        return ctx;
       },
     },
-  );
+  });
+
+  return session;
 }

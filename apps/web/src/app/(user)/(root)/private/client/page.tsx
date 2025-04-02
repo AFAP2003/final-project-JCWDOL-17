@@ -1,16 +1,17 @@
 'use client';
 
-import { useSession } from '@/hooks/use-session';
+import { useSession } from '@/lib/auth/client';
 
 export default function ExamplePrivatePageClient() {
-  const { isPending, session } = useSession();
+  const { data, error, isPending } = useSession();
+  if (error) throw error;
 
   if (isPending) return <div>Loading session...</div>;
-  if (!session) return <div>Not Log in</div>;
+  if (!data) return <div>Not Log in</div>;
   return (
     <div>
-      <p>access token: {session.accessToken}</p>
-      <p>user: {JSON.stringify(session.user)}</p>
+      <p>access token: {data.session.token}</p>
+      <p>user: {JSON.stringify(data.user)}</p>
     </div>
   );
 }

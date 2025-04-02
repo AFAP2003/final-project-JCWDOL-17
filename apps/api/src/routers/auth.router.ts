@@ -14,17 +14,25 @@ export class AuthRouter {
 
   private initializeRoutes(): void {
     this.router.post(
-      '/signup/basic/confirm',
-      asynchandler(this.controller.signupBasicConfirmation),
+      '/signup/confirm',
+      asynchandler(this.controller.signupCredConfirm),
     );
-    this.router.post(
-      '/signup/basic/resend',
-      asynchandler(this.controller.signupBasicResendEmail),
-    );
-
     this.router.post('/signup', asynchandler(this.controller.signup));
 
-    this;
+    this.router.post(
+      '/signin/confirm',
+      asynchandler(this.controller.signinCredConfirm),
+    );
+    this.router.post('/signin', asynchandler(this.controller.signin));
+
+    this.router.post(
+      '/forgot-password',
+      asynchandler(this.controller.forgotPassword),
+    );
+    this.router.post(
+      '/reset-password',
+      asynchandler(this.controller.resetPassword),
+    );
   }
 
   getRouter(): Router {
