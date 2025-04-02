@@ -1,7 +1,11 @@
 import { ApiError } from './types';
 
 export class InternalSeverError extends ApiError {
-  constructor(error: Error) {
+  constructor(error: Error | string) {
+    if (typeof error === 'string') {
+      error = new Error(error);
+    }
+
     super({
       originalError: error,
       errmsg:

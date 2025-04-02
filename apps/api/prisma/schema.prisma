@@ -6,5 +6,79 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DATABSE_DIRECT_URL")
+  directUrl = env("DATABASE_DIRECT_URL")
+}
+
+model User {
+  id            String           @id @default(uuid())
+  role          UserRole
+  firstName     String
+  lastName      String
+  fullName      String
+  email         String           @unique
+  emailVerified Boolean
+  image         String?
+  signupMethod  SignupMethodType
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  referralCode String? @unique
+  referredById String? // The ID of the user who invited this user.
+  referrals    User[]  @relation("SignupReferral") // A list of users who signed up using this user's referral code.
+  referredBy   User?   @relation("SignupReferral", fields: [referredById], references: [id]) // The user who invited this user to sign up 
+
+  sessions Session[]
+  accounts Account[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  metadata   Json?
+}
+
+// /* ---------------------- enum related thing ---------------------- */
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER
+}
+
+enum SignupMethodType {
+  CREDENTIAL
+  SOCIAL
 }
