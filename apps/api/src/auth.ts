@@ -1,14 +1,16 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { bearer } from 'better-auth/plugins';
+import { bearer, customSession } from 'better-auth/plugins';
 import { v4 as uuid } from 'uuid';
 
+import { User } from '@prisma/client';
 import {
   BASE_API_URL,
   BASE_FRONTEND_URL,
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
 } from './config';
+import { genReferralCode } from './helpers/gen-referral-code';
 import { prismaclient } from './prisma';
 
 export const auth = betterAuth({
@@ -22,6 +24,7 @@ export const auth = betterAuth({
       return uuid();
     },
   },
+
   user: {
     fields: {
       name: 'fullName',
@@ -74,7 +77,7 @@ export const auth = betterAuth({
     google: {
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
-      mapProfileToUser: (profile) => {
+      mapProfileToUser: async (profile) => {
         const names = profile.name.split(' ');
         return {
           role: 'USER',
@@ -85,6 +88,7 @@ export const auth = betterAuth({
           emailVerified: true,
           image: profile.picture,
           signupMethod: 'SOCIAL',
+          referralCode: await genReferralCode(),
         };
       },
     },
@@ -94,5 +98,14 @@ export const auth = betterAuth({
     disabled: true,
   },
 
-  plugins: [bearer()],
+  plugins: [
+    customSession(async ({ user, session }) => {
+      const { name, ...rest } = user;
+      return {
+        user: { fullname: name, ...rest } as unknown as User,
+        session,
+      };
+    }),
+    bearer(),
+  ],
 });

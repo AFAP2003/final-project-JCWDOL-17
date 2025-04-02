@@ -1,111 +1,79 @@
-// import { createServerClient } from '@supabase/ssr';
+import { betterFetch } from '@better-fetch/fetch';
 import { getSessionCookie } from 'better-auth/cookies';
 import { NextResponse, type NextRequest } from 'next/server';
+import { authClient } from './lib/auth/client';
+import { Session } from './lib/types/session';
 
-// // list of public route that unauthenticated user can safely access
-// const publicRoutes = [
-//   '/',
-//   '/auth/signup',
-//   '/auth/signin',
-//   '/auth/signup/set-password',
-//   '/admin/auth/signin',
-// ];
+// list of public route, Unauthenticated user can safely access.
+const publicRoutes = [
+  '/',
+  '/auth/signup',
+  '/auth/signup/set-password',
+  '/auth/signin',
+  '/auth/reset-password',
+  '/auth/forgot-password',
+  '/admin/auth/signin',
+  '/admin/auth/signin/confirm',
+];
 
 export async function middleware(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request, {
-    // Optionally pass config if cookie name, prefix or useSecureCookies option is customized in auth config.
-    // cookieName: 'session_token',
-    // cookiePrefix: 'better-auth',
-    // useSecureCookies: true,
-  });
+  const sessionCookie = getSessionCookie(request, {});
+  const currentPath = request.nextUrl.pathname;
+  const pathIsPublic = publicRoutes.find((route) => route === currentPath);
 
-  let supabaseResponse = NextResponse.next({
+  const isAuthenticated = sessionCookie != null;
+
+  if (!isAuthenticated && !pathIsPublic) {
+    const url = request.nextUrl.clone();
+    if (currentPath.startsWith('/admin')) {
+      url.pathname = '/admin/auth/signin';
+    } else {
+      url.pathname = '/auth/signin';
+    }
+    return NextResponse.redirect(url);
+  }
+
+  if (isAuthenticated) {
+    const { data: session, error } = await betterFetch<
+      typeof authClient.$Infer.Session
+    >('/api/better/auth/get-session', {
+      baseURL: process.env.NEXT_PUBLIC_BASE_API_URL,
+      headers: {
+        cookie: request.headers.get('cookie') || '', // Forward the cookies from the request
+      },
+    });
+
+    if (error) {
+      console.error('Session fetch error:', error);
+      return NextResponse.error(); // This triggers the default Next.js error page (500 error)
+    }
+    const { user } = session as unknown as Session;
+
+    const role = user.role;
+    switch (role) {
+      case 'USER': {
+        if (currentPath.startsWith('/admin') && !pathIsPublic) {
+          const url = request.nextUrl.clone();
+          url.pathname = '/admin/auth/signin';
+          return NextResponse.redirect(url);
+        }
+        break;
+      }
+
+      default: {
+        if (!currentPath.startsWith('/admin') && !pathIsPublic) {
+          const url = request.nextUrl.clone();
+          url.pathname = '/auth/signin';
+          return NextResponse.redirect(url);
+        }
+        break;
+      }
+    }
+  }
+
+  return NextResponse.next({
     request,
   });
-
-  // const supabase = createServerClient(
-  //   process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL!,
-  //   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  //   {
-  //     cookies: {
-  //       getAll() {
-  //         return request.cookies.getAll();
-  //       },
-  //       setAll(cookiesToSet) {
-  //         cookiesToSet.forEach(({ name, value, options }) =>
-  //           request.cookies.set(name, value),
-  //         );
-  //         supabaseResponse = NextResponse.next({
-  //           request,
-  //         });
-  //         cookiesToSet.forEach(({ name, value, options }) =>
-  //           supabaseResponse.cookies.set(name, value, options),
-  //         );
-  //       },
-  //     },
-  //   },
-  // );
-
-  // // Do not run code between createServerClient and
-  // // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // // issues with users being randomly logged out.
-
-  // // IMPORTANT: DO NOT REMOVE auth.getUser()
-
-  // const { data } = await supabase.auth.getUser();
-
-  // const currentPath = request.nextUrl.pathname;
-  // const pathIsPublic = publicRoutes.find((route) => route === currentPath);
-
-  // const isUnauthenticated = !data.user;
-  // if (isUnauthenticated && !pathIsPublic) {
-  //   const url = request.nextUrl.clone();
-  //   if (currentPath.startsWith('/admin')) {
-  //     url.pathname = '/admin/auth/signin';
-  //   } else {
-  //     url.pathname = '/auth/signin';
-  //   }
-  //   return NextResponse.redirect(url);
-  // }
-
-  // const isAuthenticated = data.user;
-  // if (isAuthenticated) {
-  //   const role = data.user.user_metadata.role as 'USER' | 'ADMIN' | 'SUPER';
-  //   switch (role) {
-  //     case 'USER': {
-  //       if (currentPath.startsWith('/admin') && !pathIsPublic) {
-  //         const url = request.nextUrl.clone();
-  //         url.pathname = '/admin/auth/signin';
-  //         return NextResponse.redirect(url);
-  //       }
-  //       break;
-  //     }
-
-  //     default: {
-  //       if (!currentPath.startsWith('/admin') && !pathIsPublic) {
-  //         const url = request.nextUrl.clone();
-  //         url.pathname = '/auth/signin';
-  //         return NextResponse.redirect(url);
-  //       }
-  //       break;
-  //     }
-  //   }
-  // }
-
-  // // IMPORTANT: You *must* return the supabaseResponse object as it is.
-  // // If you're creating a new response object with NextResponse.next() make sure to:
-  // // 1. Pass the request in it, like so:
-  // //    const myNewResponse = NextResponse.next({ request })
-  // // 2. Copy over the cookies, like so:
-  // //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  // //    the cookies!
-  // // 4. Finally:
-  // //    return myNewResponse
-  // // If this is not done, you may be causing the browser and server to go out
-  // // of sync and terminate the user's session prematurely!
-
-  return supabaseResponse;
 }
 
 export const config = {
