@@ -12,7 +12,7 @@ export const { sendVerificationEmail, signIn, signOut, signUp } = authClient;
 export function useSession() {
   const { data, error, isPending, refetch } = authClient.useSession();
   return {
-    data: data as unknown as Session,
+    data: data as unknown as Session | null,
     error,
     isPending,
     refetch,
