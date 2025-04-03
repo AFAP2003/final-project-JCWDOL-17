@@ -102,7 +102,7 @@ export const auth = betterAuth({
     customSession(async ({ user, session }) => {
       const { name, ...rest } = user;
       return {
-        user: { fullname: name, ...rest } as unknown as User,
+        user: { fullName: name, ...rest } as unknown as User,
         session,
       };
     }),
