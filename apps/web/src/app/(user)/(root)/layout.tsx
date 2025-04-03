@@ -1,3 +1,4 @@
+import Navbar from '@/components/navbar';
 import React from 'react';
 
 type Props = {
@@ -7,7 +8,7 @@ type Props = {
 export default function UserLayout({ children }: Props) {
   return (
     <div>
-      [NAVBAR]
+      <Navbar />
       <div>{children}</div>
       [FOOTER]
     </div>
