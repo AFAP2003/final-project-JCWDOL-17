@@ -19,5 +19,5 @@ export async function getSessionServer() {
   });
 
   const { data, error } = session;
-  return { data: data as unknown as Session, error: error };
+  return { data: data as unknown as Session | null, error: error };
 }
