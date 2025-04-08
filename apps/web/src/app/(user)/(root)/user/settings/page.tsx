@@ -6,7 +6,7 @@ import TabContentSecurity from './tab-content-security';
 
 export default function SettingsPage() {
   return (
-    <div className="p-2 w-full min-h-[720px]">
+    <div className="p-2 w-full">
       <ContentHeader>Settings</ContentHeader>
       <Separator />
       <div className="pt-4">

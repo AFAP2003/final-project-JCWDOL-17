@@ -23,7 +23,7 @@ export default function UserSidebar() {
   const { user, session } = data;
 
   return (
-    <Card className="w-64 p-2 min-h-[720px] flex flex-col">
+    <Card className="w-64 p-2 flex flex-col">
       <div className="flex gap-2 items-center p-2 pb-4">
         <Avatar className="size-12">
           <AvatarImage src={user.image} alt="User Image"></AvatarImage>
