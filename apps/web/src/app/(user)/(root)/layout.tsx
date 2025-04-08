@@ -7,10 +7,10 @@ type Props = {
 
 export default function UserLayout({ children }: Props) {
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div>{children}</div>
-      [FOOTER]
+      <div className="grow flex flex-col">{children}</div>
+      <div>[FOOTER]</div>
     </div>
   );
 }
