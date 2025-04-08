@@ -30,6 +30,44 @@ import { z } from 'zod';
 import { SMTPService } from './smtp.service';
 import { UserService } from './user.service';
 
+type SendAuthEmailParam =
+  | {
+      type: AuthEmailType.SignupConfirmation;
+      data: {
+        receiverEmail: string;
+        firstName: string;
+        lastName: string;
+        referralCode?: string | undefined;
+        baseCallback: string;
+      };
+    }
+  | {
+      type: AuthEmailType.SigninNotification;
+      data: {
+        receiverEmail: string;
+        userId: string;
+        sessionToken: string;
+        baseCallback: string;
+      };
+    }
+  | {
+      type: AuthEmailType.SigninConfirmation;
+      data: {
+        receiverEmail: string;
+        baseCallback: string;
+        password: string;
+        role: 'USER' | 'ADMIN' | 'SUPER';
+      };
+    }
+  | {
+      type: AuthEmailType.ResetPassword;
+      data: {
+        receiverEmail: string;
+        userId: string;
+        baseCallback: string;
+      };
+    };
+
 export class AuthService {
   private userService = new UserService();
   private smtpService = new SMTPService();
@@ -372,6 +410,13 @@ export class AuthService {
     return { userId: userId };
   };
 
+  listSession = async (req: Request) => {
+    const sessions = await auth.api.listSessions({
+      headers: fromNodeHeaders(req.headers),
+    });
+    return sessions;
+  };
+
   private signinWithCredential = async (
     data: {
       email: string;
@@ -608,41 +653,3 @@ export class AuthService {
     }
   }
 }
-
-type SendAuthEmailParam =
-  | {
-      type: AuthEmailType.SignupConfirmation;
-      data: {
-        receiverEmail: string;
-        firstName: string;
-        lastName: string;
-        referralCode?: string | undefined;
-        baseCallback: string;
-      };
-    }
-  | {
-      type: AuthEmailType.SigninNotification;
-      data: {
-        receiverEmail: string;
-        userId: string;
-        sessionToken: string;
-        baseCallback: string;
-      };
-    }
-  | {
-      type: AuthEmailType.SigninConfirmation;
-      data: {
-        receiverEmail: string;
-        baseCallback: string;
-        password: string;
-        role: 'USER' | 'ADMIN' | 'SUPER';
-      };
-    }
-  | {
-      type: AuthEmailType.ResetPassword;
-      data: {
-        receiverEmail: string;
-        userId: string;
-        baseCallback: string;
-      };
-    };

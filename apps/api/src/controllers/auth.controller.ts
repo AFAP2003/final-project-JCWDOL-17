@@ -40,7 +40,7 @@ export class AuthController {
 
     try {
       const result = await this.authService.signup(dto, req);
-      res.json({ ...result });
+      res.json(result);
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;
@@ -120,6 +120,19 @@ export class AuthController {
     try {
       const { userId } = await this.authService.resetPassword(dto);
       res.json({ message: `New password has been updated for user ${userId}` });
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  listSession = async (req: Request, res: Response) => {
+    try {
+      const sessions = await this.authService.listSession(req);
+      res.json(sessions);
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;
