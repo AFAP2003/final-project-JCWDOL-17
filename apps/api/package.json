@@ -12,7 +12,7 @@
     "serve": "npm run build && cross-env NODE_ENV=production node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "gen:template": "ts-node scripts/gen-template.ts",
-    "db:restart": "npm run prisma:migrate:reset && npm run prisma:push && npm run prisma:seed",
+    "prisma:restart": "npm run prisma:migrate:reset && npm run prisma:push && npm run prisma:seed",
     "prisma:gen": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate:dev": "prisma migrate dev --skip-seed",
@@ -53,6 +53,7 @@
     "nodemon": "^3.1.9",
     "pg": "^8.14.1",
     "prisma": "^5.7.1",
+    "prisma-dbml-generator": "^0.12.0",
     "rimraf": "^6.0.1",
     "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0"
