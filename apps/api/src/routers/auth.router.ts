@@ -1,4 +1,5 @@
 import { AuthController } from '@/controllers/auth.controller';
+import { withAuthentication } from '@/middlewares/auth.middleware';
 import { Router } from 'express';
 import asynchandler from 'express-async-handler';
 
@@ -32,6 +33,12 @@ export class AuthRouter {
     this.router.post(
       '/reset-password',
       asynchandler(this.controller.resetPassword),
+    );
+
+    this.router.get(
+      '/sessions',
+      withAuthentication,
+      asynchandler(this.controller.listSession),
     );
   }
 
