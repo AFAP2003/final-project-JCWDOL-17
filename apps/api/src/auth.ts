@@ -46,7 +46,7 @@ export const auth = betterAuth({
         required: true,
       },
       signupMethod: {
-        type: 'string',
+        type: 'string[]',
         fieldName: 'signupMethod',
         required: true,
       },
@@ -87,7 +87,7 @@ export const auth = betterAuth({
           email: profile.email,
           emailVerified: true,
           image: profile.picture,
-          signupMethod: 'SOCIAL',
+          signupMethod: ['SOCIAL'],
           referralCode: await genReferralCode(),
         };
       },

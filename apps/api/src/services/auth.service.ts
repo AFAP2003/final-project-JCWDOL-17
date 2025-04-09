@@ -143,7 +143,7 @@ export class AuthService {
               name: `${firstName} ${lastName}`,
               firstName: firstName,
               lastName: lastName,
-              signupMethod: dto.signupMethod,
+              signupMethod: [dto.signupMethod],
               referralCode: await genReferralCode(),
               referredById: referredById,
             },
@@ -370,6 +370,10 @@ export class AuthService {
       },
     });
     if (!user) throw new NotFoundError();
+    const permitted = user.signupMethod.find((m) => m === 'CREDENTIAL');
+    if (!permitted) {
+      throw new NotFoundError();
+    }
 
     this.sendAuthEmail({
       type: AuthEmailType.ResetPassword,
