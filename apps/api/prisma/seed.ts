@@ -31,7 +31,9 @@ async function SEED_SUPER_ADMIN() {
       lastName: 'Doe',
       fullName: 'John Doe',
       role: 'SUPER',
-      signupMethod: 'CREDENTIAL',
+      signupMethod: {
+        set: ['CREDENTIAL'],
+      },
     },
   });
 
@@ -67,7 +69,9 @@ async function SEED_STORE_ADMIN() {
       lastName: 'Doe',
       fullName: 'Alice Doe',
       role: 'ADMIN',
-      signupMethod: 'CREDENTIAL',
+      signupMethod: {
+        set: ['CREDENTIAL'],
+      },
     },
   });
 
@@ -103,7 +107,9 @@ async function SEED_USER() {
       lastName: 'Doe',
       fullName: 'Loki Doe',
       role: 'USER',
-      signupMethod: 'CREDENTIAL',
+      signupMethod: {
+        set: ['CREDENTIAL'],
+      },
     },
   });
 

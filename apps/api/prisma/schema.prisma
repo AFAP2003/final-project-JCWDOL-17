@@ -15,15 +15,19 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  role          UserRole @default(USER)
-  name          String
-  email         String   @unique
-  emailVerified Boolean  @default(false)
-  password      String?
+  id            String             @id @default(uuid())
+  role          UserRole
+  firstName     String
+  lastName      String
+  fullName      String
+  email         String             @unique
+  emailVerified Boolean
   image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  phone         String?
+  gender        Gender?
+  signupMethod  SignupMethodType[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
   referralCode  String? @unique
   referredById  String?
@@ -419,4 +423,9 @@ enum VoucherType {
 enum ValueType {
   PERCENTAGE
   FIXED_AMOUNT
+}
+
+enum Gender {
+  MEN
+  WOMEN
 }
