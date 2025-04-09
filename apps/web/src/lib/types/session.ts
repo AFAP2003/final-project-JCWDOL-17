@@ -20,7 +20,7 @@ export type Session = {
     role: 'USER' | 'ADMIN' | 'SUPER';
     firstName: string;
     lastName: string;
-    signupMethod: 'SOCIAL' | 'CREDENTIAL';
+    signupMethod: ('SOCIAL' | 'CREDENTIAL')[];
     referralCode?: string;
     referredById?: string;
   };
