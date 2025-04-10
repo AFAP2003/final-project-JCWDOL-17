@@ -21,6 +21,8 @@ export async function middleware(request: NextRequest) {
   const currentPath = request.nextUrl.pathname;
   const pathIsPublic = publicRoutes.find((route) => route === currentPath);
 
+  console.log({ currentPath });
+
   const isAuthenticated = sessionCookie != null;
 
   if (!isAuthenticated && !pathIsPublic) {
@@ -34,40 +36,64 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAuthenticated) {
-    const { data: session, error } = await betterFetch<
-      typeof authClient.$Infer.Session
-    >('/api/better/auth/get-session', {
-      baseURL: process.env.NEXT_PUBLIC_BASE_API_URL,
-      headers: {
-        cookie: request.headers.get('cookie') || '', // Forward the cookies from the request
-      },
-    });
+    try {
+      const { data: session, error } = await betterFetch<
+        typeof authClient.$Infer.Session
+      >('/api/better/auth/get-session', {
+        baseURL: process.env.NEXT_PUBLIC_BASE_API_URL,
+        headers: {
+          cookie: request.headers.get('cookie') || '', // Forward the cookies from the request
+        },
+      });
 
-    if (error) {
-      console.error('Session fetch error:', error);
-      return NextResponse.error(); // This triggers the default Next.js error page (500 error)
-    }
-    const { user } = session as unknown as Session;
+      if (error) {
+        console.error('Session fetch error:', error);
+        return NextResponse.error(); // This triggers the default Next.js error page (500 error)
+      }
 
-    const role = user.role;
-    switch (role) {
-      case 'USER': {
-        if (currentPath.startsWith('/admin') && !pathIsPublic) {
-          const url = request.nextUrl.clone();
+      // Posible case when user revoke other session, or reset password
+      if (!session) {
+        const url = request.nextUrl.clone();
+        if (currentPath.startsWith('/admin')) {
           url.pathname = '/admin/auth/signin';
-          return NextResponse.redirect(url);
+        } else {
+          url.pathname = '/auth/signin';
         }
-        break;
+        const response = NextResponse.redirect(url);
+        response.cookies.set('better-auth.session_token', '', {
+          path: '/',
+          maxAge: 0,
+        });
+        return response;
       }
 
-      default: {
-        if (!currentPath.startsWith('/admin') && !pathIsPublic) {
-          const url = request.nextUrl.clone();
-          url.pathname = '/auth/signin';
-          return NextResponse.redirect(url);
+      const { user } = session as unknown as Session;
+
+      const role = user?.role;
+      switch (role) {
+        case 'USER': {
+          if (currentPath.startsWith('/admin') && !pathIsPublic) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/admin/auth/signin';
+            return NextResponse.redirect(url);
+          }
+          break;
         }
-        break;
+
+        default: {
+          if (!currentPath.startsWith('/admin') && !pathIsPublic) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/auth/signin';
+            return NextResponse.redirect(url);
+          }
+          break;
+        }
       }
+    } catch (error) {
+      console.log({ error });
+      return NextResponse.next({
+        request,
+      });
     }
   }
 

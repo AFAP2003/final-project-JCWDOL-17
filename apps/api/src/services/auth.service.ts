@@ -1,12 +1,15 @@
 import { auth } from '@/auth';
 import { BASE_FRONTEND_URL, CRYPTO_SECRET } from '@/config';
+import { AccountLinkDTO } from '@/dtos/account-link.dto';
 import { ForgotPasswordDTO } from '@/dtos/forgot-password.dto';
 import { ResetPasswordDTO } from '@/dtos/reset-password.dto';
+import { RevokeSessionDTO } from '@/dtos/revoke-session.dto';
 import { SigninCredConfirmDTO, SigninDTO } from '@/dtos/signin.dto';
 import { SignupCredConfirmDTO, SignupDTO } from '@/dtos/signup.dto';
 import { AuthEmailType } from '@/enums/auth-email-type';
 import { VerificationIdentifier } from '@/enums/verification-identifier';
 import {
+  BadRequestError,
   InternalSeverError,
   NotFoundError,
   UnauthorizedError,
@@ -20,6 +23,7 @@ import { aesEncrypt } from '@/helpers/encrypt-decrypt';
 import { genRandomString } from '@/helpers/gen-random-string';
 import { genReferralCode } from '@/helpers/gen-referral-code';
 import { prismaclient } from '@/prisma';
+import { UserSession } from '@/types/user-session.type';
 import { UserRole } from '@prisma/client';
 import { APIError } from 'better-auth/api';
 import { fromNodeHeaders } from 'better-auth/node';
@@ -60,7 +64,7 @@ type SendAuthEmailParam =
       };
     }
   | {
-      type: AuthEmailType.ResetPassword;
+      type: AuthEmailType.ResetPassword | AuthEmailType.NewPassword;
       data: {
         receiverEmail: string;
         userId: string;
@@ -91,7 +95,7 @@ export class AuthService {
         );
     }
 
-    this.sendAuthEmail({
+    await this.sendAuthEmail({
       type: AuthEmailType.SignupConfirmation,
       data: {
         baseCallback: `${BASE_FRONTEND_URL}/auth/signup/set-password`,
@@ -224,7 +228,7 @@ export class AuthService {
       );
     }
 
-    this.sendAuthEmail({
+    await this.sendAuthEmail({
       type: AuthEmailType.SigninConfirmation,
       data: {
         baseCallback: `${BASE_FRONTEND_URL}/admin/auth/signin/confirm`,
@@ -291,7 +295,7 @@ export class AuthService {
               req,
             );
 
-            this.sendAuthEmail({
+            await this.sendAuthEmail({
               type: AuthEmailType.SigninNotification,
               data: {
                 baseCallback: `${BASE_FRONTEND_URL}/auth/reset-password`,
@@ -372,10 +376,12 @@ export class AuthService {
     if (!user) throw new NotFoundError();
     const permitted = user.signupMethod.find((m) => m === 'CREDENTIAL');
     if (!permitted) {
-      throw new NotFoundError();
+      throw new BadRequestError(
+        'This account is not linked to credential method',
+      );
     }
 
-    this.sendAuthEmail({
+    await this.sendAuthEmail({
       type: AuthEmailType.ResetPassword,
       data: {
         baseCallback: `${BASE_FRONTEND_URL}/auth/reset-password`,
@@ -385,7 +391,10 @@ export class AuthService {
     });
   };
 
-  resetPassword = async (dto: z.infer<typeof ResetPasswordDTO>) => {
+  resetPassword = async (
+    dto: z.infer<typeof ResetPasswordDTO>,
+    req: Request,
+  ) => {
     const veriftoken = await prismaclient.verification.findFirst({
       where: {
         identifier: dto.identifier,
@@ -402,9 +411,34 @@ export class AuthService {
       userId: string;
     };
 
+    const user = await prismaclient.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) throw new NotFoundError();
+
     const ctx = await auth.$context;
-    const hash = await ctx.password.hash(dto.newPassword);
-    await ctx.internalAdapter.updatePassword(userId, hash);
+
+    if (user.signupMethod.includes('CREDENTIAL')) {
+      const hash = await ctx.password.hash(dto.newPassword);
+      await ctx.internalAdapter.updatePassword(userId, hash);
+    } else {
+      // For linking account with credential
+      try {
+        await auth.api.setPassword({
+          body: {
+            newPassword: dto.newPassword,
+          },
+          headers: fromNodeHeaders(req.headers),
+        });
+      } catch (error: any) {
+        throw new InternalSeverError(
+          `error creating new password ${error.status}`,
+        );
+      }
+    }
+
     await ctx.internalAdapter.deleteSessions(userId); // remove all session
     await prismaclient.verification.delete({
       where: {
@@ -414,11 +448,85 @@ export class AuthService {
     return { userId: userId };
   };
 
-  listSession = async (req: Request) => {
+  getAllSession = async (req: Request) => {
     const sessions = await auth.api.listSessions({
       headers: fromNodeHeaders(req.headers),
     });
     return sessions;
+  };
+
+  revokeSession = async (
+    dto: z.infer<typeof RevokeSessionDTO>,
+    req: Request,
+  ) => {
+    const { status } = await auth.api.revokeSession({
+      body: {
+        token: dto.sessionToken,
+      },
+      headers: fromNodeHeaders(req.headers),
+    });
+
+    return { status };
+  };
+
+  getAllAccount = async (req: Request) => {
+    const accounts = await auth.api.listUserAccounts({
+      headers: fromNodeHeaders(req.headers),
+    });
+    return accounts;
+  };
+
+  accountLink = async (
+    dto: z.infer<typeof AccountLinkDTO>,
+    session: UserSession,
+    req: Request,
+  ) => {
+    switch (dto.method) {
+      case 'CREDENTIAL': {
+        if (dto.action === 'RESET') {
+          await this.forgotPassword({
+            email: session.user.email,
+          });
+          return { method: dto.method, redirect: false, url: '' };
+        }
+
+        const user = await prismaclient.user.findUnique({
+          where: {
+            email: session.user.email,
+          },
+        });
+        if (!user) throw new NotFoundError();
+
+        await this.sendAuthEmail({
+          type: AuthEmailType.NewPassword,
+          data: {
+            baseCallback: `${BASE_FRONTEND_URL}/auth/reset-password`,
+            receiverEmail: user.email,
+            userId: user.id,
+          },
+        });
+
+        return { method: dto.method, redirect: false, url: '' };
+      }
+
+      case 'GOOGLE': {
+        try {
+          const { redirect, url } = await auth.api.linkSocialAccount({
+            body: {
+              provider: 'google',
+              callbackURL: dto.callbackUrl,
+            },
+            headers: fromNodeHeaders(req.headers),
+          });
+
+          return { method: dto.method, redirect, url };
+        } catch (error) {
+          throw new InternalSeverError(
+            `invalid link account to google ${error}`,
+          );
+        }
+      }
+    }
   };
 
   private signinWithCredential = async (
@@ -478,7 +586,7 @@ export class AuthService {
             },
           },
         });
-        if (verifrecord.length > 3) {
+        if (verifrecord.length >= 3) {
           throw new TooManyRequestError();
         }
 
@@ -500,7 +608,7 @@ export class AuthService {
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}`;
 
-        return this.smtpService.sendMail({
+        this.smtpService.sendMail({
           tmplname: 'signup-confirmation',
           to: param.data.receiverEmail,
           subject: 'Signup Confirmation',
@@ -510,6 +618,7 @@ export class AuthService {
             currentYear: currentDate().getFullYear(),
           },
         });
+        return;
       }
 
       case AuthEmailType.SigninNotification: {
@@ -539,7 +648,7 @@ export class AuthService {
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.AnonymusSignin}`;
 
-        return await this.smtpService.sendMail({
+        this.smtpService.sendMail({
           tmplname: 'signin-notification',
           subject: 'Signin Notification',
           to: param.data.receiverEmail,
@@ -552,6 +661,7 @@ export class AuthService {
             currentYear: currentDate().getFullYear(),
           },
         });
+        return;
       }
 
       case AuthEmailType.SigninConfirmation: {
@@ -567,7 +677,7 @@ export class AuthService {
             },
           },
         });
-        if (veriftokens.length > 3) {
+        if (veriftokens.length >= 3) {
           throw new TooManyRequestError();
         }
 
@@ -592,7 +702,7 @@ export class AuthService {
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}`;
 
-        return await this.smtpService.sendMail({
+        this.smtpService.sendMail({
           tmplname: 'signin-confirmation',
           subject: 'Signin Confirmation',
           to: param.data.receiverEmail,
@@ -603,6 +713,7 @@ export class AuthService {
             currentYear: currentDate().getFullYear(),
           },
         });
+        return;
       }
 
       case AuthEmailType.ResetPassword: {
@@ -619,7 +730,7 @@ export class AuthService {
           },
         });
 
-        if (verifTokenExist.length > 3) {
+        if (verifTokenExist.length >= 3) {
           throw new TooManyRequestError();
         }
 
@@ -642,7 +753,7 @@ export class AuthService {
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.ResetPassword}`;
 
-        return await this.smtpService.sendMail({
+        this.smtpService.sendMail({
           tmplname: 'reset-password',
           subject: 'Reset Password',
           to: param.data.receiverEmail,
@@ -653,6 +764,58 @@ export class AuthService {
             currentYear: currentDate().getFullYear(),
           },
         });
+        return;
+      }
+
+      case AuthEmailType.NewPassword: {
+        const verifTokenExist = await prismaclient.verification.findMany({
+          where: {
+            identifier: VerificationIdentifier.NewPassword,
+            metadata: {
+              path: ['userId'],
+              equals: param.data.userId,
+            },
+            expiresAt: {
+              gt: currentDate(),
+            },
+          },
+        });
+
+        if (verifTokenExist.length >= 3) {
+          throw new TooManyRequestError();
+        }
+
+        const satuJamKedepan = addHours(currentDate(), 1);
+        const token = genRandomString();
+        const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
+
+        await prismaclient.verification.create({
+          data: {
+            expiresAt: satuJamKedepan,
+            identifier: VerificationIdentifier.NewPassword,
+            metadata: {
+              userId: param.data.userId,
+            },
+            value: token,
+          },
+        });
+
+        // TODO: Setup Worker for removing after 1 hour
+
+        const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.NewPassword}`;
+
+        this.smtpService.sendMail({
+          tmplname: 'new-password',
+          subject: 'Set New Password',
+          to: param.data.receiverEmail,
+          data: {
+            receiver: param.data.receiverEmail,
+            url: url,
+            expiredAt: format(satuJamKedepan, 'yyyy-MM-dd HH:mm:ss'),
+            currentYear: currentDate().getFullYear(),
+          },
+        });
+        return;
       }
     }
   }

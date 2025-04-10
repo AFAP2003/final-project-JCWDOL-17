@@ -1,3 +1,5 @@
+'use client';
+
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ContentHeader from '../content-header';
