@@ -1,4 +1,4 @@
-import { betterAuth } from 'better-auth';
+import { APIError, betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { bearer, customSession } from 'better-auth/plugins';
 import { v4 as uuid } from 'uuid';
@@ -90,6 +90,55 @@ export const auth = betterAuth({
           signupMethod: ['SOCIAL'],
           referralCode: await genReferralCode(),
         };
+      },
+    },
+  },
+
+  databaseHooks: {
+    account: {
+      create: {
+        after: async (account, context) => {
+          const user = await prismaclient.user.findUnique({
+            where: {
+              id: account.userId,
+            },
+          });
+          if (!user) {
+            // Imposible Path
+            throw new APIError('INTERNAL_SERVER_ERROR', {
+              code: '',
+              message: 'Account created without user id',
+            });
+          }
+
+          if (account.providerId === 'credential') {
+            if (!user.signupMethod.includes('CREDENTIAL')) {
+              await prismaclient.user.update({
+                where: {
+                  id: user.id,
+                },
+                data: {
+                  signupMethod: {
+                    push: 'CREDENTIAL',
+                  },
+                },
+              });
+            }
+          } else {
+            if (!user.signupMethod.includes('SOCIAL')) {
+              await prismaclient.user.update({
+                where: {
+                  id: user.id,
+                },
+                data: {
+                  signupMethod: {
+                    push: 'SOCIAL',
+                  },
+                },
+              });
+            }
+          }
+        },
       },
     },
   },

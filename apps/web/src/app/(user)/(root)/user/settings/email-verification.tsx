@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useCooldown } from '@/hooks/use-cooldown';
 import { ArrowRight, MailCheckIcon } from 'lucide-react';
 
 type Props = {
@@ -9,6 +8,8 @@ type Props = {
   email: string;
   resend: (email: string) => void;
   disabled: boolean;
+  cooldownTime: string;
+  rawCooldownTime: number;
 };
 
 export default function EmailVerification({
@@ -16,9 +17,9 @@ export default function EmailVerification({
   email,
   resend,
   disabled,
+  cooldownTime,
+  rawCooldownTime,
 }: Props) {
-  const { cooldownTime, rawCooldownTime, restartCooldown } = useCooldown(120);
-
   if (!show) return null;
 
   return (
@@ -42,7 +43,6 @@ export default function EmailVerification({
       <Button
         onClick={async () => {
           resend(email);
-          restartCooldown();
         }}
         disabled={rawCooldownTime > 0 || disabled}
         className="h-[40px] bg-green-600 hover:bg-green-600/90 transition-all duration-300"

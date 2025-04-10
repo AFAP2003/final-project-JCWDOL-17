@@ -1,3 +1,5 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Popover,
@@ -8,6 +10,8 @@ import { signOut } from '@/lib/auth/client';
 import { Session } from '@/lib/types/session';
 import { LogOut, Settings } from 'lucide-react';
 import Link from 'next/link';
+// import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Separator } from '../ui/separator';
 
 type Props = {
@@ -15,8 +19,16 @@ type Props = {
 };
 
 export default function AvatarPopup({ session: { session, user } }: Props) {
+  // const router = useRouter();
+  const [openPopup, setOpenPopup] = useState<boolean>(false);
+
   return (
-    <Popover>
+    <Popover
+      open={openPopup}
+      onOpenChange={(val) => {
+        setOpenPopup(val);
+      }}
+    >
       <PopoverTrigger>
         <div className="flex gap-2 items-center">
           <Avatar>
@@ -50,7 +62,11 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
             <div className="flex flex-col h-full justify-between min-w-32">
               {/* Right Content Top */}
               <div>
-                <Link href={'/user/settings'} passHref>
+                <Link
+                  href={'/user/settings'}
+                  onClick={() => setOpenPopup(false)}
+                  passHref
+                >
                   <div className="flex items-center gap-2 hover:bg-gray-100 rounded-sm px-2 py-1 cursor-pointer">
                     <Settings className="size-4" /> Settings
                   </div>
@@ -58,12 +74,17 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
               </div>
 
               {/* Right Content Bottom */}
-              <div
-                onClick={() => signOut()}
+              <button
+                onClick={async () => {
+                  await signOut();
+                  window.location.reload();
+                  // setOpenPopup(false);
+                  // router.refresh();
+                }}
                 className="flex gap-2 items-center cursor-pointer hover:bg-gray-100 rounded-sm px-2 py-1"
               >
                 Logout <LogOut className="size-4" />
-              </div>
+              </button>
             </div>
           </div>
         </div>

@@ -12,13 +12,13 @@ import { Separator } from '@/components/ui/separator';
 import { useSession } from '@/lib/auth/client';
 import { Settings } from 'lucide-react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
 export default function UserSidebar() {
   const { data, isPending } = useSession();
 
   if (isPending) return null;
-  if (!data) notFound();
+  if (!data) redirect('/auth/signin');
 
   const { user, session } = data;
 

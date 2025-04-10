@@ -9,7 +9,7 @@ export function parseUserAgent(userAgent: string, createdAt: string) {
 
   const deviceType = resolveDevice(result.device.type);
   const browser = result.browser.name || 'Web';
-  const os = `${result.os.name} ${result.os.version}`;
+  const os = `${result.os.name}`;
 
   const icon = deviceType === 'mobile' ? Smartphone : Laptop;
   const createdDate = dateFrom(createdAt);

@@ -40,9 +40,9 @@ model User {
 
   managedStore Store?    @relation("StoreToAdmin")
   storeId      String?
-  Session      Session[]
-  Account      Account[]
-  Store        Store[]
+  sessions     Session[]
+  accounts     Account[]
+  stores       Store[]
 }
 
 model Session {
