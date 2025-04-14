@@ -1,9 +1,9 @@
 import { ApiError, InternalSeverError } from '@/errors';
-import { HealthServices } from '@/services/health.services';
+import { HealthService } from '@/services/health.service';
 import { Request, Response } from 'express';
 
 export class HealthController {
-  private healthService = new HealthServices();
+  private healthService = new HealthService();
 
   healthcheck = async (req: Request, res: Response) => {
     try {

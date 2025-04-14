@@ -1,4 +1,5 @@
 import { ApiError } from '@/errors';
+// import { APIError } from 'better-auth/api';
 import { NextFunction, Request, Response } from 'express';
 
 function logerror(err: Error) {
@@ -7,7 +8,7 @@ function logerror(err: Error) {
 }
 
 // Middleware for handling 404 Not Found
-export const notFoundMiddleware = (
+export const withNotFound = (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -19,7 +20,7 @@ export const notFoundMiddleware = (
   });
 };
 // Middleware for handling errors
-export const errorMiddleware = (
+export const withError = (
   err: Error,
   req: Request,
   res: Response,
