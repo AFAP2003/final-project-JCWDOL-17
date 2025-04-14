@@ -1,9 +1,8 @@
 import { Toaster } from '@/components/ui/toaster';
 import QueryProvider from '@/context/query-provider';
-
-import type { Metadata } from 'next'
-import { fontInter } from './fonts'
-import './globals.css'
+import type { Metadata } from 'next';
+import { fontInter } from './fonts';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'My Next App',
