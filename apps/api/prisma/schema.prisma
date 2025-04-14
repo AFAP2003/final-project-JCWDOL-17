@@ -3,8 +3,420 @@ generator client {
   previewFeatures = ["views"]
 }
 
+generator dbml {
+  provider = "prisma-dbml-generator"
+  output   = "./erd"
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DATABSE_DIRECT_URL")
+  directUrl = env("DATABASE_DIRECT_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  role          UserRole @default(USER)
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  password      String?
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  referralCode  String? @unique
+  referredById  String?
+  referredUsers User[]  @relation("UserReferrals")
+  referredBy    User?   @relation("UserReferrals", fields: [referredById], references: [id])
+
+  addresses Address[]
+  cart      Cart?
+  orders    Order[]
+
+  managedStore Store?    @relation("StoreToAdmin")
+  storeId      String?
+  Session      Session[]
+  Account      Account[]
+  Store        Store[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  metadata   Json?
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  userId     String
+  label      String
+  recipient  String
+  phone      String
+  address    String
+  city       String
+  province   String
+  postalCode String
+  latitude   Float?
+  longitude  Float?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+}
+
+model Store {
+  id          String   @id @default(uuid())
+  name        String
+  address     String
+  city        String
+  province    String
+  postalCode  String
+  latitude    Float
+  longitude   Float
+  maxDistance Float    @default(10)
+  isActive    Boolean  @default(true)
+  isMain      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  adminId   String?     @unique
+  admin     User?       @relation("StoreToAdmin", fields: [adminId], references: [id])
+  inventory Inventory[]
+  orders    Order[]
+  discounts Discount[]
+  User      User?       @relation(fields: [userId], references: [id])
+  userId    String?
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  image       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  weight      Float?
+  sku         String   @unique
+  categoryId  String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category   Category       @relation(fields: [categoryId], references: [id])
+  images     ProductImage[]
+  inventory  Inventory[]
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+  discounts  Discount[]     @relation("ProductDiscount")
+  vouchers   Voucher[]      @relation("ProductVoucher")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  imageUrl  String
+  isMain    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Inventory {
+  id        String   @id @default(uuid())
+  productId String
+  storeId   String
+  quantity  Int
+  minStock  Int      @default(5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product       Product        @relation(fields: [productId], references: [id])
+  store         Store          @relation(fields: [storeId], references: [id])
+  stockJournals StockJournal[]
+
+  @@unique([productId, storeId])
+}
+
+model StockJournal {
+  id          String           @id @default(uuid())
+  inventoryId String
+  quantity    Int
+  type        StockJournalType
+  notes       String?
+  referenceId String?
+  createdBy   String
+  createdAt   DateTime         @default(now())
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id])
+}
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  productId String
+  quantity  Int
+  addedAt   DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id               String @id @default(uuid())
+  orderNumber      String @unique
+  userId           String
+  storeId          String
+  addressId        String
+  shippingMethodId String
+
+  shippingAddress String
+  recipientName   String
+  recipientPhone  String
+  city            String
+  province        String
+  postalCode      String
+
+  status         OrderStatus   @default(WAITING_PAYMENT)
+  subtotal       Decimal       @db.Decimal(10, 2)
+  shippingCost   Decimal       @db.Decimal(10, 2)
+  discount       Decimal       @default(0) @db.Decimal(10, 2)
+  total          Decimal       @db.Decimal(10, 2)
+  paymentMethod  PaymentMethod
+  paymentStatus  PaymentStatus @default(PENDING)
+  shippingMethod String
+  trackingNumber String?
+  notes          String?
+  expiresAt      DateTime?
+  cancelReason   String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  statusHistory    Json?
+  lastStatusChange DateTime @default(now())
+  lastChangedBy    String?
+
+  user            User           @relation(fields: [userId], references: [id])
+  store           Store          @relation(fields: [storeId], references: [id])
+  address         Address        @relation(fields: [addressId], references: [id])
+  shippingOption  ShippingMethod @relation(fields: [shippingMethodId], references: [id])
+  items           OrderItem[]
+  appliedVouchers OrderVoucher[]
+  paymentProofs   PaymentProof[]
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  discount  Decimal  @default(0) @db.Decimal(10, 2)
+  subtotal  Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model PaymentProof {
+  id         String             @id @default(uuid())
+  orderId    String
+  filePath   String
+  status     PaymentProofStatus @default(PENDING)
+  notes      String?
+  uploadedAt DateTime           @default(now())
+  verifiedAt DateTime?
+  verifiedBy String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model ShippingMethod {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  baseCost    Decimal  @db.Decimal(10, 2)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  orders Order[]
+}
+
+model Discount {
+  id          String       @id @default(uuid())
+  storeId     String
+  name        String
+  description String?
+  type        DiscountType
+  value       Decimal      @db.Decimal(10, 2)
+  minPurchase Decimal?     @db.Decimal(10, 2)
+  maxDiscount Decimal?     @db.Decimal(10, 2)
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  buyQuantity Int?
+  getQuantity Int?
+
+  store    Store     @relation(fields: [storeId], references: [id])
+  products Product[] @relation("ProductDiscount")
+}
+
+model Voucher {
+  id            String      @id @default(uuid())
+  code          String      @unique
+  name          String
+  description   String?
+  type          VoucherType
+  valueType     ValueType
+  value         Decimal     @db.Decimal(10, 2)
+  minPurchase   Decimal?    @db.Decimal(10, 2)
+  maxDiscount   Decimal?    @db.Decimal(10, 2)
+  startDate     DateTime
+  endDate       DateTime
+  isActive      Boolean     @default(true)
+  isForShipping Boolean     @default(false)
+  maxUsage      Int?
+  usageCount    Int         @default(0)
+  createdAt     DateTime    @default(now())
+
+  products      Product[]      @relation("ProductVoucher")
+  orderVouchers OrderVoucher[]
+}
+
+model OrderVoucher {
+  id        String   @id @default(uuid())
+  orderId   String
+  voucherId String
+  discount  Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  voucher Voucher @relation(fields: [voucherId], references: [id])
+
+  @@unique([orderId, voucherId])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER
+}
+
+enum SignupMethodType {
+  CREDENTIAL
+  SOCIAL
+}
+
+enum OrderStatus {
+  WAITING_PAYMENT
+  WAITING_PAYMENT_CONFIRMATION
+  PROCESSING
+  SHIPPED
+  CONFIRMED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProofStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  PAYMENT_GATEWAY
+}
+
+enum StockJournalType {
+  ADDITION
+  SUBTRACTION
+  TRANSFER
+  SALE
+  RETURN
+  ADJUSTMENT
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  BUY_X_GET_Y
+}
+
+enum VoucherType {
+  PRODUCT_SPECIFIC
+  CART
+  SHIPPING
+  REFERRAL
+}
+
+enum ValueType {
+  PERCENTAGE
+  FIXED_AMOUNT
 }
