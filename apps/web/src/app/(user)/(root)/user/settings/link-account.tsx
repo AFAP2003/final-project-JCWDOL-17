@@ -16,6 +16,7 @@ import { ReactNode, useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 import { SiFacebook } from 'react-icons/si';
 import EmailVerification from './email-verification';
+import SectionHeading from './section-heading';
 
 type LinkAccountParam =
   | {
@@ -37,6 +38,7 @@ export default function LinkAccount({ session }: Props) {
   const { cooldownTime, rawCooldownTime, restartCooldown } = useCooldown(120);
   const [openDialog, setOpenDialog] = useState(false);
 
+  // TODO: handle query.error
   const query = useQuery({
     queryKey: ['user/settings', 'list-account'],
     queryFn: async () => {
@@ -44,8 +46,6 @@ export default function LinkAccount({ session }: Props) {
       return data as GetAllAccountResponse;
     },
   });
-
-  // TODO: handle query.error
 
   const isGoogleLinked = !!query.data?.find((a) => a.provider === 'google');
   const isFacebookLinked = !!query.data?.find((a) => a.provider === 'facebook');
@@ -182,10 +182,7 @@ export default function LinkAccount({ session }: Props) {
       </Dialog>
 
       <div className="mb-12 w-full">
-        <h3 className="text-xl font-semibold mb-8 text-neutral-700">
-          Account Linking
-        </h3>
-
+        <SectionHeading>Account Linking</SectionHeading>
         <div className="flex flex-col space-y-2 w-full justify-center">
           {items.map((item, idx) => (
             <Button

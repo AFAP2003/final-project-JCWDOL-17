@@ -21,8 +21,6 @@ export async function middleware(request: NextRequest) {
   const currentPath = request.nextUrl.pathname;
   const pathIsPublic = publicRoutes.find((route) => route === currentPath);
 
-  console.log({ currentPath });
-
   const isAuthenticated = sessionCookie != null;
 
   if (!isAuthenticated && !pathIsPublic) {

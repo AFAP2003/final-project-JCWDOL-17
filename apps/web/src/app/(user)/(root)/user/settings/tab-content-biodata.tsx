@@ -6,6 +6,7 @@ import { TabsContent } from '@/components/ui/tabs';
 import { useSession } from '@/lib/auth/client';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
+import SectionHeading from './section-heading';
 
 export default function TabContentBiodata() {
   const { data, isPending } = useSession();
@@ -14,10 +15,9 @@ export default function TabContentBiodata() {
   return (
     <TabsContent value="biodata">
       {!isPending && (
-        <Card className="flex max-lg:flex-col gap-12 p-6 w-full">
-          {/* Left Content */}
-          <div>
-            {/* Image */}
+        <Card className="p-6">
+          <div className="flex max-lg:flex-col gap-12 w-full">
+            {/* Left Content */}
             <div className="p-4 border rounded-lg shadow">
               <div className="relative aspect-square mb-4 w-60 mx-auto">
                 {!data?.user.image ? (
@@ -36,40 +36,37 @@ export default function TabContentBiodata() {
                 extensions: .JPG .JPEG .PNG
               </p>
             </div>
-          </div>
 
-          {/* Right Content */}
-          <div className="w-full">
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-6">Change Your Bio</h3>
+            {/* Right Content */}
+            <div className="w-full">
+              <div className="mb-12">
+                <SectionHeading>Change Your Bio</SectionHeading>
+                <div className="text-sm grid grid-cols-[30%_70%] grid-rows-4 w-full gap-4 text-gray-700">
+                  {/* Bio */}
+                  <div>First Name</div>
+                  <div>{data?.user.firstName || ''}</div>
 
-              <div className="text-sm grid grid-cols-[30%_70%] grid-rows-4 w-full gap-4 text-gray-700">
-                {/* Bio */}
-                <div>First Name</div>
-                <div>{data?.user.firstName || ''}</div>
+                  <div>Last Name</div>
+                  <div>{data?.user.lastName || ''}</div>
 
-                <div>Last Name</div>
-                <div>{data?.user.lastName || ''}</div>
+                  <div>Date of birth</div>
+                  <div>27 Oktober 1998</div>
 
-                <div>Date of birth</div>
-                <div>27 Oktober 1998</div>
-
-                <div>Gender</div>
-                <div>Men</div>
+                  <div>Gender</div>
+                  <div>Men</div>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-6">
-                Change Your Contact
-              </h3>
-              <div className="text-sm grid grid-cols-[30%_70%] grid-rows-2 w-full gap-4 text-gray-700">
-                {/* Contact Field */}
-                <div>Email</div>
-                <div className="line-clamp-1">{data?.user.email || ''}</div>
+              <div className="mb-12">
+                <SectionHeading>Change Your Contact</SectionHeading>
+                <div className="text-sm grid grid-cols-[30%_70%] grid-rows-2 w-full gap-4 text-gray-700">
+                  {/* Contact Field */}
+                  <div>Email</div>
+                  <div className="line-clamp-1">{data?.user.email || ''}</div>
 
-                <div>Phone</div>
-                <div>{'081885884883'}</div>
+                  <div>Phone</div>
+                  <div>{'081885884883'}</div>
+                </div>
               </div>
             </div>
           </div>

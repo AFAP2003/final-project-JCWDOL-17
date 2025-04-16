@@ -21,3 +21,6 @@ export const BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET || '';
 export const CRYPTO_SECRET = process.env.CRYPTO_SECRET || '';
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+export const REDIS_URL = process.env.REDIS_URL || '';
+export const RAJA_ONGKIR_API = process.env.RAJA_ONGKIR_API || '';
+export const RAPID_API_KEY = process.env.RAPID_API_KEY || '';
