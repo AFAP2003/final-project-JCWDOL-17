@@ -1,29 +1,17 @@
 'use client';
 
-import { useSession } from '@/lib/auth/client';
-import React, { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import {
-  ChevronRight,
-  Clock,
-  Package,
-  Truck,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-} from 'lucide-react';
-import Link from 'next/link';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import {
-  getOrderStatusConfig,
-  orderStatusConfig,
-} from '@/lib/config/order-config';
-import { OrderStatusBadgeProps } from '@/lib/types/orders';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getOrderStatusConfig } from '@/lib/config/order-config';
 import { mockOrderList } from '@/lib/mocks/order-data';
+import { OrderStatusBadgeProps } from '@/lib/types/orders';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { ChevronRight, Package } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
 
 function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
   const config = getOrderStatusConfig(status);
