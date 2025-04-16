@@ -5,14 +5,14 @@ import { fontInter } from './fonts';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '',
-  description: '',
-};
+  title: 'My Next App',
+  description: 'A Next.js application',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en">
