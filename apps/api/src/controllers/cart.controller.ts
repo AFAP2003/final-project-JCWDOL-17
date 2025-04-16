@@ -1,10 +1,6 @@
 import { AddToCartDTO } from '@/dtos/add-to-cart.dto';
 import { UpdateCartItemDTO } from '@/dtos/update-cart-item.dto';
-import {
-  ApiError,
-  InternalSeverError,
-  UnprocessableEntityError,
-} from '@/errors';
+import { UnprocessableEntityError } from '@/errors';
 import { formatZodError } from '@/helpers/format-zod-error';
 import { getSessionUser } from '@/helpers/session-helper';
 import { CartService } from '@/services/cart.service';
