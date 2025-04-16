@@ -7,6 +7,7 @@ import { BASE_FRONTEND_URL, PORT } from './config';
 import { withError, withNotFound } from './middlewares/errors.middleware';
 import { AuthRouter } from './routers/auth.router';
 import { HealthRouter } from './routers/health.router';
+import { RegionRouter } from './routers/region.router';
 import { TokenRouter } from './routers/token.router';
 import { UserRouter } from './routers/user.router';
 
@@ -44,11 +45,13 @@ export default class App {
     const authRouter = new AuthRouter();
     const userRouter = new UserRouter();
     const tokenRouter = new TokenRouter();
+    const regionRouter = new RegionRouter();
 
     this.app.use('/api', healthRouter.getRouter());
     this.app.use('/api/auth', authRouter.getRouter());
     this.app.use('/api/user', userRouter.getRouter());
     this.app.use('/api/token', tokenRouter.getRouter());
+    this.app.use('/api/region', regionRouter.getRouter());
   }
 
   public start(): void {

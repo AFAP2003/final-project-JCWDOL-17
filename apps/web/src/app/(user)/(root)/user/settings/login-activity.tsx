@@ -1,76 +1,83 @@
 'use client';
 
 import { Separator } from '@/components/ui/separator';
-import { useActiveSession } from '@/hooks/use-active-session';
 import { useCooldown } from '@/hooks/use-cooldown';
 import { toast } from '@/hooks/use-toast';
 import { apiclient } from '@/lib/apiclient';
 import { parseUserAgent } from '@/lib/parse-user-agent';
-import { useMutation } from '@tanstack/react-query';
+import { GetAllSessionResponse } from '@/lib/types/get-all-session-response';
+import { Session } from '@/lib/types/session';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { Lightbulb } from 'lucide-react';
 import { useState } from 'react';
 import EmailVerification from './email-verification';
+import SectionHeading from './section-heading';
 
-type Props = Pick<
-  ReturnType<typeof useActiveSession>,
-  'current' | 'sessions' | 'refetch'
->;
+type Props = {
+  current: Session | null;
+};
 
-export default function LoginActivity({
-  current,
-  sessions,
-  refetch: refetchSession,
-}: Props) {
+export default function LoginActivity({ current }: Props) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { cooldownTime, rawCooldownTime, restartCooldown } = useCooldown(120);
 
-  const { mutate: resetPassword, isPending } = useMutation({
-    mutationFn: async () => {
-      return await apiclient.post('/auth/forgot-password', {
-        email: current?.user.email,
-      });
-    },
-
-    onError: (error: AxiosError) => {
-      const response = error.response?.data as { error: { message: string } };
-      const message = response?.error?.message;
-
-      if (
-        error.status === 400 &&
-        message.startsWith('This account is not linked to credential method')
-      ) {
-        toast({
-          description:
-            'Please set your password first to link your account with credential',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      if (error.status! === 400 && message?.startsWith('Too many request')) {
-        toast({
-          description: 'Too many request, please try again later!',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      toast({
-        description:
-          'Sorry we have problem in our server, please try again later',
-        variant: 'destructive',
-      });
-    },
-
-    onSuccess: () => {
-      setIsSubmitted(true);
-      toast({
-        description: `Email was send to ${current?.user.email}`,
-      });
-      restartCooldown();
+  // TODO: handle errror
+  const { data: sessions, refetch: refetchSession } = useQuery({
+    queryKey: ['user/settings', 'tab-content-security'],
+    queryFn: async () => {
+      const { data } = await apiclient.get('/auth/sessions');
+      return data as GetAllSessionResponse;
     },
   });
+
+  const { mutate: resetPassword, isPending: resetPasswordPending } =
+    useMutation({
+      mutationFn: async () => {
+        return await apiclient.post('/auth/forgot-password', {
+          email: current?.user.email,
+        });
+      },
+
+      onError: (error: AxiosError) => {
+        const response = error.response?.data as { error: { message: string } };
+        const message = response?.error?.message;
+
+        if (
+          error.status === 400 &&
+          message.startsWith('This account is not linked to credential method')
+        ) {
+          toast({
+            description:
+              'Please set your password first to link your account with credential',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        if (error.status! === 400 && message?.startsWith('Too many request')) {
+          toast({
+            description: 'Too many request, please try again later!',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        toast({
+          description:
+            'Sorry we have problem in our server, please try again later',
+          variant: 'destructive',
+        });
+      },
+
+      onSuccess: () => {
+        setIsSubmitted(true);
+        toast({
+          description: `Email was send to ${current?.user.email}`,
+        });
+        restartCooldown();
+      },
+    });
 
   const { mutate: revokeSession } = useMutation({
     mutationFn: async (sessionToken: string) => {
@@ -96,7 +103,7 @@ export default function LoginActivity({
     <>
       <EmailVerification
         show={isSubmitted}
-        disabled={isPending}
+        disabled={resetPasswordPending}
         email={current?.user.email || ''}
         resend={() => resetPassword()}
         cooldownTime={cooldownTime}
@@ -104,9 +111,7 @@ export default function LoginActivity({
       />
 
       <div className="mb-12 w-full">
-        <h3 className="text-xl font-semibold mb-8 text-neutral-700">
-          Login Activity
-        </h3>
+        <SectionHeading>Login Activity</SectionHeading>
 
         <div className="flex items-center text-sm gap-3 mb-6">
           <Lightbulb className="size-6 text-yellow-500" />

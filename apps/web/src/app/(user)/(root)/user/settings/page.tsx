@@ -3,6 +3,7 @@
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ContentHeader from '../content-header';
+import TabContentAddress from './tab-content-address';
 import TabContentBiodata from './tab-content-biodata';
 import TabContentSecurity from './tab-content-security';
 
@@ -13,12 +14,14 @@ export default function SettingsPage() {
       <Separator />
       <div className="pt-4">
         <Tabs defaultValue="biodata" className="">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="biodata">Biodata</TabsTrigger>
+            <TabsTrigger value="address">Address</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
           </TabsList>
 
           <TabContentBiodata />
+          <TabContentAddress />
           <TabContentSecurity />
         </Tabs>
       </div>
