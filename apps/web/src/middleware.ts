@@ -14,6 +14,10 @@ const publicRoutes = [
   '/auth/forgot-password',
   '/admin/auth/signin',
   '/admin/auth/signin/confirm',
+  // Wajib Delete Before merge
+  '/orders',
+  '/cart',
+  '/checkout',
 ];
 
 export async function middleware(request: NextRequest) {

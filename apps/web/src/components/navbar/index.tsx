@@ -4,6 +4,9 @@ import { useSession } from '@/lib/auth/client';
 import Logo from '../logo';
 import AuthButton from './auth-button';
 import AvatarPopup from './avatar-popup';
+import Link from 'next/link';
+import { Button } from '../ui/button';
+import { ShoppingBag } from 'lucide-react';
 
 export default function Navbar() {
   const { data: session, isPending } = useSession();
@@ -15,6 +18,13 @@ export default function Navbar() {
         </div>
         <div className="grow border-x flex justify-center items-center mx-16 h-full">
           [SEARCH BAR]
+        </div>
+        <div className="flex items-center gap-6">
+          <Link href="/orders" passHref>
+            <Button variant="ghost" size="icon" title="My Orders">
+              <ShoppingBag className="h-30 w-30" />
+            </Button>
+          </Link>
         </div>
         <div>
           {isPending || !session ? (
