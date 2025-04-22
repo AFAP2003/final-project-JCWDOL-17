@@ -9,6 +9,7 @@ import { AuthRouter } from './routers/auth.router';
 import { HealthRouter } from './routers/health.router';
 import { TokenRouter } from './routers/token.router';
 import { UserRouter } from './routers/user.router';
+import apiRouter from './routers/dashboardApi.router';
 
 export default class App {
   static VERSION = '1.0.0';
@@ -49,6 +50,8 @@ export default class App {
     this.app.use('/api/auth', authRouter.getRouter());
     this.app.use('/api/user', userRouter.getRouter());
     this.app.use('/api/token', tokenRouter.getRouter());
+    this.app.use('/api/dashboard', apiRouter)
+
   }
 
   public start(): void {

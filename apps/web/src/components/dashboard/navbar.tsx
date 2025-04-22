@@ -14,13 +14,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/shadcn/dropdown-menu"
+} from "@/components/ui/dropdown-menu"
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/shadcn/avatar"
+} from "@/components/ui/avatar"
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
   return (
     <nav className="flex items-center h-[50px] px-4 sm:px-10 border-b bg-white justify-between sm:justify-end">
