@@ -1,5 +1,6 @@
 import { UserController } from '@/controllers/user.controller';
 import { withAuthentication } from '@/middlewares/auth.middleware';
+import { withImageUpload } from '@/middlewares/media.middleware';
 import { Router } from 'express';
 import asynchandler from 'express-async-handler';
 
@@ -18,6 +19,42 @@ export class UserRouter {
       '/whoami',
       withAuthentication,
       asynchandler(this.controller.whoami),
+    );
+
+    this.router.put(
+      '/bio',
+      withAuthentication,
+      asynchandler(this.controller.updateBio),
+    );
+
+    this.router.post(
+      '/profile',
+      withAuthentication,
+      withImageUpload,
+      asynchandler(this.controller.postProfile),
+    );
+
+    this.router.post(
+      '/address',
+      withAuthentication,
+      asynchandler(this.controller.createAddress),
+    );
+    this.router.put(
+      '/address/:addressId',
+      withAuthentication,
+      asynchandler(this.controller.updateAddress),
+    );
+
+    this.router.get(
+      '/address',
+      withAuthentication,
+      asynchandler(this.controller.getAllAddress),
+    );
+
+    this.router.delete(
+      '/address/:addressId',
+      withAuthentication,
+      asynchandler(this.controller.deleteAddress),
     );
   }
 

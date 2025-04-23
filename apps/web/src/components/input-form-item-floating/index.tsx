@@ -60,6 +60,7 @@ export default function InputFormItemFloating<
   // const [isFetching, setIsFetching] = useState(false); // TODO:
   const [suggestions, setSuggestions] = useState<T>();
   const [isSelecting, setIsSelecting] = useState(false);
+  const [isFocus, setIsFocus] = useState(false);
 
   useEffect(() => {
     if (props.withSuggestion && !isSelecting) {
@@ -77,13 +78,13 @@ export default function InputFormItemFloating<
     typeof suggestions !== 'undefined' && suggestions.length > 0;
 
   return (
-    <FormItem className="mb-4 relative">
+    <FormItem className="mb-6 relative">
       <div className="relative peer">
         <Input
           id={props.id}
           placeholder=" "
           className={cn(
-            'peer px-5 py-6 focus-visible:ring-0 text-sm text-neutral-700 font-medium focus:border-green-500',
+            'peer px-5 py-6 focus-visible:ring-0 text-sm text-neutral-700 font-medium focus:border-neutral-500 bg-neutral-50',
             props.inputClass,
           )}
           {...props.field}
@@ -91,25 +92,31 @@ export default function InputFormItemFloating<
             setIsSelecting(false);
             props.field.onChange(e);
           }}
+          onFocus={() => setIsFocus(true)}
+          onBlur={() => setIsFocus(false)}
         />
         <Label
           htmlFor={props.id}
-          className="absolute transition-all duration-150 text-neutral-700 top-0 left-0 -translate-y-2 bg-white px-1 peer-placeholder-shown:translate-y-4 peer-placeholder-shown:text-neutral-500 peer-focus:text-neutral-700 peer-focus:-translate-y-2 translate-x-4"
+          className={cn(
+            'absolute z-10 transition-all duration-150 top-0 left-0 px-1 -translate-y-6 translate-x-0',
+            'peer-focus:text-neutral-200 peer-focus:-translate-y-6 peer-focus:translate-x-0',
+            'peer-placeholder-shown:translate-y-4 peer-placeholder-shown:text-neutral-500 peer-placeholder-shown:translate-x-4',
+          )}
         >
           {props.label}
         </Label>
       </div>
       <div className="px-1 flex w-full justify-between items-start gap-x-4">
-        <FormMessage className="-translate-y-1 w-full grow" />
+        <FormMessage className="-translate-y-1 w-full grow pb-3" />
         {props.showCount && (
-          <span className="text-sm font-mono text-neutral-700 -translate-y-1 ml-auto text-end">
+          <span className="text-sm font-mono -translate-y-1 ml-auto text-end">
             {props?.field?.value?.length}/{props.maxCount}
           </span>
         )}
       </div>
-      {props.withSuggestion && !isInputEmpty && hasSuggestion && (
+      {props.withSuggestion && !isInputEmpty && isFocus && hasSuggestion && (
         <div
-          className="absolute w-full top-[4.5rem] bg-white border  shadow-lg z-10 rounded-lg overflow-hidden mt-2 peer-focus-within:border-green-500"
+          className="absolute w-full top-[4.5rem] bg-white border shadow-lg z-10 rounded-lg overflow-hidden mt-2 peer-focus-within:border-neutral-500"
           style={{ zIndex: 2000 }}
         >
           <div className="divide-y divide-green-100">

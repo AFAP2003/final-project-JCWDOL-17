@@ -24,3 +24,6 @@ export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 export const REDIS_URL = process.env.REDIS_URL || '';
 export const RAJA_ONGKIR_API = process.env.RAJA_ONGKIR_API || '';
 export const RAPID_API_KEY = process.env.RAPID_API_KEY || '';
+export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || '';
+export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || '';
+export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || '';

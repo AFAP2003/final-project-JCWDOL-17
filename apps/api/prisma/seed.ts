@@ -27,9 +27,7 @@ async function SEED_SUPER_ADMIN() {
     data: {
       email: superemail,
       emailVerified: true,
-      firstName: 'John',
-      lastName: 'Doe',
-      fullName: 'John Doe',
+      name: 'John Doe',
       role: 'SUPER',
       signupMethod: {
         set: ['CREDENTIAL'],
@@ -65,9 +63,7 @@ async function SEED_STORE_ADMIN() {
     data: {
       email: email,
       emailVerified: true,
-      firstName: 'Alice',
-      lastName: 'Doe',
-      fullName: 'Alice Doe',
+      name: 'Alice Chan',
       role: 'ADMIN',
       signupMethod: {
         set: ['CREDENTIAL'],
@@ -103,9 +99,7 @@ async function SEED_USER() {
     data: {
       email: email,
       emailVerified: true,
-      firstName: 'Loki',
-      lastName: 'Doe',
-      fullName: 'Loki Doe',
+      name: 'Loki Asgard',
       role: 'USER',
       signupMethod: {
         set: ['CREDENTIAL'],

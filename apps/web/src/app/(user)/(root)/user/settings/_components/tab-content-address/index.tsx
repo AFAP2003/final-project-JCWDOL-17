@@ -16,18 +16,25 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { TabsContent } from '@/components/ui/tabs';
 import { apiclient } from '@/lib/apiclient';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DialogDescription } from '@radix-ui/react-dialog';
-import { Map, Plus } from 'lucide-react';
+import { Loader2, Map, Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useIsClient } from 'usehooks-ts';
+import { useDebounceValue, useIsClient } from 'usehooks-ts';
 import { z } from 'zod';
 // import AddressMap from './address-map';
+import { toast } from '@/hooks/use-toast';
+import { useSession } from '@/lib/auth/client';
+import { parseBasicObjZodError } from '@/lib/parse-zod-error';
+import { GetAllAddressResponse } from '@/lib/types/get-all-address-response';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import dynamic from 'next/dynamic';
+import AddressCard from './address-card';
 import SearchBox from './search-box';
+
 const AddressMap = dynamic(() => import('./address-map'), {
   ssr: false,
 });
@@ -65,7 +72,7 @@ const formSchema = z.object({
     .min(-180, { message: 'Longitude must be >= -180' })
     .max(180, { message: 'Longitude must be <= 180' }),
 
-  receipent: z
+  recipient: z
     .string()
     .trim()
     .min(3, 'Required, min of 3 character long')
@@ -81,8 +88,13 @@ const formSchema = z.object({
 
 export default function TabContentAddress() {
   const [openDialog, setOpenDialog] = useState(false);
+  const [action, setAction] = useState<'create' | 'update'>('create');
+  const [addressId, setAddressId] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const isClient = useIsClient();
+  const [search, setSearch] = useState('');
+  const [dbSearch] = useDebounceValue(search.trim(), 500);
+  const { data: session } = useSession();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -93,11 +105,107 @@ export default function TabContentAddress() {
       province: '',
       postalCode: '',
       isPrimary: false,
-      receipent: '',
+      recipient: '',
       phone: '',
-      latitude: 0, // tambahkan ini
-      longitude: 0, // tambahkan ini
+      latitude: -7.027455, // TODO:
+      longitude: 110.4134411, // TODO:
     },
+  });
+
+  const { mutate: mutateAddress, isPending: mutatePending } = useMutation({
+    mutationFn: async (payload: z.infer<typeof formSchema>) => {
+      if (action === 'create') {
+        const { data } = await apiclient.post('/user/address', payload);
+        return data;
+      }
+      if (action === 'update') {
+        const { data } = await apiclient.put(
+          `/user/address/${addressId}`,
+          payload,
+        );
+        return data;
+      }
+    },
+    onSuccess: () => {
+      toast({
+        description:
+          action === 'create'
+            ? 'A new address has been successfully added.'
+            : 'The address has been successfully updated.',
+      });
+      setOpenDialog(false);
+      setAddressId(null);
+      form.reset();
+      refetchGet();
+    },
+
+    onError: (error: AxiosError) => {
+      const response = error.response?.data as { error: { message: string } };
+      const message = response?.error?.message;
+
+      if (error.status! === 422) {
+        const parsederror = parseBasicObjZodError(error);
+        parsederror.forEach((err) => form.setError(err.key, err.value));
+        return;
+      }
+
+      if (
+        error.status! === 400 &&
+        message.startsWith('Address limit exceeded')
+      ) {
+        toast({
+          description:
+            'Cannot create new address. Limit exceeded of 100 address in total',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        description:
+          'Sorry we have problem in our server, please try again later',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const { mutate: deleteAddress, isPending: deletePending } = useMutation({
+    mutationFn: async (payload: { addressId: string }) => {
+      const { data } = await apiclient.delete(
+        `/user/address/${payload.addressId}`,
+      );
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        description: 'The address has been successfully removed.',
+      });
+      form.reset();
+      refetchGet();
+    },
+
+    onError: (error: AxiosError) => {
+      toast({
+        description:
+          'Sorry we have problem in our server, please try again later',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const {
+    data: addresses,
+    isPending: getPending,
+    refetch: refetchGet,
+  } = useQuery({
+    queryKey: ['user/settings', 'list-address', dbSearch],
+    queryFn: async () => {
+      const { data } = await apiclient.get<GetAllAddressResponse>(
+        `/user/address?query=${dbSearch}&pageSize=100`,
+      );
+      return data.addresses;
+    },
+    enabled: !!session?.user,
   });
 
   return (
@@ -112,23 +220,23 @@ export default function TabContentAddress() {
             setOpenDialog(val);
           }}
         >
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl border-neutral-500 bg-neutral-800 text-neutral-200">
             <DialogHeader />
             <DialogDescription />
 
-            <DialogTitle className="text-xl text-neutral-800 font-bold flex w-full justify-center items-center gap-x-4">
-              <Map className="text-green-500 size-8" />{' '}
-              <span>Tell Us Your Address</span>
+            <DialogTitle className="text-xl font-bold flex w-full justify-center items-center gap-x-4">
+              <Map className="size-8" /> <span>Tell Us Your Address</span>
             </DialogTitle>
-            <Separator className="bg-neutral-500 mb-2" />
 
-            <ScrollArea className="max-h-[500px] px-4">
+            <Separator className="bg-neutral-500 mb-3" />
+
+            <ScrollArea className="max-h-[500px] px-6">
               <Form {...form}>
                 <form
                   ref={formRef}
-                  className="py-2"
+                  className="py-6"
                   onSubmit={form.handleSubmit((data) => {
-                    console.log({ data });
+                    mutateAddress(data);
                   })}
                 >
                   <FormField
@@ -243,27 +351,32 @@ export default function TabContentAddress() {
                       )}
                     />
 
-                    <div className="relative bottom-3 flex items-center space-x-2">
-                      <Switch
-                        onCheckedChange={(val) =>
-                          form.setValue('isPrimary', val)
-                        }
-                        id="isPrimary"
-                        className="data-[state=checked]:bg-green-500"
-                      />
-                      <Label
-                        className="text-sm font-medium text-neutral-700"
-                        htmlFor="isPrimary"
-                      >
-                        Use As Primary
-                      </Label>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="isPrimary"
+                      render={({ field }) => (
+                        <div className="relative bottom-3 flex items-center space-x-2">
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            id="isPrimary"
+                            className="data-[state=checked]:bg-neutral-700"
+                          />
+                          <Label
+                            className="text-sm font-medium"
+                            htmlFor="isPrimary"
+                          >
+                            Use As Primary
+                          </Label>
+                        </div>
+                      )}
+                    />
                   </div>
 
                   <AddressMap
                     initialPosition={{
-                      lat: -7.027455,
-                      lng: 110.4134411,
+                      lat: form.getValues('latitude'),
+                      lng: form.getValues('longitude'),
                     }}
                     onLocationChange={(loc) => {
                       if (loc) {
@@ -273,16 +386,16 @@ export default function TabContentAddress() {
                     }}
                   />
 
-                  <Separator className="my-6 bg-neutral-300 h-1" />
+                  <Separator className="my-12 bg-neutral-500 h-1" />
 
                   <FormField
                     control={form.control}
-                    name="receipent"
+                    name="recipient"
                     render={({ field }) => (
                       <InputFormItemFloating
                         field={field}
-                        id="receipent"
-                        label="Receipent Name"
+                        id="recipient"
+                        label="Recipient Name"
                         showCount
                         maxCount={50}
                         withSuggestion={false}
@@ -307,14 +420,15 @@ export default function TabContentAddress() {
               </Form>
             </ScrollArea>
 
-            <Separator className="bg-neutral-500 mb-2" />
+            <Separator className="bg-neutral-500 mb-3" />
+
             <DialogFooter>
               <Button
                 type="button"
                 onClick={() => {
                   formRef.current?.requestSubmit();
                 }}
-                className="text-sm sm:text-sm bg-green-600 hover:bg-green-700"
+                className="text-sm sm:text-sm bg-neutral-700 hover:bg-neutral-700/90"
               >
                 Save Address
               </Button>
@@ -323,24 +437,86 @@ export default function TabContentAddress() {
         </Dialog>
       )}
 
-      <TabsContent value="address">
-        <Card className="p-6">
-          <div className="w-full">
-            <div className="flex w-full justify-between mb-8 gap-12">
-              <SearchBox />
-              <Button
-                onClick={() => setOpenDialog(true)}
-                className="bg-green-600 hover:bg-green-700 transition-all duration-300"
-              >
-                <Plus className="size-4" />
-                New Address
-              </Button>
-            </div>
-
-            <div>[Address List]</div>
+      <Card className="p-6">
+        <div className="w-full">
+          <div className="flex w-full justify-between mb-8 gap-12">
+            <SearchBox search={search} setSearch={setSearch} />
+            <Button
+              disabled={mutatePending}
+              onClick={() => {
+                setOpenDialog(true);
+                setAction('create');
+                setAddressId(null);
+              }}
+              className="bg-neutral-800/90 hover:bg-neutral-800/90 text-neutral-200 hover:text-neutral-300 transition-all duration-300"
+            >
+              <Plus className="size-4" />
+              New Address
+            </Button>
           </div>
-        </Card>
-      </TabsContent>
+
+          <div className="py-6">
+            {addresses?.length === 0 && !dbSearch && (
+              <div className="w-full h-[120px]">
+                <div className="text-neutral-500 text-center text-base max-w-sm mx-auto">
+                  📭 No addresses have been added yet. Please add one to
+                  simplify your delivery process.
+                </div>
+              </div>
+            )}
+
+            {addresses?.length === 0 && dbSearch && (
+              <div className="w-full h-[120px] flex items-center">
+                <div className="text-neutral-500 text-center text-base max-w-sm mx-auto">
+                  🔍 No result found for current filter.
+                </div>
+              </div>
+            )}
+
+            {getPending && (
+              <div className="w-full h-[120px] flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center text-center text-neutral-500">
+                  <Loader2 className="w-8 h-8 mb-2 animate-spin text-neutral-400" />
+                  <span className="text-base">Searching for addresses...</span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-6">
+              {addresses?.map((a) => (
+                <AddressCard
+                  disabled={deletePending}
+                  key={a.id}
+                  address={a}
+                  onEdit={(address) => {
+                    form.setValue('label', address.label);
+                    form.setValue('address', address.address);
+                    form.setValue('province', address.province);
+                    form.setValue('city', address.city);
+                    form.setValue('postalCode', address.postalCode);
+                    form.setValue(
+                      'isPrimary',
+                      address.isDefault ? true : false,
+                    );
+                    form.setValue('latitude', address.latitude);
+                    form.setValue('longitude', address.longitude);
+                    form.setValue('recipient', address.recipient);
+                    form.setValue('phone', address.phone);
+                    setOpenDialog(true);
+                    setAction('update');
+                    setAddressId(a.id);
+                  }}
+                  onDelete={(address) => {
+                    deleteAddress({
+                      addressId: address.id,
+                    });
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
     </>
   );
 }

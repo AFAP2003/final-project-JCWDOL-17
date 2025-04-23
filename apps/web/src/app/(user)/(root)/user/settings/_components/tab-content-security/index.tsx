@@ -1,7 +1,6 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { TabsContent } from '@/components/ui/tabs';
 import { useSession } from '@/lib/auth/client';
 import LinkAccount from './link-account';
 import LoginActivity from './login-activity';
@@ -12,13 +11,11 @@ export default function TabContentSecurity({}: Props) {
   const { data: session } = useSession();
 
   return (
-    <TabsContent value="security">
-      <Card className="p-6">
-        <div className="w-full">
-          <LoginActivity current={session} />
-          <LinkAccount session={session!} />
-        </div>
-      </Card>
-    </TabsContent>
+    <Card className="p-6">
+      <div className="w-full">
+        <LoginActivity current={session} />
+        <LinkAccount session={session!} />
+      </div>
+    </Card>
   );
 }

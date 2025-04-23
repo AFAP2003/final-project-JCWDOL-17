@@ -33,9 +33,9 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
         <div className="flex gap-2 items-center">
           <Avatar>
             <AvatarImage src={user.image} alt="User Image"></AvatarImage>
-            <AvatarFallback>{`${user.firstName.at(0)?.toUpperCase()}${user.lastName ? user.lastName.at(0)?.toUpperCase() : user.firstName.at(1)?.toUpperCase()}`}</AvatarFallback>
+            <AvatarFallback className="bg-neutral-200 text-neutral-800">{`${user.name.at(0)?.toUpperCase()}`}</AvatarFallback>
           </Avatar>
-          <div className="">{user.firstName}</div>
+          <div className="">{user.name.split(' ').at(0)}</div>
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-96">
@@ -44,9 +44,9 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
           <div className="flex items-center rounded-sm gap-4">
             <Avatar className="">
               <AvatarImage src={user.image} alt="User Image"></AvatarImage>
-              <AvatarFallback>{`${user.firstName.at(0)?.toUpperCase()}${user.lastName ? user.lastName.at(0)?.toUpperCase() : user.firstName.at(1)?.toUpperCase()}`}</AvatarFallback>
+              <AvatarFallback className="bg-neutral-200 text-neutral-800">{`${user.name.at(0)?.toUpperCase()}`}</AvatarFallback>
             </Avatar>
-            <div>{user.fullName}</div>
+            <div>{user.name}</div>
           </div>
 
           <Separator className="my-4" />
