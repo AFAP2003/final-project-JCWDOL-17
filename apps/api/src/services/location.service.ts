@@ -1,6 +1,6 @@
 import { RAJA_ONGKIR_API, RAPID_API_KEY } from '@/config';
 import { CityGetAllDTO } from '@/dtos/city-get-all.dto';
-import { GeoPlacesDTO } from '@/dtos/geo-places.dto';
+import { GeocodingDTO } from '@/dtos/geocoding.dto';
 import { ProvinceGetAllDTO } from '@/dtos/province-get-all.dto';
 import { BadRequestError, NotFoundError } from '@/errors';
 import {
@@ -17,8 +17,8 @@ import { z } from 'zod';
 let isInitialize = false;
 let isChecking = false;
 
-export class RegionService {
-  geoPlaces = async (dto: z.infer<typeof GeoPlacesDTO>) => {
+export class LocationService {
+  geocoding = async (dto: z.infer<typeof GeocodingDTO>) => {
     if (!dto.name && !dto.lat && !dto.lng) return [];
 
     const baseurl =

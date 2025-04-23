@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 // import { apiclient } from '@/lib/apiclient';
 import { IDN_LATLONG_BOUND } from '@/lib/constants/indonesian-latlong-bounds';
-import { FindLocationResponse } from '@/lib/types/find-location-response';
+import { GeocodingResponse } from '@/lib/types/geocoding-response';
 import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { divIcon, DragEndEvent, LeafletEvent, Map } from 'leaflet';
@@ -29,7 +29,7 @@ type Props = {
     lat: number;
     lng: number;
   };
-  onLocationChange: (loc: FindLocationResponse[number] | null) => void;
+  onLocationChange: (loc: GeocodingResponse[number] | null) => void;
 };
 
 export default function AddressMap(props: Props) {
@@ -40,10 +40,10 @@ export default function AddressMap(props: Props) {
 
   const [inputSearch, setInputSearch] = useState('');
   const [dbInputSearch] = useDebounceValue(inputSearch, 500);
-  const [resultSearch, setResultSearch] = useState<FindLocationResponse>([]);
+  const [resultSearch, setResultSearch] = useState<GeocodingResponse>([]);
 
   const [pinnedLocation, setPinnedLocation] = useState<
-    FindLocationResponse[number] | null
+    GeocodingResponse[number] | null
   >(null);
 
   const [isInitial, setIsInitial] = useState(true);
@@ -60,8 +60,8 @@ export default function AddressMap(props: Props) {
       //   skipNull: true,
       //   skipEmptyString: true,
       // });
-      // const { data } = await apiclient.get(`/region/geo-places?${query}`);
-      // return data as FindLocationResponse;
+      // const { data } = await apiclient.get(`/location/geocoding?${query}`);
+      // return data as GeocodingResponse;
       return DummyFetch(param);
     },
 

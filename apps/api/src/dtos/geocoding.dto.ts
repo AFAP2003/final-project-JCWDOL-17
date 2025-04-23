@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const GeoPlacesDTO = z
+export const GeocodingDTO = z
   .object({
     name: z.string().trim().optional(),
     resultSize: z

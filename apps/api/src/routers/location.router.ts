@@ -1,19 +1,19 @@
-import { RegionController } from '@/controllers/region.controller';
+import { LocationController } from '@/controllers/location.controller';
 import { Router } from 'express';
 import asynchandler from 'express-async-handler';
 
-export class RegionRouter {
+export class LocationRouter {
   private router: Router;
-  private controller: RegionController;
+  private controller: LocationController;
 
   constructor() {
-    this.controller = new RegionController();
+    this.controller = new LocationController();
     this.router = Router();
     this.initializeRoutes();
   }
 
   private initializeRoutes(): void {
-    this.router.get('/geo-places', asynchandler(this.controller.geoPlaces));
+    this.router.get('/geocoding', asynchandler(this.controller.geocoding));
     this.router.get('/province', asynchandler(this.controller.provinceGetAll));
     this.router.get('/city', asynchandler(this.controller.cityGetAll));
   }

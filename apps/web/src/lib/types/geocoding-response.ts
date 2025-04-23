@@ -1,4 +1,4 @@
-export type FindLocationResponse = {
+export type GeocodingResponse = {
   name: string;
   address: string;
   latitude: number;
