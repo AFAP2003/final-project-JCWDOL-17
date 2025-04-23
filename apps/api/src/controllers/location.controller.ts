@@ -1,5 +1,5 @@
 import { CityGetAllDTO } from '@/dtos/city-get-all.dto';
-import { GeoPlacesDTO } from '@/dtos/geo-places.dto';
+import { GeocodingDTO } from '@/dtos/geocoding.dto';
 import { ProvinceGetAllDTO } from '@/dtos/province-get-all.dto';
 import {
   ApiError,
@@ -7,20 +7,20 @@ import {
   UnprocessableEntityError,
 } from '@/errors';
 import { formatZodError } from '@/helpers/format-zod-error';
-import { RegionService } from '@/services/region.service';
+import { LocationService } from '@/services/location.service';
 import { Request, Response } from 'express';
 
-export class RegionController {
-  private regionService = new RegionService();
+export class LocationController {
+  private locationService = new LocationService();
 
-  geoPlaces = async (req: Request, res: Response) => {
-    const { data: dto, error } = GeoPlacesDTO.safeParse(req.query);
+  geocoding = async (req: Request, res: Response) => {
+    const { data: dto, error } = GeocodingDTO.safeParse(req.query);
     if (error) {
       throw new UnprocessableEntityError(formatZodError(error));
     }
 
     try {
-      const result = await this.regionService.geoPlaces(dto);
+      const result = await this.locationService.geocoding(dto);
       res.json(result);
     } catch (error) {
       if (!(error instanceof ApiError)) {
@@ -38,7 +38,7 @@ export class RegionController {
     }
 
     try {
-      const result = await this.regionService.provinceGetAll(dto);
+      const result = await this.locationService.provinceGetAll(dto);
       res.json(result);
     } catch (error) {
       if (!(error instanceof ApiError)) {
@@ -56,7 +56,7 @@ export class RegionController {
     }
 
     try {
-      const result = await this.regionService.cityGetAll(dto);
+      const result = await this.locationService.cityGetAll(dto);
       res.json(result);
     } catch (error) {
       if (!(error instanceof ApiError)) {

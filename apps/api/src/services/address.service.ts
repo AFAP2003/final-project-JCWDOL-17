@@ -9,10 +9,10 @@ import { prismaclient } from '@/prisma';
 import { Address, Prisma } from '@prisma/client';
 import { Request } from 'express';
 import { z } from 'zod';
-import { RegionService } from './region.service';
+import { LocationService } from './location.service';
 
 export class AddressService {
-  private regionService = new RegionService();
+  private locationService = new LocationService();
 
   createAddress = async (
     dto: z.infer<typeof AddressCreateDTO>,
@@ -31,8 +31,8 @@ export class AddressService {
       );
     }
 
-    const province = await this.regionService.provinceGetByName(dto.province);
-    const city = await this.regionService.cityGetByName(dto.city);
+    const province = await this.locationService.provinceGetByName(dto.province);
+    const city = await this.locationService.cityGetByName(dto.city);
 
     if (dto.isPrimary) {
       const oldDefault = await prismaclient.address.findUnique({
@@ -105,8 +105,8 @@ export class AddressService {
       }
     }
 
-    const province = await this.regionService.provinceGetByName(dto.province);
-    const city = await this.regionService.cityGetByName(dto.city);
+    const province = await this.locationService.provinceGetByName(dto.province);
+    const city = await this.locationService.cityGetByName(dto.city);
 
     const updated = await prismaclient.address.update({
       where: {

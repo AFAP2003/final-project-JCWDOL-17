@@ -283,7 +283,7 @@ export default function TabContentAddress() {
                         suggestionFetchFn={async (val) => {
                           try {
                             const { data } = await apiclient.get(
-                              `/region/city?name=${val}&pageSize=5`,
+                              `/location/city?name=${val}&pageSize=5`,
                             );
                             return data.cities as {
                               cityName: string;
@@ -316,7 +316,7 @@ export default function TabContentAddress() {
                         suggestionFetchFn={async (val) => {
                           try {
                             const { data } = await apiclient.get(
-                              `/region/province?name=${val}&pageSize=5`,
+                              `/location/province?name=${val}&pageSize=5`,
                             );
                             return data.provinces as {
                               provinceName: string;
