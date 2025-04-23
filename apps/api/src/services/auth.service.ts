@@ -39,8 +39,7 @@ type SendAuthEmailParam =
       type: AuthEmailType.SignupConfirmation;
       data: {
         receiverEmail: string;
-        firstName: string;
-        lastName: string;
+        name: string;
         referralCode?: string | undefined;
         baseCallback: string;
       };
@@ -99,8 +98,7 @@ export class AuthService {
       type: AuthEmailType.SignupConfirmation,
       data: {
         baseCallback: `${BASE_FRONTEND_URL}/auth/signup/set-password`,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
+        name: dto.name,
         receiverEmail: dto.email,
         referralCode: dto.referralCode,
       },
@@ -123,13 +121,11 @@ export class AuthService {
 
           if (!veriftoken) throw new BadTokenError(dto.token);
 
-          const { email, firstName, lastName, referralCode } =
-            veriftoken.metadata as {
-              email: string;
-              firstName: string;
-              lastName: string;
-              referralCode?: string;
-            };
+          const { email, name, referralCode } = veriftoken.metadata as {
+            email: string;
+            name: string;
+            referralCode?: string;
+          };
 
           let referredById = undefined;
           if (referralCode) {
@@ -144,9 +140,7 @@ export class AuthService {
               role: dto.role,
               email: email,
               password: dto.password,
-              name: `${firstName} ${lastName}`,
-              firstName: firstName,
-              lastName: lastName,
+              name: name,
               signupMethod: [dto.signupMethod],
               referralCode: await genReferralCode(),
               referredById: referredById,
@@ -597,8 +591,7 @@ export class AuthService {
             value: token,
             metadata: {
               email: param.data.receiverEmail,
-              firstName: param.data.firstName,
-              lastName: param.data.lastName,
+              name: param.data.name,
               referralCode: param.data.referralCode,
             },
           },

@@ -15,8 +15,8 @@ import { useRouter } from 'next/navigation';
 import { ReactNode, useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 import { SiFacebook } from 'react-icons/si';
-import EmailVerification from './email-verification';
-import SectionHeading from './section-heading';
+import EmailVerification from '../email-verification';
+import SectionHeading from '../section-heading';
 
 type LinkAccountParam =
   | {
@@ -142,18 +142,18 @@ export default function LinkAccount({ session }: Props) {
       />
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogTitle className="text-lg font-semibold text-neutral-900">
+        <DialogContent className="max-w-sm bg-neutral-800 text-neutral-200 border-neutral-500">
+          <DialogTitle className="text-lg font-semibold">
             Confirm Password Change
           </DialogTitle>
-          <DialogDescription className="text-sm text-neutral-700 mt-2">
+          <DialogDescription className="text-sm text-neutral-300 mt-2">
             For security reasons, changing or creating new password will sign
             you out of all sessions. Please confirm to proceed.
           </DialogDescription>
           <DialogFooter className="mt-6 flex w-full gap-3">
             <button
               onClick={() => setOpenDialog(false)}
-              className="text-sm font-medium border border-green-500 text-green-600 rounded-lg px-4 py-2 hover:bg-green-50 transition-colors duration-200"
+              className="text-sm font-medium border border-neutral-500 text-neutral-700 bg-neutral-50 rounded-lg px-4 py-2 hover:bg-neutral-50 hover:text-neutral-800 transition-colors duration-200"
             >
               Cancel
             </button>
@@ -173,7 +173,7 @@ export default function LinkAccount({ session }: Props) {
                 );
                 setOpenDialog(false);
               }}
-              className="text-sm font-medium bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition-colors duration-200"
+              className="text-sm font-medium bg-neutral-700 text-neutral-200 rounded-lg px-4 py-2 hover:bg-neutral-700 hover:text-neutral-300 transition-colors duration-200"
             >
               Continue
             </button>
@@ -219,14 +219,14 @@ function Button(props: ButtonProps) {
         if (!props.canToogle && props.isLinked) return true;
       })()}
       className={cn(
-        'border rounded-xl text-sm w-full disabled:opacity-80 transition-all duration-300 group',
+        'border rounded-xl text-sm w-full disabled:opacity-70 transition-all duration-150 group',
         props.canToogle &&
           !props.isPending &&
-          'hover:border-green-500/50 hover:bg-green-50',
+          'hover:border-neutral-500/20 hover:bg-neutral-100',
         !props.canToogle &&
           !props.isLinked &&
           !props.isPending &&
-          'hover:border-green-500/50 hover:bg-green-50 ',
+          'hover:border-neutral-500/20 hover:bg-neutral-100 ',
       )}
     >
       <div className="flex items-center">
@@ -242,15 +242,15 @@ function Button(props: ButtonProps) {
         >
           {props.icon}
         </span>
-        <p className="w-full font-semibold text-neutral-600">{props.label}</p>
+        <p className="w-full font-medium text-neutral-600">{props.label}</p>
         <span className="py-2 px-3 w-28">
           {props.isLinked ? (
-            <div className="text-xs flex flex-row items-center text-green-500 gap-2">
+            <div className="text-xs flex flex-row items-center text-neutral-700 gap-2 font-medium">
               <Link2 className="size-4 shrink-0" />
               <span className="w-full text-center">Linked</span>
             </div>
           ) : (
-            <div className="text-xs flex flex-row items-center text-green-500 gap-2">
+            <div className="text-xs flex flex-row items-center text-neutral-700 gap-2 font-medium">
               <Link2Off className="size-4" />
               <span>Unlinked</span>
             </div>

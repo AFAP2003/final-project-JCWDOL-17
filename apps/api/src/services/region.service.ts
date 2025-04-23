@@ -2,7 +2,7 @@ import { RAJA_ONGKIR_API, RAPID_API_KEY } from '@/config';
 import { CityGetAllDTO } from '@/dtos/city-get-all.dto';
 import { GeoPlacesDTO } from '@/dtos/geo-places.dto';
 import { ProvinceGetAllDTO } from '@/dtos/province-get-all.dto';
-import { BadRequestError } from '@/errors';
+import { BadRequestError, NotFoundError } from '@/errors';
 import {
   calculateMetadataPagination,
   calculateOffsite,
@@ -89,6 +89,28 @@ export class RegionService {
     return { provinces, metadata };
   };
 
+  provinceGetByName = async (name: string) => {
+    if (isChecking) {
+      throw new BadRequestError('Request conflict, try again later');
+    }
+
+    const redis = await this.redisclient();
+
+    const province = await redis.repo.province
+      .search()
+      .where('provinceName')
+      .matchExactly(name)
+      .return.first();
+
+    if (!province) throw new NotFoundError();
+
+    return province as {
+      provinceId: string;
+      provinceName: string;
+      [key: symbol]: string;
+    };
+  };
+
   cityGetAll = async (dto: z.infer<typeof CityGetAllDTO>) => {
     if (isChecking) {
       throw new BadRequestError('Request conflict, try again later');
@@ -117,6 +139,31 @@ export class RegionService {
     });
 
     return { cities, metadata };
+  };
+
+  cityGetByName = async (name: string) => {
+    if (isChecking) {
+      throw new BadRequestError('Request conflict, try again later');
+    }
+
+    const redis = await this.redisclient();
+
+    const city = await redis.repo.city
+      .search()
+      .where('cityName')
+      .matchExactly(name)
+      .return.first();
+
+    if (!city) throw new NotFoundError();
+
+    return city as {
+      cityId: string;
+      cityName: string;
+      postalCode: string;
+      provinceId: string;
+      provinceName: string;
+      [key: symbol]: string;
+    };
   };
 
   private escapeQuery = (value: string) => {

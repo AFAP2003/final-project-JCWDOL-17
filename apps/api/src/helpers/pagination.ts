@@ -7,9 +7,6 @@ export function calculateMetadataPagination({
   page: number;
   pageSize: number;
 }) {
-  if (!totalRecord || totalRecord === 0) {
-    return null;
-  }
   return {
     currentPage: page,
     pageSize: pageSize,

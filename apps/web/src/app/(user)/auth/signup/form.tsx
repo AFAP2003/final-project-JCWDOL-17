@@ -45,16 +45,7 @@ import { z } from 'zod';
 
 const formSchema = z.object({
   email: z.string().email('Please input valid email address'),
-  firstName: z
-    .string()
-    .trim()
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must be at most 50 characters')
-    .regex(
-      /^[A-Za-z]+(?:[' -][A-Za-z]+)*$/,
-      'Name can only contain letters, spaces, hyphens, and apostrophes',
-    ),
-  lastName: z
+  name: z
     .string()
     .trim()
     .min(2, 'Name must be at least 2 characters')
@@ -92,8 +83,7 @@ export default function SignupForm({ searchParams }: Props) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: '',
-      firstName: '',
-      lastName: '',
+      name: '',
       referralCode: '',
     },
   });
@@ -198,51 +188,27 @@ export default function SignupForm({ searchParams }: Props) {
                   })}
                   className="space-y-4"
                 >
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="firstName">First Name</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                id="firstName"
-                                placeholder="John"
-                                className="pl-10"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="lastName">Last Name</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                id="lastName"
-                                placeholder="Smith"
-                                className="pl-10"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="name">Full Name</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="name"
+                              placeholder="John"
+                              className="pl-10"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}

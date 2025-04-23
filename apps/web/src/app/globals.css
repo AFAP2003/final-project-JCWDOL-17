@@ -82,6 +82,15 @@
   }
 }
 
+@layer utilities {
+  .bg-gradient-primary {
+    @apply bg-gradient-to-b from-neutral-800 to-neutral-700;
+  }
+  .bg-gradient-darker {
+    @apply bg-gradient-to-b from-neutral-900 to-neutral-800;
+  }
+}
+
 /* --------------------- leaflet related thing -------------------- */
 .leaflet-container {
   @apply aspect-video;

@@ -26,23 +26,10 @@ export const auth = betterAuth({
   },
 
   user: {
-    fields: {
-      name: 'fullName',
-    },
     additionalFields: {
       role: {
         type: 'string',
         fieldName: 'role',
-        required: true,
-      },
-      firstName: {
-        type: 'string',
-        fieldName: 'firstName',
-        required: true,
-      },
-      lastName: {
-        type: 'string',
-        fieldName: 'lastName',
         required: true,
       },
       signupMethod: {
@@ -58,6 +45,21 @@ export const auth = betterAuth({
       referredById: {
         type: 'string',
         fieldName: 'referredById',
+        required: false,
+      },
+      phone: {
+        type: 'string',
+        fieldName: 'phone',
+        required: false,
+      },
+      gender: {
+        type: 'string',
+        fieldName: 'gender',
+        required: false,
+      },
+      dateOfBirth: {
+        type: 'date',
+        fieldName: 'dateOfBirth',
         required: false,
       },
     },
@@ -78,12 +80,9 @@ export const auth = betterAuth({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
       mapProfileToUser: async (profile) => {
-        const names = profile.name.split(' ');
         return {
           role: 'USER',
-          firstName: names[0],
-          lastName: names.length > 1 ? names.slice(1).join(' ') : '',
-          fullName: profile.name,
+          name: profile.name,
           email: profile.email,
           emailVerified: true,
           image: profile.picture,
@@ -149,9 +148,8 @@ export const auth = betterAuth({
 
   plugins: [
     customSession(async ({ user, session }) => {
-      const { name, ...rest } = user;
       return {
-        user: { fullName: name, ...rest } as unknown as User,
+        user: user as unknown as User,
         session,
       };
     }),

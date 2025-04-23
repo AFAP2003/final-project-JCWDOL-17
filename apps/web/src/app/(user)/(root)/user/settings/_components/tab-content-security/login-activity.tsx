@@ -11,8 +11,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { Lightbulb } from 'lucide-react';
 import { useState } from 'react';
-import EmailVerification from './email-verification';
-import SectionHeading from './section-heading';
+import EmailVerification from '../email-verification';
+import SectionHeading from '../section-heading';
 
 type Props = {
   current: Session | null;
@@ -24,7 +24,7 @@ export default function LoginActivity({ current }: Props) {
 
   // TODO: handle errror
   const { data: sessions, refetch: refetchSession } = useQuery({
-    queryKey: ['user/settings', 'tab-content-security'],
+    queryKey: ['user/settings', 'list-session'],
     queryFn: async () => {
       const { data } = await apiclient.get('/auth/sessions');
       return data as GetAllSessionResponse;
@@ -114,13 +114,13 @@ export default function LoginActivity({ current }: Props) {
         <SectionHeading>Login Activity</SectionHeading>
 
         <div className="flex items-center text-sm gap-3 mb-6">
-          <Lightbulb className="size-6 text-yellow-500" />
+          <Lightbulb className="size-6 text-red-500" />
           <p className="text-neutral-500">
             If there is any unfamiliar activity, immediately click &quot;Sign
             Out&quot; and{' '}
             <span
               onClick={() => resetPassword()}
-              className="underline underline-offset-4 cursor-pointer text-green-500 hover:text-yellow-500"
+              className="underline underline-offset-4 cursor-pointer text-red-500 hover:text-red-500"
             >
               change your password
             </span>
@@ -128,14 +128,14 @@ export default function LoginActivity({ current }: Props) {
           </p>
         </div>
 
-        <div className="">
+        <div className="bg-neutral-50 rounded-lg p-6 border shadow-sm">
           {sessions?.map((session) => {
             const ua = parseUserAgent(session.userAgent, session.createdAt);
             return (
               <div key={session.id}>
-                <div className="flex justify-between items-center px-8">
+                <div className="flex justify-between items-center px-3">
                   <div className="flex gap-3 items-center">
-                    <ua.icon className="size-12 text-green-500" />
+                    <ua.icon className="size-12 text-neutral-600" />
                     <div className="flex flex-col">
                       <p className="text-sm font-semibold text-neutral-700">
                         {ua.browser} at {ua.os}
@@ -147,13 +147,13 @@ export default function LoginActivity({ current }: Props) {
                   </div>
 
                   {session.id === current?.session.id ? (
-                    <div className="text-xs font-semibold bg-green-500 text-neutral-100 rounded-full text-center w-fit px-2 py-0.5">
+                    <div className="text-xs font-semibold bg-neutral-800 text-neutral-100 rounded-full text-center w-fit px-2 py-0.5">
                       Active
                     </div>
                   ) : (
                     <div
                       onClick={() => revokeSession(session.token)}
-                      className="text-xs font-semibold text-green-500 hover:underline cursor-pointer underline-offset-4"
+                      className="text-xs font-semibold text-neutral-700 hover:underline cursor-pointer underline-offset-4"
                     >
                       Sign Out
                     </div>

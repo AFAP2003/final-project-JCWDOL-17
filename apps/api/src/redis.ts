@@ -5,6 +5,7 @@ import { URL } from 'url';
 import { REDIS_URL } from './config';
 
 export const redisIO = () => new Redis(REDIS_URL);
+
 export const redisOM = async () => {
   const redisUrl = new URL(REDIS_URL);
   if (!client) {

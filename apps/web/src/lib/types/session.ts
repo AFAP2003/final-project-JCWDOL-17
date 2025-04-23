@@ -11,17 +11,19 @@ export type Session = {
   };
   user: {
     id: string;
-    fullName: string;
+    role: 'USER' | 'ADMIN' | 'SUPER';
+    name: string;
     email: string;
     emailVerified: boolean;
     image?: string;
-    createdAt: string;
-    updatedAt: string;
-    role: 'USER' | 'ADMIN' | 'SUPER';
-    firstName: string;
-    lastName: string;
-    signupMethod: ('SOCIAL' | 'CREDENTIAL')[];
+    phone?: string;
+    gender?: 'MALE' | 'FEMALE';
+    dateOfBirth?: Date;
+    signupMethod: ('CREDENTIAL' | 'SOCIAL')[];
+    createdAt: Date;
+    updatedAt: Date;
     referralCode?: string;
     referredById?: string;
+    storeId?: string;
   };
 };
