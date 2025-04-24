@@ -15,7 +15,10 @@ const publicRoutes = [
   '/admin/auth/signin',
   '/admin/auth/signin/confirm',
   // Wajib Delete Before merge
+  '/admin',
+  '/admin/*',
   '/orders',
+  '/orders/*',
   '/cart',
   '/checkout',
 ];
@@ -23,7 +26,15 @@ const publicRoutes = [
 export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request, {});
   const currentPath = request.nextUrl.pathname;
-  const pathIsPublic = publicRoutes.find((route) => route === currentPath);
+  //const pathIsPublic = publicRoutes.find((route) => route === currentPath);
+  const pathIsPublic = publicRoutes.find((route) => {
+    // Handle wildcard routes
+    if (route.endsWith('/*')) {
+      return currentPath.startsWith(route.slice(0, -2));
+    }
+    // Handle exact matches
+    return route === currentPath;
+  });
 
   const isAuthenticated = sessionCookie != null;
 

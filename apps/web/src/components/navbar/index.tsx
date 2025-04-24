@@ -20,6 +20,7 @@ export default function Navbar() {
           [SEARCH BAR]
         </div>
         <div className="flex items-center gap-6">
+          {/* Dev To Be Deleted or Edit */}
           <Link href="/orders" passHref>
             <Button variant="ghost" size="icon" title="My Orders">
               <ShoppingBag className="h-30 w-30" />
