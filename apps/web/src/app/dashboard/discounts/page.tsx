@@ -14,9 +14,9 @@ import {
   VisibilityState,
 } from '@tanstack/react-table';
 
-import { Badge } from '@/components/shadcn/badge';
-import { Input } from '@/components/shadcn/input';
-import { Button } from '@/components/shadcn/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectTrigger,
@@ -25,7 +25,7 @@ import {
   SelectGroup,
   SelectLabel,
   SelectItem,
-} from '@/components/shadcn/select';
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -34,7 +34,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
-} from '@/components/shadcn/dialog';
+} from '@/components/ui/dialog';
 
 import {
   DropdownMenu,
@@ -43,7 +43,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from '@/components/shadcn/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 
 import {
   Table,
@@ -52,7 +52,7 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from '@/components/shadcn/table';
+} from '@/components/ui/table';
 
 import {
   Plus,

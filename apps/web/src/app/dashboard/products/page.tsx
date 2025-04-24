@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Badge } from '@/components/shadcn/badge';
+import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 import {
   useReactTable,
   getCoreRowModel,
@@ -28,9 +29,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/shadcn/table';
-import { Input } from '@/components/shadcn/input';
-import { Button } from '@/components/shadcn/button';
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -38,7 +39,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from '@/components/shadcn/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -47,7 +48,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/shadcn/select';
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -56,7 +57,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
-} from '@/components/shadcn/dialog';
+} from '@/components/ui/dialog';
 
 export default function Products() {
   // Sample product data (using useMemo so it doesn't change on every render)
@@ -65,6 +66,7 @@ export default function Products() {
       {
         id: 1,
         produk: 'Sunmi Beras Putih Premium 5 kg',
+        gambar: '', // sample rectangular image URL
         kategori: 'Sembako',
         harga: 'Rp 79.999',
         stok: '0',
@@ -73,6 +75,7 @@ export default function Products() {
       {
         id: 2,
         produk: 'Hati Ayam Organik Hona Farm',
+        gambar: '', // will use fallback
         kategori: 'Sembako',
         harga: 'Rp 25.999',
         stok: '70',
@@ -81,6 +84,7 @@ export default function Products() {
       {
         id: 3,
         produk: 'Healthy Republic Bumbu Marinasi Rendang 120 gram',
+        gambar: '', // sample rectangular image URL
         kategori: 'Sembako',
         harga: 'Rp 38.500',
         stok: '10',
@@ -90,10 +94,34 @@ export default function Products() {
     []
   );
 
-  // Define table columns (memoized)
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
       { accessorKey: 'id', header: 'ID' },
+      // Updated "gambar" column using DaisyUI avatar styling:
+      {
+        accessorKey: 'gambar',
+        header: 'Gambar',
+        cell: ({ getValue }) => {
+          const imageUrl = getValue<string>();
+          return (
+            <div className="avatar">
+              <div className="w-[150px] h-[100px] rounded-md">
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt="Product Image"
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full bg-gray-200 rounded-md text-sm text-gray-500">
+                    NA
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
       { accessorKey: 'produk', header: 'Produk' },
       { accessorKey: 'kategori', header: 'Kategori' },
       { accessorKey: 'harga', header: 'Harga' },
@@ -132,10 +160,7 @@ export default function Products() {
               <DropdownMenuCheckboxItem onCheckedChange={() => {}}>
                 Edit
               </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                className="text-red-600"
-                onCheckedChange={() => {}}
-              >
+              <DropdownMenuCheckboxItem className="text-red-600" onCheckedChange={() => {}}>
                 Delete
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
@@ -148,15 +173,12 @@ export default function Products() {
 
   // Global filter state (search text)
   const [globalFilter, setGlobalFilter] = useState('');
-
   // TanStack Table states
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 });
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-
-  // Create the TanStack Table instance with a global filter function that
-  // searches across all desired columns.
+  // Create the TanStack Table instance with global filtering
   const table = useReactTable({
     data,
     columns,
@@ -174,7 +196,6 @@ export default function Products() {
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: (row, _columnId, filterValue) => {
       const searchText = String(filterValue).toLowerCase();
-      // Search across all searchable columns
       const cellValues = [
         String(row.getValue('id') ?? ''),
         String(row.getValue('produk') ?? ''),
@@ -196,8 +217,7 @@ export default function Products() {
     setGlobalFilter(e.target.value);
   };
 
-  // Handler for the status filter dropdown.
-  // When "all" is selected, the filter on the status column is cleared.
+  // Handler for the status filter dropdown
   const handleStatusFilter = (value: string) => {
     if (value === 'all') {
       table.getColumn('status')?.setFilterValue(undefined);
@@ -208,6 +228,11 @@ export default function Products() {
 
   return (
     <div className="min-h-screen w-full flex flex-col gap-6 p-4">
+      <div className="flex justify-end">
+        <Link href="/dashboard/categories">
+          <Button className="w-[150px]">Kategori</Button>
+        </Link>
+      </div>
       {/* Header with title and "Tambah Produk" modal */}
       <div className="flex justify-between items-center">
         <h1 className="sm:text-4xl text-2xl font-bold">Produk</h1>
@@ -218,7 +243,7 @@ export default function Products() {
               Tambah Produk
             </Button>
           </DialogTrigger>
-          <DialogContent className='max-h-[90vh] sm:max-h-full overflow-y-auto'>
+          <DialogContent className="max-h-[90vh] sm:max-h-full overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Tambah Produk Baru</DialogTitle>
               <DialogDescription>
@@ -303,100 +328,95 @@ export default function Products() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" className='mt-2 sm:mt-0'>Cancel</Button>
-              <Button type="submit" >Tambah Produk</Button>
+              <Button variant="outline" className="mt-2 sm:mt-0">Cancel</Button>
+              <Button type="submit">Tambah Produk</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Filter row: Global search, status filter, and column visibility toggler */}
-      <div className="mb-4 flex  items-end justify-between gap-2 sm:gap-0">
-        <div className="flex gap-2 ">
+      {/* Filter row */}
+      <div className="mb-4 flex items-end justify-between gap-2 sm:gap-0">
+        <div className="flex gap-2">
           <Input
             placeholder="Cari..."
             value={globalFilter}
             onChange={handleSearchChange}
             className="order-2 h-9 w-[140px] text-sm sm:w-[200px] sm:order-1"
           />
-          
         </div>
-      <div className='flex flex-col-reverse sm:flex-row gap-2 sm:gap-4 '>
-      <Select onValueChange={handleStatusFilter} defaultValue="all">
+        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4">
+          <Select onValueChange={handleStatusFilter} defaultValue="all">
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Pilih Status" />
+              <SelectValue placeholder="Pilih Verifikasi" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Pilih Status</SelectLabel>
+                <SelectLabel>Pilih Role</SelectLabel>
                 <SelectItem value="all">Semua Kategori</SelectItem>
-                <SelectItem value="Tersedia">Buah & Sayur                </SelectItem>
-                <SelectItem value="Stok Rendah">Susu & Telor
-                </SelectItem>
-                <SelectItem value="Stok Habis">Roti
-                </SelectItem>
-                <SelectItem value="roti">Roti
-                </SelectItem>
-                <SelectItem value="daging">Daging
-                </SelectItem>
-                <SelectItem value="sembako">Sembako
-                </SelectItem>
+                <SelectItem value="true">Buah & Sayur</SelectItem>
+                <SelectItem value="false">Susu & Telor</SelectItem>
+                <SelectItem value="false">Roti</SelectItem>
+                <SelectItem value="false">Daging</SelectItem>
+                <SelectItem value="false">Lainnya</SelectItem>
+
               </SelectGroup>
             </SelectContent>
           </Select>
-      <Select onValueChange={handleStatusFilter} defaultValue="all">
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Pilih Status" />
+          <Select onValueChange={handleStatusFilter} defaultValue="all">
+            <SelectTrigger className="w-[170px]">
+              <SelectValue placeholder="Pilih Verifikasi" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Pilih Status</SelectLabel>
+                <SelectLabel>Pilih Verifikasi</SelectLabel>
                 <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="Tersedia">Tersedia</SelectItem>
-                <SelectItem value="Stok Rendah">Stok Rendah</SelectItem>
-                <SelectItem value="Stok Habis">Stok Habis</SelectItem>
+                <SelectItem value="true">Tersedia</SelectItem>
+                <SelectItem value="false">Stok Rendah</SelectItem>
+                <SelectItem value="false">Stok Habis</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              <Eye />
-              Lihat
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Kolom</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {table.getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {typeof column.columnDef.header === 'string'
-                    ? column.columnDef.header
-                    : flexRender(column.columnDef.header, column.getContext())}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+          <DropdownMenu modal={true}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-auto">
+                <Eye /> Lihat
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Kolom</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table.getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  >
+                    {typeof column.columnDef.header === 'string'
+                      ? column.columnDef.header
+                      : flexRender(column.columnDef.header, column.getContext())}
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Main table */}
       <div className="rounded-md border border-gray-200 overflow-x-auto w-full">
-        <Table className='min-w-full'>
+        <Table className="min-w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
+                    onClick={
+                      header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined
+                    }
                     className="cursor-pointer select-none whitespace-nowrap"
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}

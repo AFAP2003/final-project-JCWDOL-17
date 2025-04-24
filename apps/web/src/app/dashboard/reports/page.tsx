@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shadcn/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -11,7 +11,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/shadcn/select';
+} from '@/components/ui/select';
 import {
   ChartContainer,
   ChartConfig,
@@ -19,7 +19,7 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from '@/components/shadcn/chart';
+} from '@/components/ui/chart';
 import {
   Table,
   TableHeader,
@@ -27,7 +27,7 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from '@/components/shadcn/table';
+} from '@/components/ui/table';
 
 export default function MonthlySalesChart() {
   // Active tab state (used by both tabs list and dropdown)
