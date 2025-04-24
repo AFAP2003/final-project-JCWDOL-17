@@ -1,11 +1,10 @@
 'use client';
 
-import { Menu } from 'lucide-react';
+import { ChevronDown, Menu } from 'lucide-react';
 
 type NavbarProps = {
   onToggleSidebar: () => void;
 };
-import { ChevronDown } from 'lucide-react';
 
 import {
   DropdownMenu,

@@ -1,8 +1,4 @@
-import { Request, Response } from 'express';
 import { CreateOrderDTO } from '@/dtos/create-order.dto';
-import { UploadPaymentDTO } from '@/dtos/upload-payment.dto';
-import { ConfirmOrderDTO } from '@/dtos/confirm-order.dto';
-import { OrderService } from '@/services/order.service';
 import {
   ApiError,
   BadRequestError,
@@ -11,6 +7,8 @@ import {
 } from '@/errors';
 import { formatZodError } from '@/helpers/format-zod-error';
 import { getSessionUser } from '@/helpers/session-helper';
+import { OrderService } from '@/services/order.service';
+import { Request, Response } from 'express';
 
 export class OrderController {
   private orderService = new OrderService();
