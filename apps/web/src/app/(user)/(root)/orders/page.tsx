@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import {
   ChevronRight,
   Clock,
@@ -18,180 +18,20 @@ import {
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import {
+  getOrderStatusConfig,
+  orderStatusConfig,
+} from '@/lib/config/order-config';
+import { OrderStatusBadgeProps } from '@/lib/types/orders';
+import { mockOrderList } from '@/lib/mocks/order-data';
 
-// Mock orders for UI testing purposes
-const mockOrders = [
-  {
-    id: '1',
-    orderNumber: 'ORD-123456',
-    status: 'WAITING_PAYMENT',
-    total: 359970,
-    createdAt: '2025-04-12T14:30:00.000Z',
-    paymentMethod: 'BANK_TRANSFER',
-    paymentStatus: 'PENDING',
-    shippingMethod: 'Regular Shipping',
-    items: [
-      {
-        id: '1',
-        productName: 'Pakcoy',
-        quantity: 2,
-        price: 129990,
-        subtotal: 259980,
-      },
-      {
-        id: '2',
-        productName: 'Sayuran Bagus',
-        quantity: 1,
-        price: 89990,
-        subtotal: 89990,
-      },
-    ],
-    shippingCost: 10000,
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-123457',
-    status: 'PROCESSING',
-    total: 249990,
-    createdAt: '2025-04-10T09:15:00.000Z',
-    paymentMethod: 'BANK_TRANSFER',
-    paymentStatus: 'PAID',
-    shippingMethod: 'Express Shipping',
-    items: [
-      {
-        id: '3',
-        productName: 'Wortel Organik',
-        quantity: 3,
-        price: 59990,
-        subtotal: 179970,
-      },
-      {
-        id: '4',
-        productName: 'Brokoli Segar',
-        quantity: 1,
-        price: 45000,
-        subtotal: 45000,
-      },
-    ],
-    shippingCost: 25000,
-  },
-  {
-    id: '3',
-    orderNumber: 'ORD-123458',
-    status: 'SHIPPED',
-    total: 529980,
-    createdAt: '2025-04-08T11:45:00.000Z',
-    paymentMethod: 'PAYMENT_GATEWAY',
-    paymentStatus: 'PAID',
-    shippingMethod: 'Regular Shipping',
-    trackingNumber: 'TRK987654321',
-    items: [
-      {
-        id: '5',
-        productName: 'Apel Malang',
-        quantity: 4,
-        price: 129990,
-        subtotal: 519960,
-      },
-    ],
-    shippingCost: 10000,
-  },
-  {
-    id: '4',
-    orderNumber: 'ORD-123459',
-    status: 'CONFIRMED',
-    total: 229990,
-    createdAt: '2025-04-01T16:20:00.000Z',
-    paymentMethod: 'BANK_TRANSFER',
-    paymentStatus: 'PAID',
-    shippingMethod: 'Regular Shipping',
-    items: [
-      {
-        id: '6',
-        productName: 'Kale Organik',
-        quantity: 2,
-        price: 89990,
-        subtotal: 179980,
-      },
-      {
-        id: '7',
-        productName: 'Sawi Hijau',
-        quantity: 5,
-        price: 7990,
-        subtotal: 39950,
-      },
-    ],
-    shippingCost: 10000,
-  },
-  {
-    id: '5',
-    orderNumber: 'ORD-123460',
-    status: 'CANCELLED',
-    total: 309990,
-    createdAt: '2025-03-29T10:10:00.000Z',
-    paymentMethod: 'BANK_TRANSFER',
-    paymentStatus: 'FAILED',
-    shippingMethod: 'Express Shipping',
-    cancelReason: 'Pembayaran tidak dilakukan dalam waktu 24 jam',
-    items: [
-      {
-        id: '8',
-        productName: 'Bayam Organik',
-        quantity: 3,
-        price: 94990,
-        subtotal: 284970,
-      },
-    ],
-    shippingCost: 25000,
-  },
-];
-
-// Status badge configurations
-const statusConfig = {
-  WAITING_PAYMENT: {
-    label: 'Menunggu Pembayaran',
-    color: 'bg-yellow-500',
-    icon: Clock,
-  },
-  WAITING_PAYMENT_CONFIRMATION: {
-    label: 'Menunggu Konfirmasi Pembayaran',
-    color: 'bg-yellow-500',
-    icon: Clock,
-  },
-  PROCESSING: {
-    label: 'Diproses',
-    color: 'bg-blue-500',
-    icon: Package,
-  },
-  SHIPPED: {
-    label: 'Dikirim',
-    color: 'bg-indigo-500',
-    icon: Truck,
-  },
-  CONFIRMED: {
-    label: 'Selesai',
-    color: 'bg-green-500',
-    icon: CheckCircle,
-  },
-  CANCELLED: {
-    label: 'Dibatalkan',
-    color: 'bg-red-500',
-    icon: XCircle,
-  },
-};
-
-function OrderStatusBadge({ status }) {
-  const config = statusConfig[status] || {
-    label: 'Unknown',
-    color: 'bg-gray-500',
-    icon: AlertCircle,
-  };
-
+function OrderStatusBadge({ status }: OrderStatusBadgeProps) {
+  const config = getOrderStatusConfig(status);
   const Icon = config.icon;
 
   return (
     <div className="flex items-center gap-1.5">
-      <Badge className={`${config.color} text-white`}>
+      <Badge variant={config.color}>
         <Icon className="h-3 w-3 mr-1" />
         {config.label}
       </Badge>
@@ -199,24 +39,17 @@ function OrderStatusBadge({ status }) {
   );
 }
 
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
 export default function Orders() {
   // const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState('all');
 
+  const OrdersData = mockOrderList;
+
   // Filter orders based on active tab
   const filteredOrders =
     activeTab === 'all'
-      ? mockOrders
-      : mockOrders.filter((order) => {
+      ? OrdersData
+      : OrdersData.filter((order) => {
           if (activeTab === 'active') {
             return [
               'WAITING_PAYMENT',

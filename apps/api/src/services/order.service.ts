@@ -35,18 +35,13 @@ export class OrderService {
       );
 
       // Find nearest store with stock
-      const nearestStore = await this.findNearestStoreWithStock(
-        tx,
-        address.latitude,
-        address.longitude,
-        cart.items,
-      );
+      const nearestStore = await this.findNearestStoreWithStock();
 
-      if (!nearestStore) {
-        throw new BadRequestError(
-          'No stores available with the required stock. Please modify your cart.',
-        );
-      }
+      // if (!nearestStore) {
+      //   throw new BadRequestError(
+      //     'No stores available with the required stock. Please modify your cart.',
+      //   );
+      // }
 
       // Get shipping method
       const shippingMethod = await tx.shippingMethod.findUnique({
