@@ -14,7 +14,7 @@ const sidebarItem = [
   {
     icon: User,
     title: 'Manajemen User',
-    href: '/dashboard/usermanagement',
+    href: '/dashboard/users',
   },
   {
     icon: Package,
@@ -24,7 +24,7 @@ const sidebarItem = [
   {
     icon: Boxes,
     title: 'Inventaris',
-    href: '/dashboard/inventory',
+    href: '/dashboard/inventories',
   },
   {
     icon: ShoppingCart,

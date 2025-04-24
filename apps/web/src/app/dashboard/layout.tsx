@@ -25,7 +25,7 @@ export default function DashboardLayout({
           {/* Main Content Area */}
           <div className="flex w-screen flex-col gap-4">
             {/* Navbar or Header */}
-            <Navbar onToggleSidebar={()=>setSidebarOpen(!sidebarOpen)}/>
+            <Navbar onToggleSidebar={(n)=>setSidebarOpen(!sidebarOpen)}/>
 
             {/* Page Content */}
             <div className="sm:p-10">
