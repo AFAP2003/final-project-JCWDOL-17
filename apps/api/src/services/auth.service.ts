@@ -94,7 +94,7 @@ export class AuthService {
         );
     }
 
-    await this.sendAuthEmail({
+    const { url } = await this.sendAuthEmail({
       type: AuthEmailType.SignupConfirmation,
       data: {
         baseCallback: `${BASE_FRONTEND_URL}/auth/signup/set-password`,
@@ -103,6 +103,7 @@ export class AuthService {
         referralCode: dto.referralCode,
       },
     });
+    return { url };
   };
 
   signup = async (dto: z.infer<typeof SignupDTO>, req: Request) => {
@@ -222,7 +223,7 @@ export class AuthService {
       );
     }
 
-    await this.sendAuthEmail({
+    const { url } = await this.sendAuthEmail({
       type: AuthEmailType.SigninConfirmation,
       data: {
         baseCallback: `${BASE_FRONTEND_URL}/admin/auth/signin/confirm`,
@@ -231,6 +232,8 @@ export class AuthService {
         role: dto.role,
       },
     });
+
+    return { url };
   };
 
   signin = async (dto: z.infer<typeof SigninDTO>, req: Request) => {
@@ -289,7 +292,7 @@ export class AuthService {
               req,
             );
 
-            await this.sendAuthEmail({
+            const { url } = await this.sendAuthEmail({
               type: AuthEmailType.SigninNotification,
               data: {
                 baseCallback: `${BASE_FRONTEND_URL}/auth/reset-password`,
@@ -299,7 +302,12 @@ export class AuthService {
               },
             });
 
-            return { headers, response, signinMethod: 'CREDENTIAL' as const };
+            return {
+              headers,
+              response,
+              signinMethod: 'CREDENTIAL' as const,
+              resetUrl: url,
+            };
           } catch (error: any) {
             throw new InternalSeverError(
               new Error(`should be valid login, got error instead ${error}`),
@@ -375,7 +383,7 @@ export class AuthService {
       );
     }
 
-    await this.sendAuthEmail({
+    const { url } = await this.sendAuthEmail({
       type: AuthEmailType.ResetPassword,
       data: {
         baseCallback: `${BASE_FRONTEND_URL}/auth/reset-password`,
@@ -383,6 +391,7 @@ export class AuthService {
         userId: user.id,
       },
     });
+    return { url };
   };
 
   resetPassword = async (
@@ -491,7 +500,7 @@ export class AuthService {
         });
         if (!user) throw new NotFoundError();
 
-        await this.sendAuthEmail({
+        const { url } = await this.sendAuthEmail({
           type: AuthEmailType.NewPassword,
           data: {
             baseCallback: `${BASE_FRONTEND_URL}/auth/reset-password`,
@@ -500,7 +509,7 @@ export class AuthService {
           },
         });
 
-        return { method: dto.method, redirect: false, url: '' };
+        return { method: dto.method, redirect: false, url: url };
       }
 
       case 'GOOGLE': {
@@ -611,50 +620,7 @@ export class AuthService {
             currentYear: currentDate().getFullYear(),
           },
         });
-        return;
-      }
-
-      case AuthEmailType.SigninNotification: {
-        const session = await prismaclient.session.findUnique({
-          where: {
-            token: param.data.sessionToken,
-          },
-        });
-
-        const uainfo = UAParser(session?.userAgent || '');
-        const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
-        const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
-
-        await prismaclient.verification.create({
-          data: {
-            expiresAt: satuJamKedepan,
-            identifier: VerificationIdentifier.AnonymusSignin,
-            metadata: {
-              userId: param.data.userId,
-            },
-            value: token,
-          },
-        });
-
-        // TODO: Setup Worker for removing after 1 hour
-
-        const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.AnonymusSignin}`;
-
-        this.smtpService.sendMail({
-          tmplname: 'signin-notification',
-          subject: 'Signin Notification',
-          to: param.data.receiverEmail,
-          data: {
-            receiver: param.data.receiverEmail,
-            signinAt: session?.createdAt,
-            device: `${uainfo.os.name}/${uainfo.browser.name}`,
-            url: url,
-            expiredAt: format(satuJamKedepan, 'yyyy-MM-dd HH:mm:ss'),
-            currentYear: currentDate().getFullYear(),
-          },
-        });
-        return;
+        return { url };
       }
 
       case AuthEmailType.SigninConfirmation: {
@@ -706,7 +672,50 @@ export class AuthService {
             currentYear: currentDate().getFullYear(),
           },
         });
-        return;
+        return { url };
+      }
+
+      case AuthEmailType.SigninNotification: {
+        const session = await prismaclient.session.findUnique({
+          where: {
+            token: param.data.sessionToken,
+          },
+        });
+
+        const uainfo = UAParser(session?.userAgent || '');
+        const satuJamKedepan = addHours(currentDate(), 1);
+        const token = genRandomString();
+        const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
+
+        await prismaclient.verification.create({
+          data: {
+            expiresAt: satuJamKedepan,
+            identifier: VerificationIdentifier.AnonymusSignin,
+            metadata: {
+              userId: param.data.userId,
+            },
+            value: token,
+          },
+        });
+
+        // TODO: Setup Worker for removing after 1 hour
+
+        const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.AnonymusSignin}`;
+
+        this.smtpService.sendMail({
+          tmplname: 'signin-notification',
+          subject: 'Signin Notification',
+          to: param.data.receiverEmail,
+          data: {
+            receiver: param.data.receiverEmail,
+            signinAt: session?.createdAt,
+            device: `${uainfo.os.name}/${uainfo.browser.name}`,
+            url: url,
+            expiredAt: format(satuJamKedepan, 'yyyy-MM-dd HH:mm:ss'),
+            currentYear: currentDate().getFullYear(),
+          },
+        });
+        return { url };
       }
 
       case AuthEmailType.ResetPassword: {
@@ -757,7 +766,7 @@ export class AuthService {
             currentYear: currentDate().getFullYear(),
           },
         });
-        return;
+        return { url };
       }
 
       case AuthEmailType.NewPassword: {
@@ -808,7 +817,7 @@ export class AuthService {
             currentYear: currentDate().getFullYear(),
           },
         });
-        return;
+        return { url };
       }
     }
   }
