@@ -23,8 +23,8 @@ type Props =
 
 export default function TextareaFormItemFloating(props: Props) {
   return (
-    <FormItem className="mb-6">
-      <div className="relative">
+    <FormItem className="relative">
+      <div className="relative peer">
         <Textarea
           id={props.id}
           placeholder=" "
@@ -51,10 +51,11 @@ export default function TextareaFormItemFloating(props: Props) {
           {props.label}
         </Label>
       </div>
+
       <div className="px-1 flex w-full justify-between items-start gap-x-4">
         <FormMessage className="-translate-y-1 w-full grow pb-3" />
         {props.showCount && (
-          <span className="text-sm font-mono text-neutral-700 -translate-y-1 ml-auto text-end">
+          <span className="text-sm font-mono text-neutral-200 -translate-y-1 ml-auto text-end">
             {props.field.value.length}/{props.maxCount}
           </span>
         )}

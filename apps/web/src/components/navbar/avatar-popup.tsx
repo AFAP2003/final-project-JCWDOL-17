@@ -31,11 +31,11 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
     >
       <PopoverTrigger>
         <div className="flex gap-2 items-center">
-          <Avatar>
+          <Avatar className="size-10">
             <AvatarImage src={user.image} alt="User Image"></AvatarImage>
             <AvatarFallback className="bg-neutral-200 text-neutral-800">{`${user.name.at(0)?.toUpperCase()}`}</AvatarFallback>
           </Avatar>
-          <div className="">{user.name.split(' ').at(0)}</div>
+          {/* <div className="">{user.name.split(' ').at(0)}</div> */}
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-96">

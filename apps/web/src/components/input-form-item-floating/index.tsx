@@ -78,7 +78,7 @@ export default function InputFormItemFloating<
     typeof suggestions !== 'undefined' && suggestions.length > 0;
 
   return (
-    <FormItem className="mb-6 relative">
+    <FormItem className="relative">
       <div className="relative peer">
         <Input
           id={props.id}
@@ -116,7 +116,7 @@ export default function InputFormItemFloating<
       </div>
       {props.withSuggestion && !isInputEmpty && isFocus && hasSuggestion && (
         <div
-          className="absolute w-full top-[4.5rem] bg-white border shadow-lg z-10 rounded-lg overflow-hidden mt-2 peer-focus-within:border-neutral-500"
+          className="absolute w-full top-[4.5rem] bg-neutral-50 border shadow-lg z-10 rounded-lg overflow-hidden mt-2 peer-focus-within:border-neutral-500"
           style={{ zIndex: 2000 }}
         >
           <div className="divide-y divide-green-100">

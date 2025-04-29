@@ -1,35 +1,53 @@
 'use client';
 
 import { useCurrentLocation } from '@/context/current-location-provider';
+import { cn } from '@/lib/utils';
 import { MapPinCheck, MapPinned } from 'lucide-react';
+import { useState } from 'react';
 import {
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
 import { Separator } from '../ui/separator';
-import { FloatingActionButton } from './floating-action-button';
+import PintPointButton from './pint-point-button';
+import UseCurrentLocationButton from './use-current-location-button';
 import UseMyAddressButton from './use-my-address-button';
 
-type Props = {};
+type Props = {
+  iconClass?: string;
+  iconContainerClass?: string;
+};
 
-export default function UserLocation({}: Props) {
+export default function UserLocation(props: Props) {
   const { data, isPending } = useCurrentLocation();
+  const [isStacking, setIsStacking] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
-    <div>
-      <FloatingActionButton
-        icon={<MapPinned />}
-        className="size-14 bottom-6 right-6"
+    <>
+      <div
+        onClick={() => setDialogOpen(true)}
+        className={cn('cursor-pointer', props.iconContainerClass)}
       >
+        <MapPinned className={cn('size-7', props.iconClass)} />
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         {isPending ? (
           <DialogContent>
             <DialogTitle></DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogContent>
         ) : (
-          <DialogContent className="bg-neutral-800 border-neutral-500 text-neutral-200 p-6">
+          <DialogContent
+            className={cn(
+              'bg-neutral-800 border-neutral-500 text-neutral-200 p-6 opacity-100',
+              isStacking && 'opacity-0',
+            )}
+          >
             <DialogHeader>
               <DialogTitle>Where are you at now?</DialogTitle>
               <DialogDescription></DialogDescription>
@@ -60,7 +78,7 @@ export default function UserLocation({}: Props) {
                         <p className="text-sm text-neutral-300">
                           {data.location.address}
                         </p>
-                        <p>
+                        <p className="text-sm">
                           {data.location.addressDetail.city},{' '}
                           {data.location.addressDetail.province} |{' '}
                           {data.location.addressDetail.postalCode}
@@ -75,22 +93,28 @@ export default function UserLocation({}: Props) {
             </div>
 
             {/* Buttons */}
-            <div>
-              {/* <div className="flex items-center gap-3 px-3 py-1.5 rounded-md cursor-pointer hover:bg-neutral-700 bg-neutral-700">
-              <LocateFixed />
-              <div className="text-sm">Use Current Location</div>
-            </div>
+            <div className="flex flex-col size-full gap-3">
+              <UseMyAddressButton
+                onDialogOpenChange={(val) => {
+                  setIsStacking(val);
+                }}
+              />
+              <UseCurrentLocationButton
+                onDialogOpenChange={(val) => {
+                  setIsStacking(val);
+                }}
+              />
 
-            <div className="flex items-center gap-3 px-3 py-1.5 rounded-md cursor-pointer hover:bg-neutral-700 bg-neutral-700">
-              <LocateFixed />
-              <div className="text-sm">Change Location</div>
-            </div> */}
-
-              <UseMyAddressButton />
+              <PintPointButton
+                onDialogOpenChange={(val) => {
+                  console.log({ val });
+                  setIsStacking(val);
+                }}
+              />
             </div>
           </DialogContent>
         )}
-      </FloatingActionButton>
-    </div>
+      </Dialog>
+    </>
   );
 }

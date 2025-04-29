@@ -24,8 +24,11 @@ export class AuthController {
     }
 
     try {
-      await this.authService.signupCredConfirm(dto);
-      res.json({ message: `Verification email has been sent to ${dto.email}` });
+      const { url } = await this.authService.signupCredConfirm(dto);
+      res.json({
+        message: `Verification email has been sent to ${dto.email}`,
+        url,
+      });
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;
@@ -60,8 +63,11 @@ export class AuthController {
     }
 
     try {
-      await this.authService.signinCredConfirm(dto);
-      res.json({ message: `Verification email has been sent to ${dto.email}` });
+      const { url } = await this.authService.signinCredConfirm(dto);
+      res.json({
+        message: `Verification email has been sent to ${dto.email}`,
+        url,
+      });
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;
@@ -103,8 +109,11 @@ export class AuthController {
     }
 
     try {
-      await this.authService.forgotPassword(dto);
-      res.json({ message: `Verification email has been sent to ${dto.email}` });
+      const { url } = await this.authService.forgotPassword(dto);
+      res.json({
+        message: `Verification email has been sent to ${dto.email}`,
+        url,
+      });
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;
@@ -194,6 +203,7 @@ export class AuthController {
       if (result.method === 'CREDENTIAL') {
         res.json({
           message: `Verification email has been sent to ${session.user.email}`,
+          url: result.url,
         });
       } else {
         res.json({
