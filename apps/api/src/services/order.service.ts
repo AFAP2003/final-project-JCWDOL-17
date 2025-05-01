@@ -55,23 +55,19 @@ export class OrderService {
         throw new Error('Shipping method not found');
       }
 
-      // Calculate order details
       const { subtotal, orderItems } = this.calculateOrderItems(cart.items);
 
-      // Apply vouchers
       const { totalDiscount, appliedVouchers } = await this.applyVouchers(
         tx,
         dto.vouchers || [],
         subtotal,
       );
 
-      // Calculate shipping and total
       const shippingCost = Number(shippingMethod.baseCost);
       const total = subtotal + shippingCost - totalDiscount;
 
-      // Create the order
       const orderNumber = this.generateOrderNumber();
-      const expiryTime =
+      const expiresAt =
         dto.paymentMethod === PaymentMethod.BANK_TRANSFER
           ? addHours(new Date(), 1)
           : null;
@@ -88,7 +84,7 @@ export class OrderService {
         total,
         dto.paymentMethod,
         dto.notes,
-        expiryTime,
+        expiresAt,
         orderNumber,
         orderItems,
         appliedVouchers,

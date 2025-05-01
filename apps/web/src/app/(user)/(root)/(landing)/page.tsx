@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import UserLocation from '@/components/user-location';
 import { apiclient } from '@/lib/apiclient';
 import { signOut, useSession } from '@/lib/auth/client';
 import Link from 'next/link';
@@ -23,6 +24,7 @@ export default function Landing() {
   }, [data]);
   return (
     <div className="min-h-screen flex flex-col gap-6 items-center justify-center">
+      <UserLocation />
       <h1 className="text-4xl font-bold">Landing</h1>
       <div className="flex flex-col gap-4">
         <Link href={'/auth/signin'}>Go To User Signin</Link>
@@ -31,7 +33,6 @@ export default function Landing() {
         <Link href={'/private/server'}>Go To User Private Page Server</Link>
         <Link href={'/admin/auth/signin'}>Go To Admin Signin</Link>
       </div>
-
       {!isPending && data && (
         <div>
           <Button

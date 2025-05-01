@@ -67,7 +67,8 @@ type Props = {
   token: string;
   intend:
     | VerificationIdentifier.AnonymusSignin
-    | VerificationIdentifier.ResetPassword;
+    | VerificationIdentifier.ResetPassword
+    | VerificationIdentifier.NewPassword;
 };
 
 export default function SetPasswordForm({ token, intend }: Props) {
@@ -210,7 +211,9 @@ export default function SetPasswordForm({ token, intend }: Props) {
                 disabled={isPending}
                 size="lg"
               >
-                Reset My Password
+                {intend === VerificationIdentifier.NewPassword
+                  ? 'Set My Password'
+                  : 'Reset My Password'}
                 {isPending ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 ) : (

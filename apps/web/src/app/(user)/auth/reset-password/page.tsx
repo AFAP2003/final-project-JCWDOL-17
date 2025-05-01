@@ -14,7 +14,8 @@ export default async function ResetPassword({ searchParams }: Props) {
   if (!searchParams.intend) notFound();
   if (
     searchParams.intend !== VerificationIdentifier.ResetPassword &&
-    searchParams.intend !== VerificationIdentifier.AnonymusSignin
+    searchParams.intend !== VerificationIdentifier.AnonymusSignin &&
+    searchParams.intend !== VerificationIdentifier.NewPassword
   ) {
     notFound();
   }
