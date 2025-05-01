@@ -9,8 +9,9 @@ export function readStorage<T>(param: { key: string }) {
     return null; // Avoid SSR issues
   }
   const datastr = localStorage.getItem(param.key);
-  if (datastr) return JSON.parse(datastr) as T;
-  return null;
+  if (!datastr) return null;
+
+  return JSON.parse(datastr) as T;
 }
 
 export function removeStorage(key: string) {
