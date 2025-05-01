@@ -32,7 +32,7 @@ export default function Logo({
       </Link>
       {showText && (
         <span
-          className="bg-gradient-to-r from-primary to-primary bg-clip-text font-bold text-transparent transition-colors"
+          className="bg-gradient-to-r from-primary to-primary bg-clip-text font-bold text-transparent transition-colors text-neutral-200"
           style={{ fontSize: `calc(${fontSize} * 1.1)` }}
         >
           App

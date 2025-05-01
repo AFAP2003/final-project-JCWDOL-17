@@ -12,6 +12,11 @@ const nextConfig = {
         hostname: 'random-image-pepebigotes.vercel.app',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
     ],
   },
 };

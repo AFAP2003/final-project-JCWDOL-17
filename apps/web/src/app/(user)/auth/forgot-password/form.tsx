@@ -60,6 +60,16 @@ export default function ForgotPasswordForm() {
         setIsSubmitted(true);
         return;
       }
+      if (
+        error.status === 400 &&
+        message.startsWith('This account is not linked to credential method')
+      ) {
+        // Just ignore it
+        restartCooldown();
+        setIsSubmitted(true);
+        return;
+      }
+
       if (error.status! === 400 && message?.startsWith('Too many request')) {
         toast({
           description: 'Too many request, please try again later!',

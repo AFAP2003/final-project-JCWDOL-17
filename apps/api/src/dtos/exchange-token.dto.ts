@@ -7,6 +7,7 @@ export const ExchangeTokenDTO = z.object({
     VerificationIdentifier.SigninConfirmation,
     VerificationIdentifier.ResetPassword,
     VerificationIdentifier.AnonymusSignin,
+    VerificationIdentifier.NewPassword,
   ]),
   token: z.string(), // encrypted token
 });

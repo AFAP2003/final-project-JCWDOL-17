@@ -1,7 +1,7 @@
 import { prismaclient } from '@/prisma';
 import { AddToCartDTO } from '@/dtos/add-to-cart.dto';
 import { UpdateCartItemDTO } from '@/dtos/update-cart-item.dto';
-import { BadRequestError, ForbiddenError } from '@/errors';
+import { BadRequestError, ForbiddenError, UnauthorizedError } from '@/errors';
 import { z } from 'zod';
 
 const productInclude = {
@@ -36,6 +36,16 @@ export class CartService {
   getCart = async (userId: string) => this.findOrCreateCart(userId);
 
   addToCart = async (userId: string, dto: z.infer<typeof AddToCartDTO>) => {
+    const user = await prismaclient.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.emailVerified) {
+      throw new UnauthorizedError(
+        'user must be registered and verified to add items',
+      );
+    }
+
     const cart = await this.findOrCreateCart(userId);
     const product = await prismaclient.product.findUnique({
       where: { id: dto.productId, isActive: true },
@@ -80,16 +90,18 @@ export class CartService {
     dto: z.infer<typeof UpdateCartItemDTO>,
   ) => {
     const cart = await prismaclient.cart.findUnique({ where: { userId } });
-    if (!cart) throw new Error('Cart not found');
+    if (!cart) throw new BadRequestError('Cart not found');
 
     const cartItem = await prismaclient.cartItem.findUnique({
       where: { id: dto.cartItemId },
     });
-    if (!cartItem) throw new Error('Cart item not found');
-    if (cartItem.cartId !== cart.id)
+
+    if (!cartItem) throw new BadRequestError('Cart item not found');
+    if (cartItem.cartId !== cart.id) {
       throw new ForbiddenError(
         'You do not have permission to update this item',
       );
+    }
 
     if (dto.quantity === 0) {
       await prismaclient.cartItem.delete({ where: { id: dto.cartItemId } });
@@ -99,9 +111,12 @@ export class CartService {
     const inventory = await prismaclient.inventory.findFirst({
       where: { productId: cartItem.productId, storeId: dto.storeId },
     });
-    if (!inventory) throw new Error('Product not available in selected store');
-    if (inventory.quantity < dto.quantity)
-      throw new Error(`Only ${inventory.quantity} item(s) available`);
+
+    if (!inventory)
+      throw new BadRequestError('Product not available in selected store');
+    if (inventory.quantity < dto.quantity) {
+      throw new BadRequestError(`Only ${inventory.quantity} item(s) available`);
+    }
 
     return await prismaclient.cartItem.update({
       where: { id: dto.cartItemId },

@@ -15,15 +15,18 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  role          UserRole @default(USER)
+  id            String             @id @default(uuid())
+  role          UserRole
   name          String
-  email         String   @unique
-  emailVerified Boolean  @default(false)
-  password      String?
+  email         String             @unique
+  emailVerified Boolean
   image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  phone         String?
+  gender        Gender?
+  dateOfBirth   DateTime?
+  signupMethod  SignupMethodType[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
   referralCode  String? @unique
   referredById  String?
@@ -36,9 +39,9 @@ model User {
 
   managedStore Store?    @relation("StoreToAdmin")
   storeId      String?
-  Session      Session[]
-  Account      Account[]
-  Store        Store[]
+  sessions     Session[]
+  accounts     Account[]
+  stores       Store[]
 }
 
 model Session {
@@ -82,21 +85,22 @@ model Verification {
 
 model Address {
   id         String   @id @default(uuid())
-  userId     String
+  isDefault  Boolean? @unique
   label      String
-  recipient  String
-  phone      String
   address    String
   city       String
   province   String
   postalCode String
+  recipient  String
+  phone      String
   latitude   Float?
   longitude  Float?
-  isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
   orders Order[]
 }
 
@@ -419,4 +423,9 @@ enum VoucherType {
 enum ValueType {
   PERCENTAGE
   FIXED_AMOUNT
+}
+
+enum Gender {
+  MALE
+  FEMALE
 }

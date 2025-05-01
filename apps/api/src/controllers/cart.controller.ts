@@ -17,7 +17,15 @@ export class CartController {
     try {
       const { user } = getSessionUser(req);
       const cart = await this.cartService.getCart(user.id);
-      res.json(cart);
+      const itemCount = cart.items.reduce(
+        (acc, item) => acc + item.quantity,
+        0,
+      );
+
+      res.json({
+        ...cart,
+        itemCount,
+      });
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;
