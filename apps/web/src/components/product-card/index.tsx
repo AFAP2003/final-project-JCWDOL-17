@@ -1,4 +1,4 @@
-import { formatRupiah } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { ShoppingBasket } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '../ui/button';
@@ -92,7 +92,7 @@ export default function ProductCard({ product }: Props) {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="font-semibold">
-                {formatRupiah(product.price)}
+                {formatCurrency(product.price)}
               </span>
             </div>
           </div>
