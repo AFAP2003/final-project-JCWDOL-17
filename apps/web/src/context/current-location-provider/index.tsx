@@ -16,6 +16,7 @@ import {
   useEffect,
   useState,
 } from 'react';
+import { useGeolocated } from 'react-geolocated';
 
 type CurrentLocationContextType = {
   data: UserCurrentLocationType;
@@ -33,16 +34,25 @@ type Props = {
 
 export const CurrentLocationProvider = ({ children }: Props) => {
   const [data, setData] = useState(getStoredLocation());
+  const [isInitial, setIsInitial] = useState(true);
+  const geo = useGeolocated({
+    positionOptions: {
+      enableHighAccuracy: true,
+    },
+    watchLocationPermissionChange: true,
+    watchPosition: true,
+  });
 
   const { mutate: fetchLocation, isPending } = useMutation({
     mutationFn: async () => {
       // Case 1
-      const position = await getPosition();
-      if (position) {
+
+      if (geo.coords) {
         const current = await getCurrentLocation({
-          lat: position.latitude,
-          lng: position.longitude,
+          lat: geo.coords.latitude,
+          lng: geo.coords.longitude,
         });
+
         if (current) {
           return {
             location: {
@@ -90,14 +100,16 @@ export const CurrentLocationProvider = ({ children }: Props) => {
   });
 
   useEffect(() => {
-    if (!location) {
-      fetchLocation();
+    if (!data || isInitial) {
+      // fetchLocation();
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geo.coords?.latitude, geo.coords?.longitude]);
 
   const setCurrentLocation = useCallback((data: UserCurrentLocationType) => {
     setData(data);
     saveLocationToStorage(data);
+    setIsInitial(false);
   }, []);
 
   return (
@@ -135,20 +147,6 @@ function saveLocationToStorage(param: UserCurrentLocationType | null) {
   });
 }
 
-async function getPosition(): Promise<GeolocationCoordinates | null> {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve(pos.coords),
-      () => resolve(null), // permission denied / error
-      {
-        enableHighAccuracy: true,
-        timeout: Infinity,
-      },
-    );
-  });
-}
-
 async function getCurrentLocation(param: { lat: number; lng: number }) {
   const queryObj = {
     lat: param.lat,
@@ -163,6 +161,7 @@ async function getCurrentLocation(param: { lat: number; lng: number }) {
   const { data } = await apiclient.get<GeocodingResponse>(
     `/location/geocoding?${query}`,
   );
+
   if (data.length <= 0) return null;
   return data[0];
 }
