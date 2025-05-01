@@ -94,6 +94,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate'),require("daisyui")],
+  // plugins: [require('daisyui'), require('tailwindcss-animate')], // TODO: daisy ui conflict, override shadcn
+  plugins: [require('tailwindcss-animate')],
 };
 export default config;
