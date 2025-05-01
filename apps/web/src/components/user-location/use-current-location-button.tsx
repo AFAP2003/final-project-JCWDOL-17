@@ -1,27 +1,24 @@
 'use client';
 
 import { useCurrentLocation } from '@/context/current-location-provider';
+import { toast } from '@/hooks/use-toast';
 import { apiclient } from '@/lib/apiclient';
 import { GeocodingResponse } from '@/lib/types/geocoding-response';
 import { UserCurrentLocationType } from '@/lib/types/user-current-location-type';
 import { useMutation } from '@tanstack/react-query';
 import { LocateFixed } from 'lucide-react';
 import qs from 'query-string';
+import { useEffect, useState } from 'react';
+import { useGeolocated } from 'react-geolocated';
 import { Button } from '../ui/button';
-
-async function getPosition(): Promise<GeolocationCoordinates | null> {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve(pos.coords),
-      () => resolve(null), // permission denied / error
-      {
-        enableHighAccuracy: true,
-        timeout: Infinity,
-      },
-    );
-  });
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog';
 
 async function getCurrentLocation(param: { lat: number; lng: number }) {
   const queryObj = {
@@ -41,38 +38,99 @@ async function getCurrentLocation(param: { lat: number; lng: number }) {
   return data[0];
 }
 
-export default function UseCurrentLocationButton() {
-  const { mutate: setCurrentLocation } = useCurrentLocation();
+type Props = {
+  onDialogOpenChange?: (val: boolean) => void;
+};
 
-  // TODO: handle error
-  const { data: address, isPending } = useMutation({
+export default function UseCurrentLocationButton(props: Props) {
+  const { mutate: setCurrentLocation } = useCurrentLocation();
+  const geo = useGeolocated({
+    positionOptions: {
+      enableHighAccuracy: true,
+    },
+    watchLocationPermissionChange: true,
+  });
+
+  const [alertOpen, setAlertOpen] = useState(false);
+  useEffect(() => {
+    if (props.onDialogOpenChange) {
+      props.onDialogOpenChange(alertOpen);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alertOpen]);
+
+  const { mutate: fetchCurrentLocation, isPending } = useMutation({
     mutationFn: async () => {
-      const position = await getPosition();
-      if (position) {
-        const current = await getCurrentLocation({
-          lat: position.latitude,
-          lng: position.longitude,
+      if (!geo.coords) return null;
+
+      const current = await getCurrentLocation({
+        lat: geo.coords.latitude,
+        lng: geo.coords.longitude,
+      });
+
+      if (!current) return null;
+
+      return {
+        location: {
+          label: current.name,
+          address: current.address,
+          latitude: current.latitude,
+          longitude: current.longitude,
+        },
+        source: 'geolocation',
+      } as UserCurrentLocationType;
+    },
+    onSuccess: (data) => {
+      if (!data) {
+        toast({
+          description:
+            'Failed to retrieve your current location. Please try again shortly.',
+          variant: 'destructive',
         });
-        if (!current) return null;
-        if (current) {
-          return {
-            location: {
-              label: current.name,
-              address: current.address,
-              latitude: current.latitude,
-              longitude: current.longitude,
-            },
-            source: 'geolocation',
-          } as UserCurrentLocationType;
-        }
+      } else {
+        setCurrentLocation(data);
       }
+    },
+    onError: () => {
+      toast({
+        description:
+          'Sorry we have problem in our server, please try again later',
+        variant: 'destructive',
+      });
     },
   });
 
   return (
-    <Button className="flex w-full text-sm bg-neutral-700 text-neutral-200 hover:text-neutral-300 hover:bg-neutral-700">
-      <LocateFixed />
-      <span>Use Current Location</span>
-    </Button>
+    <>
+      <Button
+        disabled={isPending}
+        onClick={() => {
+          if (!geo.isGeolocationEnabled) {
+            setAlertOpen(true);
+            return;
+          }
+
+          geo.getPosition(); // trigger geo location;
+          fetchCurrentLocation();
+        }}
+        className="flex w-full text-sm bg-neutral-700 text-neutral-200 hover:text-neutral-300 hover:bg-neutral-700"
+      >
+        <LocateFixed />
+        <span>Use Current Location</span>
+      </Button>
+
+      <Dialog open={alertOpen} onOpenChange={setAlertOpen} modal={false}>
+        <DialogTrigger asChild className="hidden"></DialogTrigger>
+        <DialogContent className="bg-neutral-800 border-neutral-500 text-neutral-200">
+          <DialogHeader className="text-neutral-200">
+            <DialogTitle className="hidden"></DialogTitle>
+            <DialogDescription className="text-base text-neutral-200">
+              Please enable location permissions in your browser&apos;s site
+              settings.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

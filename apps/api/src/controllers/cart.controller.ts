@@ -14,25 +14,9 @@ export class CartController {
   private cartService = new CartService();
 
   getCart = async (req: Request, res: Response) => {
-    try {
-      const { user } = getSessionUser(req);
-      const cart = await this.cartService.getCart(user.id);
-      const itemCount = cart.items.reduce(
-        (acc, item) => acc + item.quantity,
-        0,
-      );
-
-      res.json({
-        ...cart,
-        itemCount,
-      });
-    } catch (error) {
-      if (!(error instanceof ApiError)) {
-        const err = error as Error;
-        throw new InternalSeverError(err);
-      }
-      throw error;
-    }
+    const { user } = getSessionUser(req);
+    const cart = await this.cartService.getCart(user.id);
+    res.json(cart);
   };
 
   addToCart = async (req: Request, res: Response) => {
@@ -41,17 +25,9 @@ export class CartController {
       throw new UnprocessableEntityError(formatZodError(error));
     }
 
-    try {
-      const { user } = getSessionUser(req);
-      const cartItem = await this.cartService.addToCart(user.id, dto);
-      res.json(cartItem);
-    } catch (error) {
-      if (!(error instanceof ApiError)) {
-        const err = error as Error;
-        throw new InternalSeverError(err);
-      }
-      throw error;
-    }
+    const { user } = getSessionUser(req);
+    const cartItem = await this.cartService.addToCart(user.id, dto);
+    res.json(cartItem);
   };
 
   updateCartItem = async (req: Request, res: Response) => {
@@ -60,45 +36,16 @@ export class CartController {
       throw new UnprocessableEntityError(formatZodError(error));
     }
 
-    try {
-      const { user } = getSessionUser(req);
-      const cartItem = await this.cartService.updateCartItem(user.id, dto);
-      res.json(cartItem);
-    } catch (error) {
-      if (!(error instanceof ApiError)) {
-        const err = error as Error;
-        throw new InternalSeverError(err);
-      }
-      throw error;
-    }
+    const { user } = getSessionUser(req);
+    const cartItem = await this.cartService.updateCartItem(user.id, dto);
+    res.json(cartItem);
   };
 
   removeCartItem = async (req: Request, res: Response) => {
-    try {
-      const { user } = getSessionUser(req);
-      const itemId = req.params.itemId;
-      await this.cartService.removeCartItem(user.id, itemId);
-      res.json({ message: 'Item removed from cart successfully' });
-    } catch (error) {
-      if (!(error instanceof ApiError)) {
-        const err = error as Error;
-        throw new InternalSeverError(err);
-      }
-      throw error;
-    }
-  };
+    const { user } = getSessionUser(req);
+    const itemId = req.params.itemId;
 
-  clearCart = async (req: Request, res: Response) => {
-    try {
-      const { user } = getSessionUser(req);
-      await this.cartService.clearCart(user.id);
-      res.json({ message: 'Cart cleared successfully' });
-    } catch (error) {
-      if (!(error instanceof ApiError)) {
-        const err = error as Error;
-        throw new InternalSeverError(err);
-      }
-      throw error;
-    }
+    await this.cartService.removeCartItem(user.id, itemId);
+    res.json({ message: 'Item removed from cart' });
   };
 }
