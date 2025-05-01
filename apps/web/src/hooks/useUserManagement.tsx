@@ -1,6 +1,4 @@
-'use client';
-
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   SortingState,
   ColumnFiltersState,
@@ -13,7 +11,7 @@ import {
 } from '@tanstack/react-table';
 import { useFormik } from 'formik';
 import { userManagementAPI } from '@/lib/apis/dashboard/userManagement.api';
-import { validationSchema } from '@/validations/user.validation';
+import { getValidationSchema } from '@/validations/user.validation';
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -24,31 +22,46 @@ import {
   import { MoreHorizontal } from 'lucide-react';
   import { Badge } from '@/components/ui/badge';
   import { toast } from '@/hooks/use-toast';
+import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 
 export function useUserManagement() {
-  // Table state
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  
-  // UI state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  
-  // API integration
+  const [pageCount,setPageCount] = useState(1)
+
   const {
     users,
     isLoading,
-    fetchUsers,
+    fetchUsers:apiFetchUsers,
     handleCreateUser,
     handleUpdateUser,
     handleDeleteUser,
   } = userManagementAPI();
+  const{stores,fetchStores}=storeManagementAPI()
+
+
+   const fetchUsers = useCallback((pageIndex:number, pageSize:number) => {
+      return apiFetchUsers(pageIndex, pageSize).then(json => {
+        if (json?.pagination) {
+          setPageCount(json.pagination.totalPages);
+        }
+        return json;
+      });
+    }, [apiFetchUsers]);
   
-  // Form handling
+    useEffect(() => {
+      fetchUsers(pagination.pageIndex , pagination.pageSize);
+    }, [pagination.pageIndex, pagination.pageSize]);
+
+    useEffect(()=>{
+      fetchStores()
+    },[])
   const formik = useFormik({
     initialValues: {
       gambar: '',
@@ -58,10 +71,10 @@ export function useUserManagement() {
       alamat: '',
       toko: '',
       kode_rujukan: '',
-      role: '',
+      role: 'ADMIN',
       verifikasi: false,
     },
-    validationSchema,
+    validationSchema:getValidationSchema(isEditMode), 
     onSubmit: async (values, { resetForm }) => {
       let success = false;
       if (isEditMode && editingUserId) {
@@ -94,13 +107,21 @@ export function useUserManagement() {
     },
     { accessorKey: 'name', header: 'Nama' },
     { accessorKey: 'email', header: 'Email' },
-    { accessorKey: 'alamat', header: 'Alamat (Utama)' },
+    {  header: 'Alamat (Utama)' ,
+
+      accessorFn: (row: any) => {
+        return row.addresses?.length > 0 ? row.addresses[0].address : 'NA';
+      }
+    },
     { accessorKey: 'role', header: 'Role' },
-    { accessorKey: 'toko', header: 'Toko' },
-    { accessorKey: 'referralCode', header: 'Kode Rujukan' },
     {
-      accessorKey: 'verifikasi',
+      header: 'Toko',
+      accessorFn: (row: any) =>
+        row.store?.name ?? 'NA',    },
+    { accessorKey: 'referralCode', header: 'Kode Rujukan' },
+    {id: 'verifikasi',
       header: 'Verifikasi',
+      accessorFn: (row:any) => row.emailVerified,
       cell: ({ getValue }) => {
         const verified = getValue<boolean>();
         return (
@@ -167,6 +188,8 @@ export function useUserManagement() {
   const table =  
     useReactTable({
       data: users,
+      manualPagination:true,
+      pageCount,
       columns,
       state: {
         sorting,
@@ -186,6 +209,7 @@ export function useUserManagement() {
           String(row.getValue('nama') ?? ''),
           String(row.getValue('email') ?? ''),
           String(row.getValue('role') ?? ''),
+          String(row.getValue('referralCode') ?? ''),
         ];
         return cellValues.some((value) =>
           value.toLowerCase().includes(searchText),
@@ -198,7 +222,6 @@ export function useUserManagement() {
     });
   
   
-  // Helper functions
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGlobalFilter(e.target.value);
   };
@@ -213,21 +236,21 @@ export function useUserManagement() {
     }
   };
 
+  const handleRoleFilter = (val: string) => {
+    if (val === 'all') table.getColumn('role')?.setFilterValue(undefined);
+    else table.getColumn('role')?.setFilterValue(val);  // ⬅︎ new
+  };
+
   return {
-    // State
     users,
     isLoading,
     globalFilter,
     dialogOpen,
     isEditMode,
     editingUserId,
-    
-    // State setters
     setDialogOpen,
     setIsEditMode,
     setEditingUserId,
-    
-    // Functions
     fetchUsers,
     handleSearchChange,
     handleVerificationFilter,
@@ -235,8 +258,10 @@ export function useUserManagement() {
     handleCreateUser,
     handleUpdateUser,
     table,
-    
-    // Form
+    stores,
+    fetchStores,
+    handleRoleFilter,
     formik,
+    columns
   };
 }

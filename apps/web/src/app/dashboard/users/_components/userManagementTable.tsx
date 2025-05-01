@@ -1,21 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   flexRender,
-  SortingState,
-  ColumnFiltersState,
-  VisibilityState,
-  ColumnDef,
-  RowData,
-  Table as ReactTable
+  Table as ReactTable,
 } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight, Eye, MoreHorizontal } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -24,46 +13,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
+
 import { User } from '@/lib/interfaces/userManagement.interface'; // your User type
 import { MyFormValues } from '@/validations/user.validation';
 import { FormikProps } from 'formik';
+
 interface UserManagementTableProps {
   users: User[];
   formik: FormikProps<MyFormValues>;
   onDelete: (id: string) => void;
   onStartEdit: (user: User) => void;
-  table:ReactTable<any>
+  table: ReactTable<any>;
+  columns: any[];
 }
 
 export default function UserManagementTable({
-  users,
-  formik,
-  onDelete,
-  onStartEdit,
-  table
+  table,
+  columns,
 }: UserManagementTableProps) {
-  const [globalFilter, setGlobalFilter] = useState('');
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 });
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
-    return (
+  return (
     <>
-     
       {/* Table */}
       <div className="overflow-x-auto border rounded">
         <Table>
@@ -92,7 +62,10 @@ export default function UserManagementTable({
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -107,8 +80,6 @@ export default function UserManagementTable({
           </TableBody>
         </Table>
       </div>
-
-     
     </>
   );
 }

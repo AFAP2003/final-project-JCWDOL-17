@@ -26,6 +26,7 @@ interface UserManagementFilterProps {
   handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleVerificationFilter: (value: string) => void;
   table: Table<User>;
+  handleRoleFilter: (value: string) => void;
 }
 
 export default function UserManagementFilter({
@@ -33,6 +34,7 @@ export default function UserManagementFilter({
   handleSearchChange,
   handleVerificationFilter,
   table,
+  handleRoleFilter,
 }: UserManagementFilterProps) {
   return (
     <div className="mb-4 flex items-end justify-between gap-2 sm:gap-0">
@@ -45,7 +47,7 @@ export default function UserManagementFilter({
         />
       </div>
       <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4">
-        <Select onValueChange={handleVerificationFilter} defaultValue="all">
+        <Select onValueChange={handleRoleFilter} defaultValue="all">
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Pilih Verifikasi" />
           </SelectTrigger>
@@ -53,8 +55,9 @@ export default function UserManagementFilter({
             <SelectGroup>
               <SelectLabel>Pilih Role</SelectLabel>
               <SelectItem value="all">Semua Role</SelectItem>
-              <SelectItem value="true">User</SelectItem>
-              <SelectItem value="false">Store Admin</SelectItem>
+              <SelectItem value="SUPER">Super Admin</SelectItem>
+              <SelectItem value="ADMIN">Store Admin</SelectItem>
+              <SelectItem value="USER">User</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>

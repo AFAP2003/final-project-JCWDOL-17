@@ -15,30 +15,31 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  role          UserRole @default(USER)
-  name          String
-  email         String   @unique
-  emailVerified Boolean  @default(false)
-  password      String?
-  image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String    @id @default(uuid())
+  role           UserRole  @default(USER)
+  name           String
+  email          String    @unique
+  emailVerified  Boolean   @default(false)
+  password       String?
+  image          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  referralCode  String? @unique
-  referredById  String?
-  referredUsers User[]  @relation("UserReferrals")
-  referredBy    User?   @relation("UserReferrals", fields: [referredById], references: [id])
+  referralCode   String?   @unique
+  referredById   String?
+  referredUsers  User[]    @relation("UserReferrals")
+  referredBy     User?     @relation("UserReferrals", fields: [referredById], references: [id])
 
-  addresses Address[]
-  cart      Cart?
-  orders    Order[]
+  addresses      Address[]
+  cart           Cart?
+  orders         Order[]
 
-  managedStore Store?    @relation("StoreToAdmin")
-  storeId      String?
-  Session      Session[]
-  Account      Account[]
-  Store        Store[]
+  managedStore   Store?    @relation("StoreToAdmin") // Potentially for admin management
+  storeId        String?
+  store          Store?    @relation(fields: [storeId], references: [id]) // User belongs to this store
+  Session        Session[]
+  Account        Account[]
+  // Remove the `Store[]` relation here as a user should belong to one store via `storeId`
 }
 
 model Session {
@@ -101,7 +102,7 @@ model Address {
 }
 
 model Store {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
   address     String
   city        String
@@ -109,19 +110,19 @@ model Store {
   postalCode  String
   latitude    Float
   longitude   Float
-  maxDistance Float    @default(10)
-  isActive    Boolean  @default(true)
-  isMain      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  maxDistance Float     @default(10)
+  isActive    Boolean   @default(true)
+  isMain      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  adminId   String?     @unique
-  admin     User?       @relation("StoreToAdmin", fields: [adminId], references: [id])
-  inventory Inventory[]
-  orders    Order[]
-  discounts Discount[]
-  User      User?       @relation(fields: [userId], references: [id])
-  userId    String?
+  adminId     String?   @unique
+  admin       User?     @relation("StoreToAdmin", fields: [adminId], references: [id])
+  inventory   Inventory[]
+  orders      Order[]
+  discounts   Discount[]
+  users       User[]    // A store can have multiple users (e.g., employees)
+  // Remove the redundant `User?` and `userId?` fields that create ambiguity
 }
 
 model Category {

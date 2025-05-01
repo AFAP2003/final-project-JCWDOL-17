@@ -3,11 +3,12 @@ import { prismaclient } from '@/prisma';
 import categoryManagementRepository from '@/repositories/categoryManagement.repository';
 
 class CategoryManagementService{
-    async listAllCategories(){
-        return await categoryManagementRepository.getCategories()
+    async listAllCategories(page =1,take=10){
+        return await categoryManagementRepository.getCategories(page,take)
     }
     
     async createNewCategory(categoryData:Category){
+
         return await categoryManagementRepository.createCategory(categoryData)
 
     }

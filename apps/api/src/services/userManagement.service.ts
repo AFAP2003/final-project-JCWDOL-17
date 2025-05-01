@@ -3,14 +3,13 @@ import storeManagementRepository from "@/repositories/storeManagement.repository
 import userManagementRepository from "@/repositories/userManagement.repository";
 
 class UserManagementService{
-    async listAllUsers(){
-        return await userManagementRepository.getUsers()
+    async listAllUsers(page=1,take=10){     
+        return await userManagementRepository.getUsers(page,take)
     }
 
     async createNewUser(userData:User){
-        const user = await userManagementRepository.createUser(userData)
+        return await userManagementRepository.createUser(userData)
 
-        return user
     }
 
     async updateUserById(id:string,userData:User){
