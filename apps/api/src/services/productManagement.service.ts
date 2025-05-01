@@ -3,8 +3,8 @@ import { prismaclient } from '@/prisma';
 import productManagementRepository from '@/repositories/productManagement.repository';
 
 class ProductManagementService{
-    async listAllProducts(){
-        return await productManagementRepository.getProducts()
+    async listAllProducts(page=1,take=10){
+        return await productManagementRepository.getProducts(page,take)
     }
     
     async getProductDetail(id:string){
