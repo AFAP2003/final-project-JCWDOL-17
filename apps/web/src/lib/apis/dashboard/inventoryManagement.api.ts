@@ -1,181 +1,188 @@
-'use client'
+'use client';
 
-import { useState } from "react";
 import { toast } from '@/hooks/use-toast';
-import { API_BASE_URL } from "@/lib/constant";
-import { Inventory } from "@/lib/interfaces/inventoryManagement.interface";
+import { API_BASE_URL } from '@/lib/constant';
+import { Inventory } from '@/lib/interfaces/inventoryManagement.interface';
+import { useState } from 'react';
 
-export function inventoryManagementAPI(){
-    const [inventories, setInventories] = useState<Inventory[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export function inventoryManagementAPI() {
+  const [inventories, setInventories] = useState<Inventory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-      const fetchInventories = async (pageIndex:number,pageSize:number) => {
-        setIsLoading(true)  
-        try {
-          const page = pageIndex + 1
+  const fetchInventories = async (pageIndex: number, pageSize: number) => {
+    setIsLoading(true);
+    try {
+      const page = pageIndex + 1;
 
-          const inventoryRes = await fetch(`${API_BASE_URL}/dashboard/inventories?page=${page}&take=${pageSize}`);
-          const inventoryData = await inventoryRes.json();
-    
-          if (inventoryRes.ok) {
-            setInventories(inventoryData.data);
-            console.log('Inventories fetched successfully: ', inventoryData);
-            return inventoryData
-          } else {
-            console.error(
-              'Failed to fetch Inventories:',
-              inventoryData.message || 'Unknown Error',
-            );
-          }
-        } catch (error) {
-          console.log('Error fetching data: ', error);
-        } finally{
-          setIsLoading(false)
-        }
-      };
+      const inventoryRes = await fetch(
+        `${API_BASE_URL}/dashboard/inventories?page=${page}&take=${pageSize}`,
+      );
+      const inventoryData = await inventoryRes.json();
 
-      const handleCreateInventory = async (values) => {
-        try {
+      if (inventoryRes.ok) {
+        setInventories(inventoryData.data);
+        console.log('Inventories fetched successfully: ', inventoryData);
+        return inventoryData;
+      } else {
+        console.error(
+          'Failed to fetch Inventories:',
+          inventoryData.message || 'Unknown Error',
+        );
+      }
+    } catch (error) {
+      console.log('Error fetching data: ', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-          let quantity;
-          if (values.tambah) {
-            quantity = Number(values.tambah);
-          } else if (values.kurangi) {
-            // For creation, it might not make sense to reduce from zero,
-            // but we'll include it for consistency
-            quantity = Math.max(0, values.sekarang - Number(values.kurangi));
-          } else {
-            quantity = 0; // Default if neither has a value
-          }
-          const inventoryRes = await fetch(`${API_BASE_URL}/dashboard/inventories`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              productId: values.produk,
-              storeId:values.toko,
-              quantity:quantity,
-              minStock:Number(values.minimal), 
-            }),
-          });
+  const handleCreateInventory = async (values) => {
+    try {
+      let quantity;
+      if (values.tambah) {
+        quantity = Number(values.tambah);
+      } else if (values.kurangi) {
+        // For creation, it might not make sense to reduce from zero,
+        // but we'll include it for consistency
+        quantity = Math.max(0, values.sekarang - Number(values.kurangi));
+      } else {
+        quantity = 0; // Default if neither has a value
+      }
+      const inventoryRes = await fetch(
+        `${API_BASE_URL}/dashboard/inventories`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            productId: values.produk,
+            storeId: values.toko,
+            quantity: quantity,
+            minStock: Number(values.minimal),
+          }),
+        },
+      );
 
+      const inventoryData = await inventoryRes.json();
 
-         
-          const inventoryData = await inventoryRes.json();
-    
-          if (inventoryRes.ok) {
-            fetchInventories(1,10);
-            console.log('inventory Created Successfully: ', inventoryData);
-            toast({
-             description:'inventory Created Successfully !'
-            });
-            return true
-          } else {
-            toast({
-              variant: 'destructive',
-              description: 'Failed to Create inventory.'
-            })
-            console.error(
-              'Failed to create inventory:',
-              inventoryData.message || 'Unknown error',
-            );
-            return false
-          }
-        } catch (error) {
-          toast({
-            variant: 'destructive',
-            description: 'Error creating inventory.'
-          })
-          console.error('Error creating inventory:', error);
-          return false
-        } 
-      };
-    
-      const handleUpdateInventory = async (id: string, values) => {
-          try {
-            const inventoryRes = await fetch(
-              `${API_BASE_URL}/dashboard/inventories/${id}`,
-              {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  productId: values.produk,
-              storeId:values.toko,
-              quantity:Number(values.tambah || 0),
-              minStock:Number(values.minimal),
-                }),
-              },
-            );
-      
-            const inventoryData = await inventoryRes.json();
-      
-            if (inventoryRes.ok) {
-              fetchInventories(1,10);
-              toast({
-                description:'inventory Updated Successfully !'
-               });
-              console.log('inventory Updated Successfully: ', inventoryData);
-              return true;
-            } else {
-              toast({
-                variant: 'destructive',
-                description: 'Failed to Create inventory.',
-              });
-              console.error(
-                'Failed to update inventory:',
-                inventoryData.message || 'Unknown error',
-              );
-              return false;
-            }
-          } catch (error) {
-            toast({
-              variant: 'destructive',
-              description: 'Error updating inventory.',
-            });
-            console.error('Error updating inventory:', error);
-            return false;
-          }
-        };
+      if (inventoryRes.ok) {
+        fetchInventories(1, 10);
+        console.log('inventory Created Successfully: ', inventoryData);
+        toast({
+          description: 'inventory Created Successfully !',
+        });
+        return true;
+      } else {
+        toast({
+          variant: 'destructive',
+          description: 'Failed to Create inventory.',
+        });
+        console.error(
+          'Failed to create inventory:',
+          inventoryData.message || 'Unknown error',
+        );
+        return false;
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        description: 'Error creating inventory.',
+      });
+      console.error('Error creating inventory:', error);
+      return false;
+    }
+  };
 
-        const handleDeleteInventory = async (id: string) => {
-            try {
-              const inventoryRes = await fetch(
-                `${API_BASE_URL}/dashboard/inventories/${id}`,
-                {
-                  method: 'DELETE',
-                },
-              );
-        
-              const inventoryData = await inventoryRes.json();
-            
-              if (inventoryRes.ok) {
-                fetchInventories(1,10); 
-                toast({
-                    description:'inventory Deleted Successfully !'
-                   });
-                console.log('inventory deleted successfully:', inventoryData);
-              } else {
-                toast({
-                  variant: 'destructive',
-                  description: 'Failed to Delete inventory.',
-                });
-                console.error(
-                  'Failed to delete inventory:',
-                  inventoryData.message || 'Unknown error',
-                );
-              }
-            } catch (error) {
-              toast({
-                variant: 'destructive',
-                description: 'Error deleting inventory.',
-              });
-              console.error('Error deleting inventory:', error);
-            }
-          };
-      return { inventories, isLoading, fetchInventories,handleCreateInventory,handleUpdateInventory,handleDeleteInventory }
+  const handleUpdateInventory = async (id: string, values) => {
+    try {
+      const inventoryRes = await fetch(
+        `${API_BASE_URL}/dashboard/inventories/${id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            productId: values.produk,
+            storeId: values.toko,
+            quantity: Number(values.tambah || 0),
+            minStock: Number(values.minimal),
+          }),
+        },
+      );
 
+      const inventoryData = await inventoryRes.json();
+
+      if (inventoryRes.ok) {
+        fetchInventories(1, 10);
+        toast({
+          description: 'inventory Updated Successfully !',
+        });
+        console.log('inventory Updated Successfully: ', inventoryData);
+        return true;
+      } else {
+        toast({
+          variant: 'destructive',
+          description: 'Failed to Create inventory.',
+        });
+        console.error(
+          'Failed to update inventory:',
+          inventoryData.message || 'Unknown error',
+        );
+        return false;
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        description: 'Error updating inventory.',
+      });
+      console.error('Error updating inventory:', error);
+      return false;
+    }
+  };
+
+  const handleDeleteInventory = async (id: string) => {
+    try {
+      const inventoryRes = await fetch(
+        `${API_BASE_URL}/dashboard/inventories/${id}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      const inventoryData = await inventoryRes.json();
+
+      if (inventoryRes.ok) {
+        fetchInventories(1, 10);
+        toast({
+          description: 'inventory Deleted Successfully !',
+        });
+        console.log('inventory deleted successfully:', inventoryData);
+      } else {
+        toast({
+          variant: 'destructive',
+          description: 'Failed to Delete inventory.',
+        });
+        console.error(
+          'Failed to delete inventory:',
+          inventoryData.message || 'Unknown error',
+        );
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        description: 'Error deleting inventory.',
+      });
+      console.error('Error deleting inventory:', error);
+    }
+  };
+  return {
+    inventories,
+    isLoading,
+    fetchInventories,
+    handleCreateInventory,
+    handleUpdateInventory,
+    handleDeleteInventory,
+  };
 }
- 

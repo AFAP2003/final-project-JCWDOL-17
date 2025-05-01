@@ -34,7 +34,7 @@ class UserManagementRepository {
 
     if (!userData.password) {
       const error = new Error('Password not provided');
-      error.name = 'DuplicateEmailError';
+      error.name = 'NoPasswordProvided';
       throw error;
     }
 
@@ -67,14 +67,43 @@ class UserManagementRepository {
   }
 
   async updateUser(id: string, userData: User) {
-    return await prismaclient.user.update({
+    const ctx = await auth.$context;
+    const { password, ...data } = userData;
+
+    const user = await prismaclient.user.update({
       where: {
         id,
       },
       data: {
-        ...userData,
+        ...data,
       },
     });
+
+    if (password) {
+      const account = await prismaclient.account.findFirst({
+        where: {
+          userId: user.id,
+        },
+      });
+      if (!account) {
+        const error = new Error(
+          `Fatal, no account found for userId ${user.id}`,
+        );
+        error.name = 'NoAccountConnected';
+        throw error;
+      }
+
+      await prismaclient.account.update({
+        where: {
+          id: account.id,
+        },
+        data: {
+          password: await ctx.password.hash(password),
+        },
+      });
+    }
+
+    return user;
   }
 
   async deleteUser(id: string) {
