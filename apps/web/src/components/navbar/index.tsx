@@ -58,7 +58,7 @@ export default function Navbar() {
         >
           <div className="flex w-full h-full justify-between items-center">
             {/* Left Content */}
-            <div className="flex items-center justify-center max-md:mr-1">
+            <div className="relative -left-1 flex items-center justify-center max-md:mr-1">
               <div
                 onClick={() => router.push('/')}
                 className={cn(
