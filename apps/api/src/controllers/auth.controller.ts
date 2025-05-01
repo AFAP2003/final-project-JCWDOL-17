@@ -1,5 +1,7 @@
+import { AccountLinkDTO } from '@/dtos/account-link.dto';
 import { ForgotPasswordDTO } from '@/dtos/forgot-password.dto';
 import { ResetPasswordDTO } from '@/dtos/reset-password.dto';
+import { RevokeSessionDTO } from '@/dtos/revoke-session.dto';
 import { SigninCredConfirmDTO, SigninDTO } from '@/dtos/signin.dto';
 import { SignupCredConfirmDTO, SignupDTO } from '@/dtos/signup.dto';
 import {
@@ -8,6 +10,7 @@ import {
   UnprocessableEntityError,
 } from '@/errors';
 import { formatZodError } from '@/helpers/format-zod-error';
+import { getSession } from '@/helpers/session-helper';
 import { AuthService } from '@/services/auth.service';
 import { Request, Response } from 'express';
 
@@ -21,8 +24,11 @@ export class AuthController {
     }
 
     try {
-      await this.authService.signupCredConfirm(dto);
-      res.json({ message: `Verification email has been sent to ${dto.email}` });
+      const { url } = await this.authService.signupCredConfirm(dto);
+      res.json({
+        message: `Verification email has been sent to ${dto.email}`,
+        url,
+      });
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;
@@ -57,8 +63,11 @@ export class AuthController {
     }
 
     try {
-      await this.authService.signinCredConfirm(dto);
-      res.json({ message: `Verification email has been sent to ${dto.email}` });
+      const { url } = await this.authService.signinCredConfirm(dto);
+      res.json({
+        message: `Verification email has been sent to ${dto.email}`,
+        url,
+      });
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;
@@ -100,8 +109,11 @@ export class AuthController {
     }
 
     try {
-      await this.authService.forgotPassword(dto);
-      res.json({ message: `Verification email has been sent to ${dto.email}` });
+      const { url } = await this.authService.forgotPassword(dto);
+      res.json({
+        message: `Verification email has been sent to ${dto.email}`,
+        url,
+      });
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;
@@ -118,7 +130,7 @@ export class AuthController {
     }
 
     try {
-      const { userId } = await this.authService.resetPassword(dto);
+      const { userId } = await this.authService.resetPassword(dto, req);
       res.json({ message: `New password has been updated for user ${userId}` });
     } catch (error) {
       if (!(error instanceof ApiError)) {
@@ -129,10 +141,76 @@ export class AuthController {
     }
   };
 
-  listSession = async (req: Request, res: Response) => {
+  getAllSession = async (req: Request, res: Response) => {
     try {
-      const sessions = await this.authService.listSession(req);
+      const sessions = await this.authService.getAllSession(req);
       res.json(sessions);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  revokeSession = async (req: Request, res: Response) => {
+    const { data: dto, error } = RevokeSessionDTO.safeParse(req.body);
+    if (error) {
+      throw new UnprocessableEntityError(formatZodError(error));
+    }
+
+    try {
+      const { status: OK } = await this.authService.revokeSession(dto, req);
+      if (!OK) {
+        throw new InternalSeverError(
+          `error revoking session with token ${dto.sessionToken}`,
+        );
+      }
+      res.json({ message: `Session revoked for token ${dto.sessionToken}` });
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  getAllAccount = async (req: Request, res: Response) => {
+    try {
+      const accounts = await this.authService.getAllAccount(req);
+      res.json(accounts);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  accountLink = async (req: Request, res: Response) => {
+    const session = getSession(req);
+    const { data: dto, error } = AccountLinkDTO.safeParse(req.body);
+    if (error) {
+      throw new UnprocessableEntityError(formatZodError(error));
+    }
+
+    try {
+      const result = await this.authService.accountLink(dto, session, req);
+
+      if (result.method === 'CREDENTIAL') {
+        res.json({
+          message: `Verification email has been sent to ${session.user.email}`,
+          url: result.url,
+        });
+      } else {
+        res.json({
+          redirect: result.redirect,
+          url: result.url,
+        });
+      }
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;

@@ -11,6 +11,7 @@ export const ResetPasswordDTO = z
     identifier: z.enum([
       VerificationIdentifier.AnonymusSignin,
       VerificationIdentifier.ResetPassword,
+      VerificationIdentifier.NewPassword,
     ]),
 
     newPassword: z
