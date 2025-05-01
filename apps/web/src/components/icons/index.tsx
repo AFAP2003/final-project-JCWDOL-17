@@ -308,4 +308,99 @@ export const Icons = {
       </g>
     </svg>
   ),
+
+  Lamp: (props: LucideProps) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="44"
+      height="44"
+      viewBox="0 0 44 44"
+      {...props}
+    >
+      {' '}
+      <defs>
+        {' '}
+        <circle id="b" cx="13" cy="13" r="13" />{' '}
+        <filter
+          id="a"
+          width="207.7%"
+          height="207.7%"
+          x="-53.8%"
+          y="-46.2%"
+          filterUnits="objectBoundingBox"
+        >
+          {' '}
+          <feMorphology
+            in="SourceAlpha"
+            operator="dilate"
+            radius="1"
+            result="shadowSpreadOuter1"
+          />{' '}
+          <feOffset
+            dy="2"
+            in="shadowSpreadOuter1"
+            result="shadowOffsetOuter1"
+          />{' '}
+          <feGaussianBlur
+            in="shadowOffsetOuter1"
+            result="shadowBlurOuter1"
+            stdDeviation="4"
+          />{' '}
+          <feComposite
+            in="shadowBlurOuter1"
+            in2="SourceAlpha"
+            operator="out"
+            result="shadowBlurOuter1"
+          />{' '}
+          <feColorMatrix
+            in="shadowBlurOuter1"
+            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0"
+          />{' '}
+        </filter>{' '}
+      </defs>{' '}
+      <g fill="none" fill-rule="evenodd">
+        {' '}
+        <g fill-rule="nonzero" transform="translate(9 7)">
+          {' '}
+          <use fill="#000" filter="url(#a)" />{' '}
+          <circle
+            cx="13"
+            cy="13"
+            r="13.5"
+            fill="#F8F8F8"
+            fill-rule="evenodd"
+            stroke="#FFC200"
+          />{' '}
+        </g>{' '}
+        <path
+          fill="#FFC200"
+          stroke="#FFC200"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M20.306 24.501c0-.11-.016-.45-.036-.754-.018-.303-.355-.755-.747-1.003 0 0-2.352-1.488-2.352-4.123a4.949 4.949 0 0 1 9.898 0c0 2.635-2.351 4.123-2.351 4.123-.392.248-.728.7-.748 1.003-.02.303-.034.629-.034.722v1.015c0 .465-.38.844-.844.844H21.15c-.464 0-.844-.365-.844-.811V24.5z"
+        />{' '}
+        <path d="M20.306 24.963h3.56" />{' '}
+        <path
+          stroke="#FFF"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M19.556 25.713h5.06"
+        />{' '}
+        <path d="M20.306 23.662h3.56" />{' '}
+        <path
+          stroke="#FFF"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M19.556 23.662h5.06"
+        />{' '}
+        <path d="M22.12 23.502v-3.54" />{' '}
+        <path
+          stroke="#FFF"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M22.12 23.502v-3.54M21.193 19.033a.928.928 0 1 0 1.856 0 .928.928 0 0 0-1.856 0z"
+        />{' '}
+      </g>
+    </svg>
+  ),
 };

@@ -1,14 +1,11 @@
-import CryptoJS from 'crypto-js';
+import axios from 'axios';
 
-const secret = 'my_secret_key';
-const message = 'Hello, crypto-js!';
+async function main() {
+  const url = 'https://google-map-places.p.rapidapi.com/maps/api/geocode/json';
 
-// Encrypt
-const encrypted = CryptoJS.AES.encrypt(message, secret).toString();
+  const { data } = await axios.get('');
+}
 
-// Decrypt
-const decrypted = CryptoJS.AES.decrypt(encrypted, secret).toString(
-  CryptoJS.enc.Utf8,
-);
-
-console.log({ encrypted, decrypted });
+main()
+  .then()
+  .catch((err) => console.log({ err }));

@@ -10,7 +10,8 @@ class UserManagementRepository{
                 const data= await prismaclient.user.findMany({
                     include:{
                         addresses:true,
-                        Store:true
+                        stores:true,
+                        
                     },
                     skip,
                     take:realTake

@@ -1,6 +1,6 @@
 import MaxWidthWrapper from '@/components/max-width-wrapper';
 import { ReactNode } from 'react';
-import UserSidebar from './sidebar';
+import UserSidebar from './_components/sidebar';
 
 type Props = {
   children: ReactNode;
@@ -9,7 +9,7 @@ type Props = {
 export default function UserLayout({ children }: Props) {
   return (
     <MaxWidthWrapper className="relative flex flex-col">
-      <div className="flex gap-4 py-4 grow">
+      <div className="flex gap-12 py-12 grow">
         <UserSidebar />
         {children}
       </div>
