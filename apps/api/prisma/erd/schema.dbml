@@ -278,16 +278,17 @@ Table Discount {
   name String [not null]
   description String
   type DiscountType [not null]
-  value Decimal [not null]
-  minPurchase Decimal
+  isPercentage Boolean
+  value Decimal
   maxDiscount Decimal
+  minPurchase Decimal
+  buyQuantity Int
+  getQuantity Int
   startDate DateTime [not null]
   endDate DateTime [not null]
   isActive Boolean [not null, default: true]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-  buyQuantity Int
-  getQuantity Int
   store Store [not null]
   products Product [not null]
 }
@@ -390,8 +391,8 @@ Enum StockJournalType {
 }
 
 Enum DiscountType {
-  PERCENTAGE
-  FIXED_AMOUNT
+  NO_RULES_DISCOUNT
+  WITH_MAX_PRICE
   BUY_X_GET_Y
 }
 
