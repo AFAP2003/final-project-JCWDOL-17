@@ -4,12 +4,21 @@ import { Request, Response, NextFunction } from 'express'
 class CategoryManagementController{
     async getCategories(req:Request,res:Response,next:NextFunction){
         try {
-            const data = await categoryManagementService.listAllCategories()
+            const page = parseInt(req.query.page as string, 10) || 1;
+            const take = parseInt(req.query.take as string, 10) || 10;
+            const {total,data} = await categoryManagementService.listAllCategories(page,take)
 
             res.status(200).send({
                 success:true,
                 message:"Categories fetched successfully",
-                data
+                data,
+                pagination:{
+                    currentPage:page,
+                    pageSize:take,
+                    totalItems:total,
+                    totalPages:Math.ceil(total/take)
+
+                }
             })
         } catch (error) {
             next(error)
@@ -20,12 +29,20 @@ class CategoryManagementController{
         try {
 
             const data = await categoryManagementService.createNewCategory(req.body)
+
+            
             res.status(200).send({
                 success:true,
                 message:"Category created successfully",
                 data
             })
-        } catch (error) {
+        } catch (error:any) {
+            if(error.name === 'DuplicateNameError'){
+                res.status(400).send({
+                    success:false,
+                    message:error.message
+                })
+            }
             next(error)
         }
     }

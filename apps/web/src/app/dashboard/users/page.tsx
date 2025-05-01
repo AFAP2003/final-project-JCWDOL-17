@@ -1,6 +1,5 @@
 'use client';
 
-import {  useEffect } from 'react';
 import UserManagementskeleton from './_components/userManagementSkeleton';
 import UserManagementTable from './_components/userManagementTable';
 import UserManagementFilter from './_components/userManagementFilter';
@@ -15,19 +14,18 @@ export default function UserManagement() {
     dialogOpen,
     isEditMode,
     formik,
-    table, 
+    table,
     globalFilter,
     handleSearchChange,
     handleVerificationFilter,
-    fetchUsers,
     handleDeleteUser,
     setDialogOpen,
     setIsEditMode,
     setEditingUserId,
+    stores,
+    handleRoleFilter,
+    columns,
   } = useUserManagement();
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
   if (isLoading) {
     return <UserManagementskeleton />;
@@ -42,6 +40,9 @@ export default function UserManagement() {
           setDialogOpen={setDialogOpen}
           formik={formik}
           isEditMode={isEditMode}
+          stores={stores}
+          setEditingUserId={setEditingUserId}
+          setIsEditMode={setIsEditMode}
         />
       </div>
 
@@ -52,6 +53,7 @@ export default function UserManagement() {
         handleSearchChange={handleSearchChange}
         handleVerificationFilter={handleVerificationFilter}
         table={table}
+        handleRoleFilter={handleRoleFilter}
       />
 
       {/* Main table */}
@@ -60,6 +62,7 @@ export default function UserManagement() {
         users={users}
         formik={formik}
         table={table}
+        columns={columns}
         onDelete={handleDeleteUser}
         onStartEdit={(user) => {
           setIsEditMode(true);
