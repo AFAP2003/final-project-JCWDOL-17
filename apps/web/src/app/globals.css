@@ -92,6 +92,11 @@
   }
 }
 
+/* --------------------- Swiper related thing -------------------- */
+.swiper-scrollbar-drag {
+  @apply !bg-neutral-400/50;
+}
+
 /* --------------------- leaflet related thing -------------------- */
 .leaflet-container {
   @apply aspect-video;
