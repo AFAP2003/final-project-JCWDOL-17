@@ -1,3 +1,5 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Popover,
@@ -8,6 +10,8 @@ import { signOut } from '@/lib/auth/client';
 import { Session } from '@/lib/types/session';
 import { LogOut, Settings } from 'lucide-react';
 import Link from 'next/link';
+// import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Separator } from '../ui/separator';
 
 type Props = {
@@ -15,15 +19,23 @@ type Props = {
 };
 
 export default function AvatarPopup({ session: { session, user } }: Props) {
+  // const router = useRouter();
+  const [openPopup, setOpenPopup] = useState<boolean>(false);
+
   return (
-    <Popover>
+    <Popover
+      open={openPopup}
+      onOpenChange={(val) => {
+        setOpenPopup(val);
+      }}
+    >
       <PopoverTrigger>
         <div className="flex gap-2 items-center">
-          <Avatar>
+          <Avatar className="size-10">
             <AvatarImage src={user.image} alt="User Image"></AvatarImage>
-            <AvatarFallback>{`${user.firstName.at(0)?.toUpperCase()}${user.lastName ? user.lastName.at(0)?.toUpperCase() : user.firstName.at(1)?.toUpperCase()}`}</AvatarFallback>
+            <AvatarFallback className="bg-neutral-200 text-neutral-800">{`${user.name.at(0)?.toUpperCase()}`}</AvatarFallback>
           </Avatar>
-          <div className="">{user.firstName}</div>
+          {/* <div className="">{user.name.split(' ').at(0)}</div> */}
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-96">
@@ -32,9 +44,9 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
           <div className="flex items-center rounded-sm gap-4">
             <Avatar className="">
               <AvatarImage src={user.image} alt="User Image"></AvatarImage>
-              <AvatarFallback>{`${user.firstName.at(0)?.toUpperCase()}${user.lastName ? user.lastName.at(0)?.toUpperCase() : user.firstName.at(1)?.toUpperCase()}`}</AvatarFallback>
+              <AvatarFallback className="bg-neutral-200 text-neutral-800">{`${user.name.at(0)?.toUpperCase()}`}</AvatarFallback>
             </Avatar>
-            <div>{user.fullName}</div>
+            <div>{user.name}</div>
           </div>
 
           <Separator className="my-4" />
@@ -50,7 +62,11 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
             <div className="flex flex-col h-full justify-between min-w-32">
               {/* Right Content Top */}
               <div>
-                <Link href={'/user/settings'} passHref>
+                <Link
+                  href={'/user/settings'}
+                  onClick={() => setOpenPopup(false)}
+                  passHref
+                >
                   <div className="flex items-center gap-2 hover:bg-gray-100 rounded-sm px-2 py-1 cursor-pointer">
                     <Settings className="size-4" /> Settings
                   </div>
@@ -58,12 +74,17 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
               </div>
 
               {/* Right Content Bottom */}
-              <div
-                onClick={() => signOut()}
+              <button
+                onClick={async () => {
+                  await signOut();
+                  window.location.reload();
+                  // setOpenPopup(false);
+                  // router.refresh();
+                }}
                 className="flex gap-2 items-center cursor-pointer hover:bg-gray-100 rounded-sm px-2 py-1"
               >
                 Logout <LogOut className="size-4" />
-              </div>
+              </button>
             </div>
           </div>
         </div>

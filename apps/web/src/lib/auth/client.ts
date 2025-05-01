@@ -7,7 +7,7 @@ export const authClient = createAuthClient({
   plugins: [],
 });
 
-export const { signIn, signOut, signUp, listSessions } = authClient;
+export const { signIn, signOut, signUp } = authClient;
 
 export function useSession() {
   const { data, error, isPending, refetch } = authClient.useSession();

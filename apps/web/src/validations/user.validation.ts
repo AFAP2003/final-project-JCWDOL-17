@@ -5,14 +5,9 @@ export interface MyFormValues {
   nama: string;
   email: string;
   password: string;
-  alamat: string;
   toko: string;
-  kode_rujukan: string;
   role: string;
-  verifikasi: boolean;
-  deskripsi: string;
-  kategoriId: number;
-  harga: number;
+  
 }
 
 export const getValidationSchema = (isEditMode: boolean) =>

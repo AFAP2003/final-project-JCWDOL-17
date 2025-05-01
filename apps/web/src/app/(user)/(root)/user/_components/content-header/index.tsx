@@ -6,8 +6,6 @@ type Props = {
 
 export default function ContentHeader({ children }: Props) {
   return (
-    <div className="p-2 text-2xl font-semibold h-[72px] flex w-full items-center">
-      {children}
-    </div>
+    <div className="text-2xl font-semibold text-neutral-800">{children}</div>
   );
 }

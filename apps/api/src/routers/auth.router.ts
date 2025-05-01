@@ -38,7 +38,25 @@ export class AuthRouter {
     this.router.get(
       '/sessions',
       withAuthentication,
-      asynchandler(this.controller.listSession),
+      asynchandler(this.controller.getAllSession),
+    );
+
+    this.router.post(
+      '/sessions/revoke',
+      withAuthentication,
+      asynchandler(this.controller.revokeSession),
+    );
+
+    this.router.get(
+      '/accounts',
+      withAuthentication,
+      asynchandler(this.controller.getAllAccount),
+    );
+
+    this.router.post(
+      '/accounts/link',
+      withAuthentication,
+      asynchandler(this.controller.accountLink),
     );
   }
 
