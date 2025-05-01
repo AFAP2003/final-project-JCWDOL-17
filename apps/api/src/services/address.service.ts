@@ -174,14 +174,10 @@ export class AddressService {
     const addresses: (Address & { count: number })[] =
       await prismaclient.$queryRaw(query);
 
-    if (addresses.length <= 0) {
-      return { addresses: [], metadata: {} };
-    }
-
     const metadata = calculateMetadataPagination({
       page: dto.page,
       pageSize: dto.pageSize,
-      totalRecord: addresses[0].count,
+      totalRecord: addresses.length > 0 ? addresses[0].count : 0,
     });
 
     return {

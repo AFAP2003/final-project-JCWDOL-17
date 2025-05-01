@@ -17,7 +17,7 @@ export default function Footer() {
   return (
     <footer
       className={cn(
-        'relative translate-y-[220px] transition-all duration-500 bg-neutral-800 text-neutral-200 px-6 md:px-9 pb-6 pt-12',
+        'relative translate-y-[220px] transition-all duration-500 bg-neutral-800 text-neutral-200 max-xl:px-6 pb-6 pt-12',
         // isFullNavbar && 'translate-y-[220px]',
       )}
     >
