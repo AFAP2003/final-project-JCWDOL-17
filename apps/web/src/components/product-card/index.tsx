@@ -71,7 +71,7 @@ export default function ProductCard({ product }: Props) {
                 src={images[1].imageUrl}
                 alt={product.name}
                 fill
-                className="object-cover absolute opacity-0 group-hover/image:opacity-100 transition-all duration-500 "
+                className="object-cover absolute opacity-0 group-hover/image:opacity-100 transition-all duration-300 "
               />
             </div>
           ) : (
@@ -97,7 +97,7 @@ export default function ProductCard({ product }: Props) {
             </div>
           </div>
 
-          <Button className="w-full bg-neutral-800">
+          <Button className="w-full bg-neutral-800 hover:bg-neutral-800/95 text-neutral-100 hover:text-neutral-200">
             <ShoppingBasket className="size-12" />
             Tambahkan
           </Button>
