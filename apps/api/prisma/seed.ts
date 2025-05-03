@@ -1,6 +1,7 @@
-import { Category, PrismaClient, Product, User } from '@prisma/client';
+import { Category, PrismaClient, Product, Store, User } from '@prisma/client';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { add } from 'date-fns/add';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { v4 as uuid } from 'uuid';
@@ -69,6 +70,14 @@ async function SEED_STORE_ADMIN() {
     {
       email: 'thebatman.gogrocery@mailinator.com',
       name: 'The Batman',
+    },
+    {
+      email: 'themanbehindyou.gogrocery@mailinator.com',
+      name: 'The Man Behind You',
+    },
+    {
+      email: 'thehash.gogrocery@mailinator.com',
+      name: 'The Hash Slinging Slasher',
     },
   ];
 
@@ -921,6 +930,225 @@ async function SEED_PRODUCT(categories: Category[]) {
   return result;
 }
 
+async function SEED_STORES(admins: User[]) {
+  const stores = [
+    {
+      name: 'Toko Jakarta',
+      address: 'Jl. Sudirman No. 1',
+      city: 'Jakarta',
+      province: 'DKI Jakarta',
+      postalCode: '10220',
+      latitude: -6.2088,
+      longitude: 106.8456,
+    },
+    {
+      name: 'Toko Bandung',
+      address: 'Jl. Asia Afrika No. 2',
+      city: 'Bandung',
+      province: 'Jawa Barat',
+      postalCode: '40111',
+      latitude: -6.9175,
+      longitude: 107.6191,
+    },
+    {
+      name: 'Toko Cirebon',
+      address: 'Jl. Siliwangi No. 3',
+      city: 'Cirebon',
+      province: 'Jawa Barat',
+      postalCode: '45121',
+      latitude: -6.732,
+      longitude: 108.5523,
+    },
+    {
+      name: 'Toko Semarang',
+      address: 'Jl. Pemuda No. 4',
+      city: 'Semarang',
+      province: 'Jawa Tengah',
+      postalCode: '50139',
+      latitude: -6.9667,
+      longitude: 110.4167,
+    },
+    {
+      name: 'Toko Yogyakarta',
+      address: 'Jl. Malioboro No. 5',
+      city: 'Yogyakarta',
+      province: 'DI Yogyakarta',
+      postalCode: '55213',
+      latitude: -7.7956,
+      longitude: 110.3695,
+    },
+    {
+      name: 'Toko Surabaya',
+      address: 'Jl. Tunjungan No. 6',
+      city: 'Surabaya',
+      province: 'Jawa Timur',
+      postalCode: '60275',
+      latitude: -7.2575,
+      longitude: 112.7521,
+    },
+    {
+      name: 'Toko Malang',
+      address: 'Jl. Ijen No. 7',
+      city: 'Malang',
+      province: 'Jawa Timur',
+      postalCode: '65112',
+      latitude: -7.9819,
+      longitude: 112.6265,
+    },
+  ];
+
+  if (admins.length < stores.length) {
+    throw new Error(
+      `Unsufficient admins store, add more ${stores.length - admins.length} admin.`,
+    );
+  }
+
+  let result: Store[] = [];
+  for (let i = 0; i < stores.length; i++) {
+    const store = stores[i];
+    const admin = admins[i];
+
+    const newstore = await prisma.store.create({
+      data: {
+        name: store.name,
+        address: store.address,
+        city: store.city,
+        province: store.province,
+        postalCode: store.postalCode,
+        latitude: store.latitude,
+        longitude: store.longitude,
+        maxDistance: 10,
+        adminId: admin.id,
+      },
+    });
+
+    result.push(newstore);
+  }
+  return result;
+}
+
+// untuk seed discount ada pada produk ke 1,2,3,4,5 untuk masing2 kategori.
+// note: setiap category ada 10 produk
+// untuk toko ada pada toko ke 1
+async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
+  const currentDate = new Date();
+  const nextMonth = add(currentDate, { months: 1 });
+
+  const productData = products.filter((product, idx) => {
+    const shiftIndex = idx + 1;
+    return shiftIndex % 10 <= 5;
+  });
+
+  const s1 = stores[0];
+
+  for (let i = 0; i < productData.length; i++) {
+    const x = i % 5;
+    switch (x) {
+      // untuk produk ke 1 dari masing-masing kategori insert buy 1 get one
+      case 0:
+        await prisma.discount.create({
+          data: {
+            name: 'Buy One Get One',
+            description:
+              'Dapatkan promo satu produk tambahan secara gratis. Promo ini berlaku dalam periode terbatas. Manfaatkan kesempatan ini untuk menggandakan pembelian Anda tanpa biaya tambahan!',
+            type: 'BUY_X_GET_Y',
+            buyQuantity: 1,
+            getQuantity: 1,
+            startDate: currentDate,
+            endDate: nextMonth,
+            storeId: s1.id,
+            products: {
+              connect: [productData[i]],
+            },
+          },
+        });
+        break;
+
+      // untuk produk ke 2 dan 3 masing2 kategori insert promo bersyarat
+      case 1:
+        await prisma.discount.create({
+          data: {
+            name: 'Big Deal 10k',
+            description:
+              'Diskon potongan harga 20% hingga maksimal Rp10.000 dengan minimal pembelian Rp20.000. Berlaku dalam periode terbatas.',
+            type: 'WITH_MAX_PRICE',
+            isPercentage: true,
+            value: 20,
+            maxDiscount: 10000,
+            minPurchase: 20000,
+            startDate: currentDate,
+            endDate: nextMonth,
+            storeId: s1.id,
+            products: {
+              connect: [productData[i]],
+            },
+          },
+        });
+        break;
+      case 2:
+        await prisma.discount.create({
+          data: {
+            name: 'Big Deal 20k',
+            description:
+              'Diskon potongan harga Rp20.000 dengan minimal pembelian Rp100.000. Berlaku dalam periode terbatas.',
+            type: 'WITH_MAX_PRICE',
+            isPercentage: false,
+            value: 20000,
+            minPurchase: 100000,
+            startDate: currentDate,
+            endDate: nextMonth,
+            storeId: s1.id,
+            products: {
+              connect: [productData[i]],
+            },
+          },
+        });
+        break;
+
+      // untuk produk 4 dan 5 NO RULES DISCOUNT
+      case 3:
+        await prisma.discount.create({
+          data: {
+            name: 'Hemat 6k',
+            description:
+              'Diskon potongan harga 30% hingga maksimal Rp6.000 tanpa syarat. Berlaku dalam periode terbatas.',
+            type: 'NO_RULES_DISCOUNT',
+            isPercentage: true,
+            value: 30,
+            maxDiscount: 6000,
+            startDate: currentDate,
+            endDate: nextMonth,
+            storeId: s1.id,
+            products: {
+              connect: [productData[i]],
+            },
+          },
+        });
+        break;
+
+      case 4:
+        if (productData[i].price.gte(20000)) {
+          await prisma.discount.create({
+            data: {
+              name: 'Hemat 5k',
+              description:
+                'Diskon potongan harga Rp5.000 tanpa syarat. Berlaku dalam periode terbatas.',
+              type: 'NO_RULES_DISCOUNT',
+              isPercentage: false,
+              value: 5000,
+              startDate: currentDate,
+              endDate: nextMonth,
+              storeId: s1.id,
+              products: {
+                connect: [productData[i]],
+              },
+            },
+          });
+        }
+    }
+  }
+}
+
 async function main() {
   ['.env', 'env.local'].forEach((envfile) =>
     config({ path: resolve(__dirname, `../${envfile}`), override: true }),
@@ -932,6 +1160,8 @@ async function main() {
   const users = await SEED_USER();
   const categories = await SEED_PRODUCT_CATEGORY();
   const products = await SEED_PRODUCT(categories);
+  const stores = await SEED_STORES(admins);
+  const productDiscounts = await SEED_PRODUCT_DISCOUNT(products, stores);
 }
 
 main()
