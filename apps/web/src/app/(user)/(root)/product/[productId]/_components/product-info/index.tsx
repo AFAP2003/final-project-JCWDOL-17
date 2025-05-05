@@ -16,7 +16,7 @@ import { formatCurrency } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { id as Indo } from 'date-fns/locale';
-import { ImageIcon, ShoppingBasket } from 'lucide-react';
+import { ImageIcon, MinusIcon, PlusIcon, ShoppingBasket } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
@@ -28,8 +28,9 @@ type Props = {
   productId: string;
 };
 
-export default function Content({ productId }: Props) {
+export default function ProductInfo({ productId }: Props) {
   const [selectedImage, setSelectedImage] = useState<string | undefined>();
+  const [count, setCount] = useState(1);
 
   const { data, isPending, error } = useQuery({
     queryKey: ['getbyid:product', productId],
@@ -188,9 +189,42 @@ export default function Content({ productId }: Props) {
             </AccordionItem>
           </Accordion>
 
-          <button className="w-full flex items-center justify-center gap-3 bg-neutral-800 p-3 rounded-md text-neutral-200 mt-auto">
-            <ShoppingBasket /> Tambahkan Keranjang
-          </button>
+          <div className="w-full space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Quantity</span>
+              <div className="flex items-center border border-neutral-300 rounded-md overflow-hidden">
+                <button
+                  onClick={() => setCount((prev) => Math.max(1, prev - 1))}
+                  className="px-2 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors"
+                >
+                  <MinusIcon className="size-full" />
+                </button>
+                <span className="px-4 py-2 min-w-[50px] text-center">
+                  {count}
+                </span>
+                <button
+                  onClick={() => setCount((prev) => prev + 1)}
+                  className="px-2 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors"
+                >
+                  <PlusIcon />
+                </button>
+              </div>
+            </div>
+
+            <button
+              className="w-full flex items-center justify-center gap-3 bg-neutral-800 p-3 rounded-md text-neutral-200 disabled:cursor-not-allowed"
+              disabled={count <= 0}
+              onClick={() => {
+                if (count > 0) {
+                  toast({
+                    description: `${count} item(s) added to cart`,
+                  });
+                }
+              }}
+            >
+              <ShoppingBasket /> Tambahkan Keranjang {`(${count})`}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import MaxWidthWrapper from '@/components/max-width-wrapper';
 import { notFound } from 'next/navigation';
-import Content from './_components/content';
+import ProductInfo from './_components/product-info';
 import SimilarProduct from './_components/similar-product';
 
 type Props = {
@@ -9,12 +9,12 @@ type Props = {
   };
 };
 
-export default function ProductDetail({ params }: Props) {
+export default function ProductDetailPage({ params }: Props) {
   if (!params?.productId) notFound();
 
   return (
     <MaxWidthWrapper>
-      <Content productId={params.productId} />
+      <ProductInfo productId={params.productId} />
       <SimilarProduct productId={params.productId} />
     </MaxWidthWrapper>
   );
