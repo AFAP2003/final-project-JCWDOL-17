@@ -803,7 +803,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       weight: 0.1,
       categoryId: kebutuhan_rumah.id,
       images: [
-        '/product/kebutuhan-rumah/lemon-twist-sos-750ml-01.webp',
+        '/product/kebutuhan-rumah/mama-lime-60ml-01.webp',
         '/product/kebutuhan-rumah/mama-lime-60ml-02.webp',
       ],
     },
@@ -1035,9 +1035,10 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
   const nextMonth = add(currentDate, { months: 1 });
 
   const productData = products.filter((product, idx) => {
-    const shiftIndex = idx + 1;
-    return shiftIndex % 10 <= 5;
+    return idx % 10 <= 4;
   });
+  console.log(products.length);
+  console.log(productData.length);
 
   const s1 = stores[0];
 
@@ -1085,6 +1086,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
           },
         });
         break;
+
       case 2:
         await prisma.discount.create({
           data: {

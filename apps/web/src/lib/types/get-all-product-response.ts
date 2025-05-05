@@ -33,6 +33,7 @@ export interface GetAllProductResponse {
       description?: string;
       type: 'NO_RULES_DISCOUNT' | 'WITH_MAX_PRICE' | 'BUY_X_GET_Y';
       value?: number;
+      isPercentage?: boolean;
       minPurchase?: number;
       maxDiscount?: number;
       startDate: string;

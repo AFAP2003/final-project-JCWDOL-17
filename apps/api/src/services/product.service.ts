@@ -1,4 +1,6 @@
 import { ProductGetAllDTO } from '@/dtos/product-get-all.dto';
+import { ProductGetByIdDTO } from '@/dtos/product-get-by-id.dto';
+import { InternalSeverError, NotFoundError } from '@/errors';
 import { currentDate } from '@/helpers/datetime';
 import { calculateMetadataPagination } from '@/helpers/pagination';
 import { prismaclient } from '@/prisma';
@@ -12,7 +14,12 @@ import {
 import { z } from 'zod';
 
 export class ProductService {
-  getAll = async (dto: z.infer<typeof ProductGetAllDTO>) => {
+  getAll = async (
+    dto: z.infer<typeof ProductGetAllDTO>,
+    option?: {
+      excludeIds: string[];
+    },
+  ) => {
     const searchterm = (() => {
       const term = dto.query?.trim()
         ? dto.query
@@ -100,7 +107,16 @@ export class ProductService {
       dto.category.forEach((name) => {
         builder.push(Prisma.sql`c."name" = ${name}`);
       });
-      return Prisma.sql`AND ${Prisma.join(builder, ' AND ')}`;
+      return Prisma.sql`AND (${Prisma.join(builder, ' OR ')})`;
+    })();
+
+    const exclude = (() => {
+      if (!option?.excludeIds || option.excludeIds.length === 0) {
+        return Prisma.empty;
+      }
+
+      const ids = option.excludeIds.map((id) => Prisma.sql`${id}`);
+      return Prisma.sql`AND p."id" NOT IN (${Prisma.join(ids, ', ')})`;
     })();
 
     const query = Prisma.sql`
@@ -116,6 +132,7 @@ export class ProductService {
           ${filterPrice}
           ${filterPromo}
           ${filterCategory}
+          ${exclude}
 
       ),
       product_page AS (
@@ -223,34 +240,50 @@ export class ProductService {
       }
 
       if (row.image_id) {
-        productsMap.get(row.id)!.images.push({
-          id: row.image_id,
-          productId: row.id,
-          imageUrl: row.image_url,
-          isMain: row.image_isMain,
-          createdAt: row.image_createdAt,
-        });
+        const product = productsMap.get(row.id);
+        if (!product) {
+          throw new InternalSeverError(`Missing product id ${row.id}`);
+        }
+
+        if (!product.images.some((image) => image.id === row.image_id)) {
+          productsMap.get(row.id)!.images.push({
+            id: row.image_id,
+            productId: row.id,
+            imageUrl: row.image_url,
+            isMain: row.image_isMain,
+            createdAt: row.image_createdAt,
+          });
+        }
       }
 
       if (row.discount_id) {
-        productsMap.get(row.id)!.discounts.push({
-          id: row.discount_id,
-          storeId: row.discount_storeId,
-          name: row.discount_name,
-          description: row.discount_description,
-          type: row.discount_type,
-          value: row.discount_value,
-          isPercentage: row.discount_isPercentage,
-          minPurchase: row.discount_minPurchase,
-          maxDiscount: row.discount_maxDiscount,
-          buyQuantity: row.discount_buyQuantity,
-          getQuantity: row.discount_getQuantity,
-          startDate: row.discount_startDate,
-          endDate: row.discount_endDate,
-          isActive: row.discount_isActive,
-          createdAt: row.discount_createdAt,
-          updatedAt: row.discount_updatedAt,
-        });
+        const product = productsMap.get(row.id);
+        if (!product) {
+          throw new InternalSeverError(`Missing product id ${row.id}`);
+        }
+
+        if (
+          !product.discounts.some((discount) => discount.id === row.discount_id)
+        ) {
+          productsMap.get(row.id)!.discounts.push({
+            id: row.discount_id,
+            storeId: row.discount_storeId,
+            name: row.discount_name,
+            description: row.discount_description,
+            type: row.discount_type,
+            value: row.discount_value,
+            isPercentage: row.discount_isPercentage,
+            minPurchase: row.discount_minPurchase,
+            maxDiscount: row.discount_maxDiscount,
+            buyQuantity: row.discount_buyQuantity,
+            getQuantity: row.discount_getQuantity,
+            startDate: row.discount_startDate,
+            endDate: row.discount_endDate,
+            isActive: row.discount_isActive,
+            createdAt: row.discount_createdAt,
+            updatedAt: row.discount_updatedAt,
+          });
+        }
       }
     }
 
@@ -264,5 +297,21 @@ export class ProductService {
       products: Array.from(productsMap.values()),
       metadata: metadata,
     };
+  };
+
+  getById = async (dto: z.infer<typeof ProductGetByIdDTO>) => {
+    const product = await prismaclient.product.findUnique({
+      where: {
+        id: dto.productId,
+      },
+      include: {
+        images: true,
+        category: true,
+        discounts: true,
+      },
+    });
+    if (!product) throw new NotFoundError();
+
+    return product;
   };
 }

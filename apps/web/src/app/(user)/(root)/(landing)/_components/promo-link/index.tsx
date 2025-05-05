@@ -16,7 +16,7 @@ export default function PromoLink() {
           <LinkInfo
             subtitle="Buy one Get one"
             title="Double the Fun"
-            href="/#"
+            href="/search?promo=bogo"
           />
         </div>
 
@@ -32,7 +32,7 @@ export default function PromoLink() {
           <LinkInfo
             subtitle="Diskon Langsung Tanpa Ribet!"
             title="Flash Deals"
-            href="/#"
+            href="/search?promo=no-rules"
           />
         </div>
         <div className="group relative col-span-1 row-span-1 rounded-md max-sm:h-[240px] overflow-hidden">
@@ -46,7 +46,7 @@ export default function PromoLink() {
           <LinkInfo
             subtitle="Belanja Lebih, Hemat Lebih!"
             title="Big Spender"
-            href="/#"
+            href="/search?promo=max-price"
           />
         </div>
       </div>

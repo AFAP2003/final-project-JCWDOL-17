@@ -15,7 +15,7 @@ export default function HighestSoldProduct() {
     queryKey: ['all:product', 'highest:sold'],
     queryFn: async () => {
       const { data } = await apiclient.get(
-        '/product?orderBy=createdAt&pageSize=10',
+        '/product?orderBy=createdAt&pageSize=10&promo=no-rules,max-price,bogo',
       );
       return data as GetAllProductResponse;
     },
@@ -65,6 +65,7 @@ export default function HighestSoldProduct() {
           modules={[Navigation]}
           mousewheel={true}
           navigation={true}
+          autoHeight={true}
           // slidesPerView={6}
         >
           {data.products.map((product, idx) => (
