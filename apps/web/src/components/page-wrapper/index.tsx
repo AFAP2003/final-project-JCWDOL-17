@@ -13,7 +13,7 @@ export default function PageWrapper({ children }: Props) {
   return (
     <div
       className={cn(
-        'relative grow flex flex-col translate-y-[220px] transition-all duration-100',
+        'grow flex flex-col translate-y-[220px] transition-all duration-100',
         // isFullNavbar && 'translate-y-[220px]',
       )}
     >

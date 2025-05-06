@@ -20,47 +20,6 @@ import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-// Mock data for development
-const items = [
-  {
-    id: '1',
-    quantity: 2,
-    product: {
-      name: 'Pakcoy',
-      description: 'Sayuran pakcoy yang sehat dan enak',
-      price: 129.99,
-      images: [
-        {
-          imageUrl:
-            'https://random-image-pepebigotes.vercel.app/api/random-image',
-          isMain: true,
-        },
-        {
-          imageUrl:
-            'https://random-image-pepebigotes.vercel.app/api/random-image',
-          isMain: false,
-        },
-      ],
-    },
-  },
-  {
-    id: '2',
-    quantity: 1,
-    product: {
-      name: 'Sayuran Bagus',
-      description: 'Saturan yang enak dan bagus',
-      price: 89.99,
-      images: [
-        {
-          imageUrl:
-            'https://random-image-pepebigotes.vercel.app/api/random-image',
-          isMain: true,
-        },
-      ],
-    },
-  },
-];
-
 export default function Cart() {
   const {
     items,
