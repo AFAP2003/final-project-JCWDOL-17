@@ -5,10 +5,10 @@ import { add } from 'date-fns/add';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { v4 as uuid } from 'uuid';
+import { prismaclient } from '../src/prisma';
 
-const prisma = new PrismaClient();
 const auth = betterAuth({
-  database: prismaAdapter(prisma, {
+  database: prismaAdapter(prismaclient, {
     provider: 'postgresql',
   }),
 });
@@ -18,15 +18,24 @@ async function SEED_SUPER_ADMIN() {
 
   const superemail = process.env.SUPER_ADMIN_EMAIL;
   if (!superemail) {
-    throw new Error('No super admin email was provided on evironment');
+    throw new Error('No super admin email was provided on environment');
   }
   const superpassword = process.env.SUPER_ADMIN_PASSWORD;
   if (!superpassword) {
-    throw new Error('No super admin password was provided on evironment');
+    throw new Error('No super admin password was provided on environment');
   }
-  // Seed Super Admin
-  const superadmin = await prisma.user.create({
-    data: {
+
+  const superadmin = await prismaclient.user.upsert({
+    where: { email: superemail },
+    update: {
+      emailVerified: true,
+      name: 'John Doe',
+      role: 'SUPER',
+      signupMethod: {
+        set: ['CREDENTIAL'],
+      },
+    },
+    create: {
       email: superemail,
       emailVerified: true,
       name: 'John Doe',
@@ -37,14 +46,20 @@ async function SEED_SUPER_ADMIN() {
     },
   });
 
-  await prisma.account.create({
-    data: {
-      accountId: superadmin.id,
-      userId: superadmin.id,
-      providerId: 'credential',
-      password: await ctx.password.hash(superpassword),
-    },
+  const existingAccount = await prismaclient.account.findFirst({
+    where: { accountId: superadmin.id },
   });
+
+  if (!existingAccount) {
+    await prismaclient.account.create({
+      data: {
+        accountId: superadmin.id,
+        userId: superadmin.id,
+        providerId: 'credential',
+        password: await ctx.password.hash(superpassword),
+      },
+    });
+  }
 
   return { superId: superadmin.id };
 }
@@ -85,7 +100,7 @@ async function SEED_STORE_ADMIN() {
 
   const admins: User[] = [];
   for (const data of datas) {
-    const admin = await prisma.user.create({
+    const admin = await prismaclient.user.create({
       data: {
         email: data.email,
         emailVerified: true,
@@ -96,7 +111,7 @@ async function SEED_STORE_ADMIN() {
         },
       },
     });
-    await prisma.account.create({
+    await prismaclient.account.create({
       data: {
         accountId: admin.id,
         userId: admin.id,
@@ -126,7 +141,7 @@ async function SEED_USER() {
 
   const users: User[] = [];
   for (const data of datas) {
-    const user = await prisma.user.create({
+    const user = await prismaclient.user.create({
       data: {
         email: data.email,
         emailVerified: true,
@@ -137,7 +152,7 @@ async function SEED_USER() {
         },
       },
     });
-    await prisma.account.create({
+    await prismaclient.account.create({
       data: {
         accountId: user.id,
         userId: user.id,
@@ -207,7 +222,7 @@ async function SEED_PRODUCT_CATEGORY() {
 
   let result: Category[] = [];
   for (const data of datas) {
-    const category = await prisma.category.create({
+    const category = await prismaclient.category.create({
       data: {
         name: data.name,
         image: data.image,
@@ -902,7 +917,7 @@ async function SEED_PRODUCT(categories: Category[]) {
 
   let result: Product[] = [];
   for (const data of datas) {
-    const product = await prisma.product.create({
+    const product = await prismaclient.product.create({
       data: {
         name: data.name,
         description: data.description,
@@ -914,7 +929,7 @@ async function SEED_PRODUCT(categories: Category[]) {
     });
 
     if (data.images.length) {
-      await prisma.productImage.createMany({
+      await prismaclient.productImage.createMany({
         data: data.images.map((imgurl, idx) => {
           return {
             imageUrl: imgurl,
@@ -1008,7 +1023,7 @@ async function SEED_STORES(admins: User[]) {
     const store = stores[i];
     const admin = admins[i];
 
-    const newstore = await prisma.store.create({
+    const newstore = await prismaclient.store.create({
       data: {
         name: store.name,
         address: store.address,
@@ -1047,7 +1062,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
     switch (x) {
       // untuk produk ke 1 dari masing-masing kategori insert buy 1 get one
       case 0:
-        await prisma.discount.create({
+        await prismaclient.discount.create({
           data: {
             name: 'Buy One Get One',
             description:
@@ -1067,7 +1082,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
 
       // untuk produk ke 2 dan 3 masing2 kategori insert promo bersyarat
       case 1:
-        await prisma.discount.create({
+        await prismaclient.discount.create({
           data: {
             name: 'Big Deal 10k',
             description:
@@ -1088,7 +1103,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
         break;
 
       case 2:
-        await prisma.discount.create({
+        await prismaclient.discount.create({
           data: {
             name: 'Big Deal 20k',
             description:
@@ -1109,7 +1124,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
 
       // untuk produk 4 dan 5 NO RULES DISCOUNT
       case 3:
-        await prisma.discount.create({
+        await prismaclient.discount.create({
           data: {
             name: 'Hemat 6k',
             description:
@@ -1130,7 +1145,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
 
       case 4:
         if (productData[i].price.gte(20000)) {
-          await prisma.discount.create({
+          await prismaclient.discount.create({
             data: {
               name: 'Hemat 5k',
               description:
@@ -1156,14 +1171,32 @@ async function main() {
     config({ path: resolve(__dirname, `../${envfile}`), override: true }),
   );
 
-  // SEED HERE
-  const { superId } = await SEED_SUPER_ADMIN();
-  const admins = await SEED_STORE_ADMIN();
-  const users = await SEED_USER();
-  const categories = await SEED_PRODUCT_CATEGORY();
-  const products = await SEED_PRODUCT(categories);
-  const stores = await SEED_STORES(admins);
-  const productDiscounts = await SEED_PRODUCT_DISCOUNT(products, stores);
+  await prismaclient.$disconnect();
+
+  try {
+    await prismaclient.$transaction(
+      async (tx) => {
+        const { superId } = await SEED_SUPER_ADMIN();
+        const admins = await SEED_STORE_ADMIN();
+        const users = await SEED_USER();
+        const categories = await SEED_PRODUCT_CATEGORY();
+        const products = await SEED_PRODUCT(categories);
+        const stores = await SEED_STORES(admins);
+        const productDiscounts = await SEED_PRODUCT_DISCOUNT(products, stores);
+      },
+      {
+        maxWait: 10000, // 10s max wait
+        timeout: 60000, // 60s transaction timeout
+      },
+    );
+
+    console.log('Seeding completed successfully');
+  } catch (error) {
+    console.error('Error during seeding:', error);
+    throw error;
+  } finally {
+    await prismaclient.$disconnect();
+  }
 }
 
 main()
@@ -1172,5 +1205,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await prismaclient.$disconnect();
   });
