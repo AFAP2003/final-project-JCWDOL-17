@@ -56,7 +56,6 @@ export function userManagementAPI() {
       const userData = await userRes.json();
 
       if (userRes.ok) {
-        fetchUsers(1, 10);
         console.log('User Created Successfully: ', userData);
         toast({
           description: 'User Created Successfully !',
@@ -115,7 +114,6 @@ export function userManagementAPI() {
       const userData = await userRes.json();
 
       if (userRes.ok) {
-        fetchUsers(1, 10);
         toast({
           description: 'User Updated Successfully !',
         });
@@ -151,11 +149,11 @@ export function userManagementAPI() {
       const userData = await userRes.json();
 
       if (userRes.ok) {
-        fetchUsers(1, 10);
         toast({
           description: 'User Deleted Successfully !',
         });
         console.log('User deleted successfully:', userData);
+        return true;
       } else {
         toast({
           variant: 'destructive',

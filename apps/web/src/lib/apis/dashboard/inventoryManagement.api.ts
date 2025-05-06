@@ -96,6 +96,15 @@ export function inventoryManagementAPI() {
 
   const handleUpdateInventory = async (id: string, values) => {
     try {
+      const updateData = {
+        productId: values.produk,
+        storeId: values.toko,
+        minStock: Number(values.minimal),
+        // These fields control the stock adjustment
+        addQuantity: values.mode === 'tambah' ? Number(values.tambah || 0) : 0,
+        subtractQuantity:
+          values.mode === 'kurangi' ? Number(values.kurangi || 0) : 0,
+      };
       const inventoryRes = await fetch(
         `${API_BASE_URL}/dashboard/inventories/${id}`,
         {
@@ -103,12 +112,7 @@ export function inventoryManagementAPI() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            productId: values.produk,
-            storeId: values.toko,
-            quantity: Number(values.tambah || 0),
-            minStock: Number(values.minimal),
-          }),
+          body: JSON.stringify(updateData),
         },
       );
 

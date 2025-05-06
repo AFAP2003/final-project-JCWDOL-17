@@ -53,7 +53,6 @@ export default class App {
     const productCategoryRouter = new ProductCategoryRouter();
     const productRouter = new ProductRouter();
     const cartRouter = new CartRouter();
-
     this.app.use('/api', healthRouter.getRouter());
     this.app.use('/api/auth', authRouter.getRouter());
     this.app.use('/api/user', userRouter.getRouter());

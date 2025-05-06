@@ -1,10 +1,7 @@
 'use client';
 
-import React from 'react';
-import {
-  ChartContainer,
-  ChartConfig,
-} from '@/components/ui/chart';
+import React, { useEffect, useState } from 'react';
+import { ChartContainer, ChartConfig } from '@/components/ui/chart';
 import {
   Select,
   SelectTrigger,
@@ -22,6 +19,9 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
+import reportManagementAPI from '@/lib/apis/dashboard/reportManagement.api';
+import StockReportSkeleton from './stockReportSkeleton';
+import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 
 interface StockRecord {
   product: string;
@@ -38,16 +38,6 @@ interface StockReportProps {
   onYearChange: (y: string) => void;
 }
 
-const stockData: StockRecord[] = [
-  { product: 'Sunmi Beras Putih Premium 5 kg', opening: 145, added: 65, removed: 42, closing: 168 },
-  { product: 'Hati Ayam Organik Hona Farm',       opening: 96,  added: 35, removed: 10, closing: 121 },
-  { product: 'Healthy Republic Bumbu Marinasi Rendang 120 gram', opening: 76, added: 45, removed: 38, closing: 83 },
-];
-
-const totalProducts = 1198;
-const stockAdded    = 2120;
-const stockRemoved  = 1645;
-
 const chartConfig: ChartConfig = {
   total: { label: 'Ringkasan Stok', color: '#2563eb' },
 };
@@ -58,6 +48,27 @@ export default function StockReport({
   onMonthChange,
   onYearChange,
 }: StockReportProps) {
+  const { isLoading, fetchStockReport, stockReport } = reportManagementAPI();
+  const { fetchStores, stores } = storeManagementAPI();
+  const [selectedStore, setSelectedStore] = useState('all');
+
+  useEffect(() => {
+    fetchStockReport(year, month, selectedStore);
+    fetchStores();
+  }, [year, month, selectedStore]);
+
+  if (isLoading) {
+    return <StockReportSkeleton />;
+  }
+
+  // Extract summary and details from stockReport
+  const summary = stockReport?.summary || {
+    totalProducts: 0,
+    stockAdded: 0,
+    stockRemoved: 0,
+  };
+  const details = stockReport?.details || [];
+
   return (
     <>
       <ChartContainer
@@ -67,6 +78,25 @@ export default function StockReport({
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Ringkasan Stok</h2>
           <div className="flex flex-col sm:flex-row gap-4">
+            <Select
+              defaultValue={selectedStore}
+              onValueChange={setSelectedStore}
+            >
+              <SelectTrigger className="w-[130px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Pilih Toko</SelectLabel>
+                  <SelectItem value="all">Semua Toko</SelectItem>
+                  {stores.map((store) => (
+                    <SelectItem value={store.id} key={store.id}>
+                      {store.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
             <Select
               defaultValue={month}
               onValueChange={(value) => onMonthChange(value)}
@@ -78,11 +108,21 @@ export default function StockReport({
                 <SelectGroup>
                   <SelectLabel>Pilih Bulan</SelectLabel>
                   {[
-                    'januari','februari','maret','april','mei','juni',
-                    'juli','agustus','september','oktober','november','desember',
-                  ].map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m.charAt(0).toUpperCase() + m.slice(1)}
+                    'januari',
+                    'februari',
+                    'maret',
+                    'april',
+                    'mei',
+                    'juni',
+                    'juli',
+                    'agustus',
+                    'september',
+                    'oktober',
+                    'november',
+                    'desember',
+                  ].map((label, idx) => (
+                    <SelectItem key={idx} value={`${idx + 1}`}>
+                      {label}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -110,18 +150,20 @@ export default function StockReport({
 
         <div className="sm:grid grid-cols-3 flex flex-col gap-4 mb-4">
           <div className="p-4 rounded bg-gray-50 border text-center">
-            <p className="text-2xl font-bold">{totalProducts.toLocaleString('en-US')}</p>
+            <p className="text-2xl font-bold">
+              {summary.totalProducts.toLocaleString('en-US')}
+            </p>
             <p className="text-sm text-gray-600">Total Produk</p>
           </div>
           <div className="p-4 rounded bg-gray-50 border text-center">
             <p className="text-2xl font-bold text-green-600">
-              +{stockAdded.toLocaleString('en-US')}
+              +{summary.stockAdded.toLocaleString('en-US')}
             </p>
             <p className="text-sm text-gray-600">Tambahan Stok</p>
           </div>
           <div className="p-4 rounded bg-gray-50 border text-center">
             <p className="text-2xl font-bold text-red-600">
-              -{stockRemoved.toLocaleString('en-US')}
+              -{summary.stockRemoved.toLocaleString('en-US')}
             </p>
             <p className="text-sm text-gray-600">Pengurangan Stok</p>
           </div>
@@ -140,7 +182,7 @@ export default function StockReport({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {stockData.map((item, idx) => (
+            {details.map((item, idx) => (
               <TableRow key={idx}>
                 <TableCell>{item.product}</TableCell>
                 <TableCell>{item.opening}</TableCell>

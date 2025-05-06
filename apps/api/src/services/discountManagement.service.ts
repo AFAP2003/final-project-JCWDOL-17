@@ -4,23 +4,22 @@ import { prismaclient } from '@/prisma';
 import discountManagementRepository from '@/repositories/discountManagement.repository';
 import inventoryManagementRepository from '@/repositories/inventoryManagement.repository';
 
-class DiscountManagementService{
-    async listAllDiscounts(){
-        return await discountManagementRepository.getDiscounts()
-    }
-    
-    async createNewDiscount(discountData:Discount){
-        return await discountManagementRepository.createDiscount(discountData)
+class DiscountManagementService {
+  async listAllDiscounts(page = 1, take = 10) {
+    return await discountManagementRepository.getDiscounts(page, take);
+  }
 
-    }
+  async createNewDiscount(discountData: Discount) {
+    return await discountManagementRepository.createDiscount(discountData);
+  }
 
-    async updateDiscountById(id:string,discountData:Discount){
-        return await discountManagementRepository.updateDiscount(id,discountData)
-    }
+  async updateDiscountById(id: string, discountData: Discount) {
+    return await discountManagementRepository.updateDiscount(id, discountData);
+  }
 
-    async deleteDiscountById(id:string){
-        return await discountManagementRepository.deleteDiscount(id)
-    }
+  async deleteDiscountById(id: string) {
+    return await discountManagementRepository.deleteDiscount(id);
+  }
 }
 
-export default new DiscountManagementService()
+export default new DiscountManagementService();

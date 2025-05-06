@@ -8,58 +8,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/utils';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-
 import MaxWidthWrapper from '@/components/max-width-wrapper';
 import { CartSkeleton } from '@/components/skeleton/cart-skeleton';
 import { useCart } from '@/context/cart-provider';
 import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-// Mock data for development
-const items = [
-  {
-    id: '1',
-    quantity: 2,
-    product: {
-      name: 'Pakcoy',
-      description: 'Sayuran pakcoy yang sehat dan enak',
-      price: 129.99,
-      images: [
-        {
-          imageUrl:
-            'https://random-image-pepebigotes.vercel.app/api/random-image',
-          isMain: true,
-        },
-        {
-          imageUrl:
-            'https://random-image-pepebigotes.vercel.app/api/random-image',
-          isMain: false,
-        },
-      ],
-    },
-  },
-  {
-    id: '2',
-    quantity: 1,
-    product: {
-      name: 'Sayuran Bagus',
-      description: 'Saturan yang enak dan bagus',
-      price: 89.99,
-      images: [
-        {
-          imageUrl:
-            'https://random-image-pepebigotes.vercel.app/api/random-image',
-          isMain: true,
-        },
-      ],
-    },
-  },
-];
 
 export default function Cart() {
   const {

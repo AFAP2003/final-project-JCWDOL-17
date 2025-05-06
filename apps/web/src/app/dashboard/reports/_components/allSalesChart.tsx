@@ -1,13 +1,7 @@
 'use client';
 
-import React from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from 'recharts';
+import React, { useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import {
   ChartContainer,
   ChartConfig,
@@ -25,35 +19,35 @@ import {
   SelectLabel,
   SelectItem,
 } from '@/components/ui/select';
+import reportManagementAPI from '@/lib/apis/dashboard/reportManagement.api';
+import AllSalesChartSkeleton from './allSalesChartSkeleton';
 
 interface AllSalesChartProps {
   year: string;
   onYearChange: (year: string) => void;
 }
 
-const salesData = [
-  { month: 'Jan', total: 1200000 },
-  { month: 'Feb', total: 1550000 },
-  { month: 'Mar', total: 670000 },
-  { month: 'Apr', total: 0 },
-  { month: 'Mei', total: 0 },
-  { month: 'Jun', total: 0 },
-  { month: 'Jul', total: 0 },
-  { month: 'Agu', total: 0 },
-  { month: 'Sep', total: 0 },
-  { month: 'Okt', total: 0 },
-  { month: 'Nov', total: 0 },
-  { month: 'Des', total: 0 },
-];
-
 const chartConfig: ChartConfig = {
   total: { label: 'Total Penjualan', color: '#2563eb' },
 };
+
+interface AllSalesChartProps {
+  year: string;
+  onYearChange: (year: string) => void;
+}
 
 export default function AllSalesChart({
   year,
   onYearChange,
 }: AllSalesChartProps) {
+  const { fetchMonthlySales, isLoading, monthlySales } = reportManagementAPI();
+
+  useEffect(() => {
+    fetchMonthlySales(year);
+  }, [year]);
+  if (isLoading) {
+    return <AllSalesChartSkeleton />;
+  }
   return (
     <ChartContainer
       config={chartConfig}
@@ -71,6 +65,13 @@ export default function AllSalesChart({
           <SelectContent>
             <SelectGroup>
               <SelectLabel>Pilih Tahun</SelectLabel>
+              <SelectItem value="2016">2016</SelectItem>
+              <SelectItem value="2017">2017</SelectItem>
+              <SelectItem value="2018">2018</SelectItem>
+              <SelectItem value="2019">2019</SelectItem>
+              <SelectItem value="2020">2020</SelectItem>
+              <SelectItem value="2021">2021</SelectItem>
+              <SelectItem value="2022">2022</SelectItem>
               <SelectItem value="2023">2023</SelectItem>
               <SelectItem value="2024">2024</SelectItem>
               <SelectItem value="2025">2025</SelectItem>
@@ -79,12 +80,17 @@ export default function AllSalesChart({
         </Select>
       </div>
       <BarChart
-        data={salesData}
+        data={monthlySales}
         barSize={24}
         margin={{ top: 10, right: 30, left: 0, bottom: 40 }}
       >
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} />
+        <XAxis
+          dataKey="month"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={10}
+        />
         <YAxis
           tickLine={false}
           axisLine={false}

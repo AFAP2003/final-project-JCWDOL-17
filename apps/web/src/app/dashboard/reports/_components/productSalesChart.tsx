@@ -1,10 +1,7 @@
 'use client';
 
-import React from 'react';
-import {
-  ChartContainer,
-  ChartConfig,
-} from '@/components/ui/chart';
+import React, { useEffect } from 'react';
+import { ChartContainer, ChartConfig } from '@/components/ui/chart';
 import {
   Select,
   SelectTrigger,
@@ -14,6 +11,8 @@ import {
   SelectLabel,
   SelectItem,
 } from '@/components/ui/select';
+import reportManagementAPI from '@/lib/apis/dashboard/reportManagement.api';
+import ProductSalesChartSkeleton from './productSalesChartSkeleton';
 
 interface TopProduct {
   rank: number;
@@ -25,15 +24,9 @@ interface TopProduct {
 interface ProductSalesChartProps {
   month: string;
   year: string;
-  onMonthChange: (m: string) => void;
-  onYearChange: (y: string) => void;
+  onMonthChange: (month: string) => void;
+  onYearChange: (year: string) => void;
 }
-
-const topProductsData: TopProduct[] = [
-  { rank: 1, name: 'Sunmi Beras Putih Premium 5 kg', unitsSold: 716, revenue: 1000000 },
-  { rank: 2, name: 'Hati Ayam Organik Hona Farm', unitsSold: 1027, revenue: 2000000 },
-  { rank: 3, name: 'Healthy Republic Bumbu Marinasi Rendang 120 gram', unitsSold: 533, revenue: 800000 },
-];
 
 const chartConfig: ChartConfig = {
   total: { label: 'Penjualan Terlaris', color: '#2563eb' },
@@ -45,6 +38,15 @@ export default function ProductSalesChart({
   onMonthChange,
   onYearChange,
 }: ProductSalesChartProps) {
+  const { fetchProductSales, productSales, isLoading } = reportManagementAPI();
+
+  useEffect(() => {
+    fetchProductSales(year, month);
+  }, [year, month]);
+
+  if (isLoading) {
+    return <ProductSalesChartSkeleton />;
+  }
   return (
     <ChartContainer
       config={chartConfig}
@@ -76,9 +78,9 @@ export default function ProductSalesChart({
                   'oktober',
                   'november',
                   'desember',
-                ].map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                ].map((label, idx) => (
+                  <SelectItem key={idx} value={`${idx + 1}`}>
+                    {label}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -95,6 +97,13 @@ export default function ProductSalesChart({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Pilih Tahun</SelectLabel>
+                <SelectItem value="2016">2016</SelectItem>
+                <SelectItem value="2017">2017</SelectItem>
+                <SelectItem value="2018">2018</SelectItem>
+                <SelectItem value="2019">2019</SelectItem>
+                <SelectItem value="2020">2020</SelectItem>
+                <SelectItem value="2021">2021</SelectItem>
+                <SelectItem value="2022">2022</SelectItem>
                 <SelectItem value="2023">2023</SelectItem>
                 <SelectItem value="2024">2024</SelectItem>
                 <SelectItem value="2025">2025</SelectItem>
@@ -104,16 +113,19 @@ export default function ProductSalesChart({
         </div>
       </div>
 
-      {topProductsData.map((item) => (
-        <div key={item.rank} className="flex items-center justify-between mb-3">
+      {productSales.map((item, idx) => (
+        <div key={item.id} className="flex items-center justify-between mb-3">
           <div>
             <p className="font-medium text-sm">
-              #{item.rank} {item.name}
+              #{idx + 1} {item.product}
             </p>
-            <p className="text-sm text-gray-600">{item.unitsSold} Produk Terjual</p>
+            <p className="text-sm text-gray-600">
+              {item.unitsSold} Produk Terjual
+            </p>
           </div>
           <p className="font-medium text-sm">
-            Rp {item.revenue.toLocaleString('id-ID', { minimumFractionDigits: 2 })}
+            Rp{' '}
+            {item.revenue.toLocaleString('id-ID', { minimumFractionDigits: 2 })}
           </p>
         </div>
       ))}
