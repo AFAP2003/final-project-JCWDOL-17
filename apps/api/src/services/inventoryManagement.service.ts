@@ -13,8 +13,8 @@ class InventoryManagementService{
 
     }
 
-    async updateInventoryById(id:string,inventoryData:Inventory){
-        return await inventoryManagementRepository.updateInventory(id,inventoryData)
+    async updateInventoryById(id:string,inventoryData:Inventory,addQuantity =0,subtractQuantity=0){
+        return await inventoryManagementRepository.updateInventory(id,inventoryData,addQuantity,subtractQuantity)
     }
 
     async deleteInventoryById(id:string){

@@ -23,15 +23,12 @@ export default function Inventory() {
     categories,
     products,
     handleCategoryFilter,
-    handleStoreFilter
+    handleStoreFilter,
+    setIsEditMode,
+    setEditingInventoryId
   } = UseInventoryManagement();
 
-  // useEffect(() => {
-  //   fetchInventories();
-  //   fetchStores()
-  //   fetchCategories()
-  //   fetchProducts()
-  // }, []);
+
 
   if(isLoading){
     return <InventoryManagementskeleton/>
@@ -48,6 +45,8 @@ export default function Inventory() {
           isEditMode={isEditMode}
           products={products}
           stores={stores}
+          setIsEditMode={setIsEditMode}
+          setEditingInventoryId={setEditingInventoryId}
         />
       </div>
 
@@ -63,7 +62,15 @@ export default function Inventory() {
         handleStoreFilter={handleStoreFilter}
       />
       {/* Main table */}
-      <InventoryManagementTable table={table} columns={columns}/>
+      <InventoryManagementTable 
+      table={table} 
+      columns={columns}
+      onStartEdit={(inv) =>{
+        setIsEditMode(true);
+          setEditingInventoryId(inv.id);
+          setDialogOpen(true);
+      }}
+      />
 
       {/* Pagination */}
       <InventoryManagementPagination table={table} />

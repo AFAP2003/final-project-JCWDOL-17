@@ -11,6 +11,7 @@ import { flexRender, Table as ReactTable } from '@tanstack/react-table';
 interface InventoryManagementTableProps {
   table: ReactTable<any>;
   columns: any[];
+  onStartEdit: (value: any) => void;
 }
 export default function InventoryManagementTable({
   table,

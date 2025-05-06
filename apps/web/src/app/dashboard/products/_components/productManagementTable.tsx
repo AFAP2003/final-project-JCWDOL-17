@@ -11,8 +11,10 @@ import { flexRender, Table as ReactTable } from '@tanstack/react-table';
 interface ProductManagementTableProps{
   table:ReactTable<any>
   columns:any[]
+    onStartEdit: (user: User) => void;
+  
 }
-export default function ProductManagementTable({ table, columns }:ProductManagementTableProps) {
+export default function ProductManagementTable({ table, columns,onStartEdit }:ProductManagementTableProps) {
   return (
     <div className="rounded-md border border-gray-200 overflow-x-auto w-full">
       <Table className="min-w-full">

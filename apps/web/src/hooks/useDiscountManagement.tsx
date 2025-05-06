@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { discountManagementAPI } from '@/lib/apis/dashboard/discountManagement.api';
 import { Discount } from '@/lib/interfaces/discountManagement.interface';
 import {
@@ -19,166 +18,234 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
-
 import { MoreHorizontal } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFormik } from 'formik';
+import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
+import { getValidationSchema } from '@/validations/discount.validation';
 export default function UseDiscountManagement() {
   const {
     discounts,
     isLoading,
-    fetchDiscounts,
+    fetchDiscounts:apiFetchDiscounts,
     handleCreateDiscount,
     handleUpdateDiscount,
     handleDeleteDiscount,
   } = discountManagementAPI();
+  const {stores,fetchStores} = storeManagementAPI()
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingDiscountId, setEditingDiscountId] = useState<string | null>(
-    null,
-  );
+  const [editingDiscountId, setEditingDiscountId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const columns: ColumnDef<Discount>[] = [
-    { accessorKey: 'nama_diskon', header: 'Nama Diskon' },
-    {
-      id: 'tipe_diskon',
-      header: 'Tipe',
-      accessorFn: (row) =>
-        row.tipe_diskon === 'percentage'
-          ? 'Persentase'
-          : row.tipe_diskon === 'nominal'
-            ? 'Nominal'
-            : 'BOGO',
-      cell: ({ getValue }) => getValue(),
+  const [pageCount, setPageCount] = useState(1);
+
+
+ const fetchDiscounts = useCallback(
+     (pageIndex: number, pageSize: number) => {
+       return apiFetchDiscounts(pageIndex, pageSize).then((json) => {
+         if (json?.pagination) {
+           setPageCount(json.pagination.totalPages);
+         }
+         return json;
+       });
+     },
+     [apiFetchDiscounts],
+   );
+ 
+   useEffect(() => {
+     fetchDiscounts(pagination.pageIndex, pagination.pageSize);
+   }, [pagination.pageIndex, pagination.pageSize]);
+
+   useEffect(()=>{
+    fetchStores()
+  },[])
+
+  function toDateOnly(d: Date) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  }
+  
+  function getStatus(start: string, end?: string) {
+    const today = toDateOnly(new Date());
+    const s = toDateOnly(new Date(start));
+    const e = end ? toDateOnly(new Date(end)) : null;
+  
+    if (s > today) return 'Inaktif';
+    if (e && e < today) return 'Kadaluwarsa';
+    return 'Aktif';
+  }
+const columns: ColumnDef<Discount>[] = [
+  {
+    accessorKey: 'name',
+    header: 'Nama',
+  },
+  {
+    accessorKey: 'description',
+    header: 'Deskripsi',
+  },
+ {
+  id: 'tipe_diskon',
+  header: 'Tipe Diskon',
+  accessorFn: row => {
+    switch (row.type) {
+      case 'NO_RULES_DISCOUNT':
+        return 'Diskon Normal'
+      case 'WITH_MAX_PRICE':
+        return 'Diskon Syarat'
+      case 'BUY_X_GET_Y':
+        return 'Beli 1 Gratis 1'
+      default:
+        return row.type
+    }
+  },
+  },
+  {
+    id: 'tipe_nilai_diskon',
+    header: 'Tipe Nilai',
+    accessorFn: row => row.isPercentage ? 'Persentase' : 'Nominal',
+    cell: ({ getValue }) => getValue<string>(),
+    filterFn: 'equalsString',
+  },
+
+  
+  {
+    accessorKey: 'value',
+    header: 'Nilai Diskon',
+    cell: ({ row }) => {
+      const { isPercentage, value } = row.original;
+      const num = Number(value);
+      return isPercentage
+        ? `${num.toLocaleString()}%`
+        : `Rp ${num.toLocaleString()}`;
     },
-    {
-      accessorKey: 'mode_diskon',
-      header: 'Mode',
-      cell: ({ getValue }) => {
-        const mode = getValue<string>();
-        if (mode === 'cart') return 'Cart';
-        if (mode === 'product') return 'Produk';
-        if (mode === 'shipping') return 'Ongkir';
-        return mode;
-      },
+  },
+  {
+    accessorKey: 'minPurchase',
+    header: 'Min. Pembelian',
+    cell: ({ getValue }) => {
+      const v = Number(getValue<string>());
+      return v > 0 ? `Rp ${v.toLocaleString()}` : '-';
     },
-    {
-      accessorKey: 'nilai_diskon',
-      header: 'Nilai Diskon',
-      cell: ({ row }) => {
-        const { tipe_diskon, nilai_diskon } = row.original;
-        if (tipe_diskon === 'percentage') return `${nilai_diskon}%`;
-        if (tipe_diskon === 'nominal')
-          return `Rp ${nilai_diskon.toLocaleString()}`;
-        if (tipe_diskon === 'bogo') return 'Beli 1 Gratis 1';
-        return nilai_diskon;
-      },
+  },
+  {
+    accessorKey: 'maxDiscount',
+    header: 'Potongan Maks.',
+    cell: ({ getValue }) => {
+      const v = Number(getValue<string>());
+      return v > 0 ? `Rp ${v.toLocaleString()}` : '-';
     },
-    {
-      accessorKey: 'min_pembelian',
-      header: 'Min. Pembelian',
-      cell: ({ getValue }) => {
-        const val = getValue<number>();
-        return val > 0 ? `Rp ${val.toLocaleString()}` : '-';
-      },
+  },
+  {
+    accessorKey: 'startDate',
+    header: 'Tanggal Mulai',
+    cell: ({ getValue }) =>
+      new Date(getValue<string>()).toLocaleDateString('id-ID'),
+  },
+  {
+    accessorKey: 'endDate',
+    header: 'Tanggal Kadaluwarsa',
+    cell: ({ getValue }) =>
+      new Date(getValue<string>()).toLocaleDateString('id-ID'),
+  },
+  {
+    id: 'status',
+    header: 'Status',
+    // 👉 indexable value for filtering:
+    accessorFn: row => {
+      const toDateOnly = (d: Date) => { d.setHours(0,0,0,0); return d }
+      const today = toDateOnly(new Date())
+      const start = toDateOnly(new Date(row.startDate))
+      const end   = row.endDate ? toDateOnly(new Date(row.endDate)) : null
+
+      if (start > today)      return 'Inaktif'
+      if (end && end < today) return 'Kadaluwarsa'
+      return 'Aktif'
     },
-    {
-      accessorKey: 'potongan_maks',
-      header: 'Potongan Maks.',
-      cell: ({ getValue }) => {
-        const val = getValue<number>();
-        return val && val > 0 ? `Rp ${val.toLocaleString()}` : '-';
-      },
-    },
-    {
-      accessorKey: 'kode_voucher',
-      header: 'Kode Voucher',
-      cell: ({ getValue }) => getValue<string>() || '-',
-    },
-    {
-      accessorKey: 'batas_penggunaan',
-      header: 'Batas Penggunaan',
-      cell: ({ getValue }) => {
-        const limit = getValue<number>();
-        return limit && limit > 0 ? limit : 'Tidak Terbatas';
-      },
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      accessorFn: (row) => getStatus(row.kadaluwarsa),
-      cell: ({ getValue }) => {
-        const status = getValue<string>();
-        return (
-          <Badge variant={status === 'Aktif' ? 'default' : 'destructive'}>
-            {status}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: 'kadaluwarsa',
-      header: 'Kadaluwarsa',
-      cell: ({ getValue }) => getValue<string>() || '-',
-    },
-    {
-      id: 'aksi',
-      header: 'Aksi',
-      cell: () => (
-        <DropdownMenu>
-          <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
-            <MoreHorizontal className="w-5 h-5" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
-            <DropdownMenuCheckboxItem>Edit</DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem className="text-red-600">
-              Delete
-            </DropdownMenuCheckboxItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ];
+    cell: ({ getValue }) => getValue<string>(),
+    filterFn: 'equalsString',
+  },
+  {
+    id: 'aksi',
+    header: 'Aksi',
+    cell: ({ row }) => {
+      const discount = row.original;
+
+      return (
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <MoreHorizontal />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuCheckboxItem onClick={() => {
+              setIsEditMode(true);
+              setEditingDiscountId(discount.id);
+              setDialogOpen(true);
+              formik.setValues({
+              nama: discount.name,
+              deskripsi: discount.description,
+              toko: discount.storeId ?? 'all',
+              tipe_diskon:
+                discount.type === 'NO_RULES_DISCOUNT' ? 'diskon_normal' :
+                discount.type === 'WITH_MAX_PRICE'  ? 'diskon_syarat' :
+                discount.type === 'BUY_X_GET_Y'      ? 'bogo' :
+                '',
+              tipe_nilai_diskon: discount.isPercentage ? 'percentage' : 'nominal',
+              nilai_diskon: String(discount.value),
+              min_pembelian: String(discount.minPurchase ?? ''),
+              potongan_maks: String(discount.maxDiscount ?? ''),
+              // ensure dates are YYYY-MM-DD for your <input type="date">
+              tanggal_mulai:  discount.startDate.split('T')[0],
+              kadaluwarsa:    discount.endDate?.split('T')[0] ?? '',
+            });
+          }}>
+            Edit
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            className="text-red-600"
+            onClick={() => {
+              /* your delete handler here, e.g.
+                 handleDeleteDiscount(row.original.id!);
+              */
+            }}
+          >
+            Delete
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )}
+  },
+];
 
   const formik = useFormik({
     initialValues: {
-      nama_diskon: '',
+      nama: '',
+      deskripsi:'',
       tipe_diskon: '',
+      tipe_nilai_diskon:'',
       nilai_diskon: '',
       min_pembelian: '',
       potongan_maks: '',
-      kode_voucher: '',
-      batas_penggunaan: '',
-      kadaluwarsa: '',
+      tanggal_mulai: '',
+      tanggal_kadaluwarsa: '',
+
     },
-    validationSchema: Yup.object({
-      nama_diskon: Yup.string().required('Nama wajib diisi'),
-      tipe_diskon: Yup.string().required('Tipe wajib dipilih'),
-      nilai_diskon: Yup.number()
-        .typeError('Masukkan angka')
-        .positive()
-        .required(),
-      min_pembelian: Yup.number().typeError('Masukkan angka').min(0).nullable(),
-      potongan_maks: Yup.number().typeError('Masukkan angka').min(0).nullable(),
-      kode_voucher: Yup.string().nullable(),
-      batas_penggunaan: Yup.number()
-        .typeError('Masukkan angka')
-        .min(0)
-        .nullable(),
-      kadaluwarsa: Yup.date().nullable(),
-    }),
+    validationSchema: getValidationSchema() ,
     onSubmit: (vals, { resetForm }) => {
-      console.log('CREATE DISCOUNT', vals); // put API call here
+      console.log('CREATE DISCOUNT', vals);
       resetForm();
     },
   });
 
   const table = useReactTable({
     data: discounts,
+    manualPagination:true,
+    pageCount,
     columns,
     state: {
       sorting,
@@ -192,22 +259,30 @@ export default function UseDiscountManagement() {
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _c, v) =>
-      [
-        'nama_diskon',
-        'tipe_diskon',
-        'mode_diskon',
-        'nilai_diskon',
-        'min_pembelian',
-        'potongan_maks',
+    globalFilterFn: (row, _col, filterValue) => {
+      const q = String(filterValue).toLowerCase()
+      const colsToSearch = [
+        'name',
+        'description',
+        'tipe_diskon',          
+        'tipe_nilai_diskon',   
+        'value',
+        'minPurchase',
+        'maxDiscount',
+        'startDate',
+        'endDate',
+        'status',
         'kode_voucher',
         'batas_penggunaan',
-        'kadaluwarsa',
-      ].some((k) =>
-        String(row.getValue(k) ?? '')
+      ]
+    
+      return colsToSearch.some(colId => {
+        const cell = row.getValue(colId)
+        return String(cell ?? '')
           .toLowerCase()
-          .includes(String(v).toLowerCase()),
-      ),
+          .includes(q)
+      })
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -221,6 +296,17 @@ export default function UseDiscountManagement() {
     if (value === 'all') table.getColumn('status')?.setFilterValue(undefined);
     else table.getColumn('status')?.setFilterValue(value);
   };
+
+  const handleTypeFilter = (value: string) => {
+    if (value === 'all') table.getColumn('tipe_diskon')?.setFilterValue(undefined)
+    else table.getColumn('tipe_diskon')?.setFilterValue(value)
+  }
+  
+  const handleTypeValueFilter = (value: string) => {
+    if (value === 'all') table.getColumn('tipe_nilai_diskon')?.setFilterValue(undefined)
+    else table.getColumn('tipe_nilai_diskon')?.setFilterValue(value)
+  }
+  
 
   return {
     handleSearchChange,
@@ -243,5 +329,11 @@ export default function UseDiscountManagement() {
     setDialogOpen,
     columns,
     formik,
+    stores,
+    fetchStores,
+    handleTypeFilter,
+    handleTypeValueFilter,
+    setIsEditMode,
+    setEditingDiscountId
   };
 }

@@ -41,7 +41,7 @@ export function useUserManagement() {
     fetchUsers:apiFetchUsers,
     handleCreateUser,
     handleUpdateUser,
-    handleDeleteUser,
+    handleDeleteUser:apiDeleteUser,
   } = userManagementAPI();
   const{stores,fetchStores}=storeManagementAPI()
 
@@ -85,6 +85,8 @@ export function useUserManagement() {
       if (success) {
         resetForm();
         setDialogOpen(false);
+        fetchUsers(pagination.pageIndex, pagination.pageSize);
+
       }
     },
   });
@@ -170,10 +172,7 @@ export function useUserManagement() {
                 className="text-red-600"
                 onCheckedChange={() => {
                   handleDeleteUser(user.id);
-                  toast({
-                    variant: 'destructive',
-                    description: 'User deleted Successfully !',
-                  });
+                 
                 }}
               >
                 Delete
@@ -241,6 +240,14 @@ export function useUserManagement() {
     else table.getColumn('role')?.setFilterValue(val);  // ⬅︎ new
   };
 
+  const handleDeleteUser = async (id: string) => {
+    const ok = await apiDeleteUser(id)
+    if (ok) {
+      await fetchUsers(pagination.pageIndex, pagination.pageSize)
+    }
+    return ok
+  }
+  
   return {
     users,
     isLoading,

@@ -5,8 +5,8 @@ import discountManagementRepository from '@/repositories/discountManagement.repo
 import inventoryManagementRepository from '@/repositories/inventoryManagement.repository';
 
 class DiscountManagementService{
-    async listAllDiscounts(){
-        return await discountManagementRepository.getDiscounts()
+    async listAllDiscounts(page=1,take=10){
+        return await discountManagementRepository.getDiscounts(page,take)
     }
     
     async createNewDiscount(discountData:Discount){

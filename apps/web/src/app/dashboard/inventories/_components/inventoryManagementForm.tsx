@@ -34,6 +34,9 @@ interface InventoryManagementFormProps {
   isEditMode: boolean;
   products: Product[];
   stores: Store[];
+  setIsEditMode: (edit: boolean) => void;
+  setEditingInventoryId: (id: string | null) => void;
+
 }
 export default function InventoryManagementForm({
   dialogOpen,
@@ -41,6 +44,9 @@ export default function InventoryManagementForm({
   products,
   stores,
   formik,
+  isEditMode,
+  setIsEditMode,
+  setEditingInventoryId
 }: InventoryManagementFormProps) {
   const {inventories} = UseInventoryManagement()
   const [activeTab, setActiveTab] = useState<'tambah' | 'kurangi'>('tambah');
@@ -78,7 +84,20 @@ export default function InventoryManagementForm({
   
   return (
 
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+    <Dialog open={dialogOpen} 
+    onOpenChange={(open) => {
+      // if opening fresh (not edit), reset all fields
+      if (open && !isEditMode) {
+        formik.resetForm();
+      }
+      // closing always clears edit state
+      if (!open) {
+        setIsEditMode(false);
+        setEditingInventoryId(null);
+      }
+      setDialogOpen(open);
+    }}
+  >
       <DialogTrigger asChild>
         <Button className="w-[150px]">
           <Plus className="w-4 h-4 mr-1" />
@@ -87,9 +106,9 @@ export default function InventoryManagementForm({
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] sm:max-h-full overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Perbarui Stok</DialogTitle>
+          <DialogTitle>{isEditMode?'Edit Stok':'Perbarui Stok'}</DialogTitle>
           <DialogDescription>
-            Isi detail di bawah ini untuk perbarui stok.
+            {isEditMode?'Isi detail di bawah ini untuk edit stok.':'Isi detail di bawah ini untuk perbarui stok.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={formik.handleSubmit}>
@@ -152,18 +171,16 @@ export default function InventoryManagementForm({
               )}
             </div>
             <Tabs defaultValue="tambah"
- value={activeTab} 
- onValueChange={(value) => {
-   const newTab = value as 'tambah' | 'kurangi';
-   setActiveTab(newTab);
-   
-   // Clear the value of the other tab when switching
-   if (newTab === 'tambah') {
-     formik.setFieldValue('kurangi', '');
-   } else {
-     formik.setFieldValue('tambah', '');
-   }
- }}>            
+ value={formik.values.mode} 
+ onValueChange={(newMode) => {
+  formik.setFieldValue('mode', newMode); // ← write back into Formik
+  // optionally clear the opposite field:
+  if (newMode === 'tambah') {
+    formik.setFieldValue('kurangi', '');
+  } else {
+    formik.setFieldValue('tambah', '');
+  }
+}}>            
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="tambah">Tambah Stok</TabsTrigger>
                 <TabsTrigger value="kurangi">Kurangi Stok</TabsTrigger>
@@ -271,7 +288,7 @@ export default function InventoryManagementForm({
           >
             Cancel
           </Button>
-          <Button type='submit'>Simpan Perubahan</Button>
+          <Button type='submit'>{isEditMode?'Simpan Perubahan':'Perbarui Stok'}</Button>
         </DialogFooter>
         </form>
 

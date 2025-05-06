@@ -28,6 +28,9 @@ interface ProductManagementFormProps {
   formik: FormikProps<MyFormValues>;
   isEditMode: boolean;
   categories: any[];
+  setIsEditMode:(value:boolean)=>void
+  setEditingProductId:(id: string | null) => void;
+  
 }
 export default function ProductManagementForm({
   formik,
@@ -35,9 +38,27 @@ export default function ProductManagementForm({
   setDialogOpen,
   isEditMode,
   categories,
+  setIsEditMode,
+  setEditingProductId
 }: ProductManagementFormProps) {
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+     <Dialog
+   open={dialogOpen}
+  onOpenChange={(open) => {
+     // when opening in “add” mode, reset the form
+    if (open && !isEditMode) {
+      formik.resetForm();
+    }
+
+    // when closing, clear edit state
+    if (!open) {
+      setIsEditMode(false);
+       setEditingProductId(null);
+     }
+
+    setDialogOpen(open);
+   }}
+>
       <DialogTrigger asChild>
         <Button className="w-[150px]">
           <Plus className="w-4 h-4 mr-1" />
@@ -47,7 +68,7 @@ export default function ProductManagementForm({
 
       <DialogContent className="max-h-[90vh] sm:max-h-full overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Tambah Produk Baru</DialogTitle>
+          <DialogTitle>{isEditMode?'Edit Produk':'Tambah Produk Baru'}</DialogTitle>
           <DialogDescription>
             {isEditMode
               ? 'Isi detail di bawah ini untuk mengedit.'
@@ -86,7 +107,7 @@ export default function ProductManagementForm({
                 <SelectGroup>
                   <SelectLabel>Kategori</SelectLabel>
                   {categories.map((category) => (
-                    <SelectItem value={category.name} key={category.id}>
+                    <SelectItem value={category.id} key={category.id}>
                       {category.name}
                     </SelectItem>
                   ))}

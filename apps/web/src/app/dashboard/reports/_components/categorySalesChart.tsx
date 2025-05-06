@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -26,6 +26,8 @@ import {
   SelectLabel,
   SelectItem,
 } from '@/components/ui/select';
+import reportManagementAPI from '@/lib/apis/dashboard/reportManagement.api';
+import CategorySalesChartSkeleton from './categorySalesChartSkeleton';
 
 interface CategorySalesChartProps {
   month: string;
@@ -35,14 +37,12 @@ interface CategorySalesChartProps {
   isSmall: boolean;
 }
 
-const categoryData = [
-  { category: 'Buah & Sayur', total: 8245300, color: '#10B981' },
-  { category: 'Susu & Telor', total: 6128750, color: '#2563eb' },
-  { category: 'Roti', total: 4982200, color: '#F59E0B' },
-  { category: 'Daging', total: 3245800, color: '#EF4444' },
-  { category: 'Lainnya', total: 2178450, color: '#6B7280' },
-];
-
+interface CategorySalesChartProps {
+  month: string;
+  year: string;
+  onMonthChange: (month: string) => void;
+  onYearChange: (year: string) => void;
+}
 export default function CategorySalesChart({
   month,
   year,
@@ -50,10 +50,19 @@ export default function CategorySalesChart({
   onYearChange,
   isSmall,
 }: CategorySalesChartProps) {
+  const { fetchCategorySales, categorySales, isLoading } =
+    reportManagementAPI();
+
+  useEffect(() => {
+    fetchCategorySales(year, month);
+  }, [year,month]);
+  if (isLoading) {
+    return <CategorySalesChartSkeleton />;
+  }
   return (
     <ChartContainer
       config={{ total: { label: 'Penjualan per Kategori', color: '#2563eb' } }}
-      className="w-full h-[500px] rounded-xl border bg-white px-6 py-4 shadow-sm"
+      className="w-full h-[500px] rounded-xl border bg-white px-6 py-10 shadow-sm"
     >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Penjualan per Kategori</h2>
@@ -81,9 +90,9 @@ export default function CategorySalesChart({
                   'oktober',
                   'november',
                   'desember',
-                ].map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                ].map((label, idx) => (
+                  <SelectItem key={idx} value={`${idx + 1}`}>
+                    {label}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -100,6 +109,13 @@ export default function CategorySalesChart({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Pilih Tahun</SelectLabel>
+                <SelectItem value="2016">2016</SelectItem>
+                <SelectItem value="2017">2017</SelectItem>
+                <SelectItem value="2018">2018</SelectItem>
+                <SelectItem value="2019">2019</SelectItem>
+                <SelectItem value="2020">2020</SelectItem>
+                <SelectItem value="2021">2021</SelectItem>
+                <SelectItem value="2022">2022</SelectItem>
                 <SelectItem value="2023">2023</SelectItem>
                 <SelectItem value="2024">2024</SelectItem>
                 <SelectItem value="2025">2025</SelectItem>
@@ -112,7 +128,7 @@ export default function CategorySalesChart({
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           layout="vertical"
-          data={categoryData}
+          data={categorySales}
           margin={{ bottom: 20 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
@@ -132,7 +148,7 @@ export default function CategorySalesChart({
           <ChartTooltip content={<ChartTooltipContent />} />
           <ChartLegend content={<ChartLegendContent />} />
           <Bar dataKey="total" barSize={20} radius={[10, 10, 10, 10]}>
-            {categoryData.map((entry, idx) => (
+            {categorySales.map((entry, idx) => (
               <Cell key={idx} fill={entry.color} />
             ))}
           </Bar>

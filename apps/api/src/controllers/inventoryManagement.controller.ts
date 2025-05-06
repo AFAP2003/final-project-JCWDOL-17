@@ -43,7 +43,10 @@ class InventoryManagementController{
     async updateInventory(req:Request,res:Response,next:NextFunction){
         try {
             const {id} = req.params
-            const data = await inventoryManagementService.updateInventoryById(id,req.body)
+            const payload = req.body
+            const addQuantity = Number(req.body.addQuantity) || 0
+            const subtractQuantity = Number(req.body.subtractQuantity) || 0
+            const data = await inventoryManagementService.updateInventoryById(id,payload,addQuantity,subtractQuantity)
 
             res.status(200).send({
                 success:true,

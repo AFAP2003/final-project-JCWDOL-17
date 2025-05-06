@@ -23,22 +23,62 @@ class InventoryManagementRepository {
     }
     
     async createInventory(inventoryData:Inventory){
-        return await prismaclient.inventory.create({
+        const inv =  await prismaclient.inventory.create({
             data:inventoryData
         })
+        
+        if(inv.quantity>0){
+            await prismaclient.stockJournal.create({
+                data:{
+                    inventoryId:inv.id,
+                    type:'ADDITION',
+                    quantity:inv.quantity,
+                    createdBy:'andi'
+                }
+            })
+        }
+        return inv
     }
 
-    async updateInventory(id:string,inventoryData:Inventory){
-        return await prismaclient.inventory.update({
-            where:{
-                id
+    async updateInventory(
+        id:string,
+        inventoryData: Inventory,
+        addQuantity = 0,
+        subtractQuantity = 0
+      ) {
+        // 1) overwrite everything in inventoryData (but this might not touch quantity!)
+        const inv = await prismaclient.inventory.update({
+          where: { id },
+          data: { ...inventoryData },
+        });
+      
+        // 2) write ADDITION journal
+        if (addQuantity > 0) {
+          await prismaclient.stockJournal.create({
+            data: {
+              inventoryId: inv.id,
+              quantity: addQuantity,
+              type: 'ADDITION',
+              createdBy: 'andi',
             },
-            data:{
-                ...inventoryData
-            }
-        })
-    }
-
+          });
+        }
+      
+        // 3) write SUBTRACTION journal
+        if (subtractQuantity > 0) {
+          await prismaclient.stockJournal.create({
+            data: {
+              inventoryId: inv.id,
+              quantity: subtractQuantity,
+              type: 'SUBTRACTION',
+              createdBy: 'andi',
+            },
+          });
+        }
+      
+        return inv;
+      }
+      
     async deleteInventory(id:string){
         return await prismaclient.inventory.delete({
             where:{

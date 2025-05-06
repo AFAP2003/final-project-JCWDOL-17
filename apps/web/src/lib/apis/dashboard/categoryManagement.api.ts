@@ -51,7 +51,6 @@ export function categoryManagementAPI(){
           const categoryData = await categoryRes.json();
     
           if (categoryRes.ok) {
-            fetchCategories(1,10);
             console.log('Category Created Successfully: ', categoryData);
             toast({
              description:'Category Created Successfully !'
@@ -107,7 +106,6 @@ export function categoryManagementAPI(){
             const categoryData = await categoryRes.json();
       
             if (categoryRes.ok) {
-              fetchCategories(1,10);
               toast({
                 description:'Category Updated Successfully !'
                });
@@ -146,11 +144,11 @@ export function categoryManagementAPI(){
               const categoryData = await categoryRes.json();
             
               if (categoryRes.ok) {
-                fetchCategories(1,10);
                 toast({
                     description:'category Deleted Successfully !'
                    });
                 console.log('category deleted successfully:', categoryData);
+                return true
               } else {
                 toast({
                   variant: 'destructive',
@@ -161,12 +159,14 @@ export function categoryManagementAPI(){
                   categoryData.message || 'Unknown error',
                 );
               }
+              return false
             } catch (error) {
               toast({
                 variant: 'destructive',
                 description: 'Error deleting category.',
               });
               console.error('Error deleting category:', error);
+              return false
             }
           };
       return { categories, isLoading, fetchCategories,handleCreateCategory,handleUpdateCategory,handleDeleteCategory }

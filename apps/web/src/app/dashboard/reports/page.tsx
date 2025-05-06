@@ -20,7 +20,7 @@ import StockReport from './_components/stockReport';
 export default function Page() {
   const [activeTab, setActiveTab] = useState<'all'|'category'|'product'|'stock'>('all');
   const [selectedYear, setSelectedYear] = useState('2025');
-  const [selectedMonth, setSelectedMonth] = useState('januari');
+  const [selectedMonth, setSelectedMonth] = useState('1');
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   useEffect(() => {

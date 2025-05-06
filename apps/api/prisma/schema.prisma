@@ -309,21 +309,24 @@ model Discount {
   name        String
   description String?
   type        DiscountType
-  value       Decimal      @db.Decimal(10, 2)
-  minPurchase Decimal?     @db.Decimal(10, 2)
-  maxDiscount Decimal?     @db.Decimal(10, 2)
-  startDate   DateTime
-  endDate     DateTime
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
 
-  buyQuantity Int?
-  getQuantity Int?
+  isPercentage Boolean? // NO_RULES_DISCOUNT / WITH_MAX_PRICE
+  value        Decimal? @db.Decimal(10, 2) // NO_RULES_DISCOUNT / WITH_MAX_PRICE
+  maxDiscount  Decimal? @db.Decimal(10, 2) // NO_RULES_DISCOUNT / WITH_MAX_PRICE
+  minPurchase  Decimal? @db.Decimal(10, 2) // WITH_MAX_PRICE
+  buyQuantity  Int? // BUY_X_GET_Y
+  getQuantity  Int? // BUY_X_GET_Y
+
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   store    Store     @relation(fields: [storeId], references: [id])
   products Product[] @relation("ProductDiscount")
 }
+
 
 model Voucher {
   id            String      @id @default(uuid())
@@ -408,8 +411,8 @@ enum StockJournalType {
 }
 
 enum DiscountType {
-  PERCENTAGE
-  FIXED_AMOUNT
+  NO_RULES_DISCOUNT
+  WITH_MAX_PRICE
   BUY_X_GET_Y
 }
 

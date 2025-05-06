@@ -5,7 +5,6 @@ import { prismaclient } from '@/prisma';
 class ProductManagementRepository {
     async getProducts(page=1,take=10){
 
-       
         const total = await prismaclient.product.count()
         const {skip,take:realTake} = pagination(page,take)
         const data = await prismaclient.product.findMany({

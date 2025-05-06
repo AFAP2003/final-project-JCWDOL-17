@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
 import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 import productManagementAPI from '@/lib/apis/dashboard/productManagement.api';
+import { getValidationSchema } from '@/validations/inventory.validation';
 
 export default function UseInventoryManagement() {
   const {
@@ -156,7 +157,20 @@ export default function UseInventoryManagement() {
                 <MoreHorizontal className="w-5 h-5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
-                <DropdownMenuCheckboxItem onCheckedChange={() => {}}>
+                <DropdownMenuCheckboxItem onCheckedChange={() => {
+                   setDialogOpen(true);
+                   setEditingInventoryId(inventory.id);
+                   setIsEditMode(true);
+                   formik.setValues({
+                    produk: inventory.productId,
+                    toko:inventory.storeId,
+                    tambah:'',
+                    kurangi:'',
+                    minimal:inventory.minStock
+
+                   
+                   })
+                }}>
                   Edit
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
@@ -202,24 +216,13 @@ export default function UseInventoryManagement() {
     initialValues: {
       produk: '',
       toko: '',
+      mode:     'tambah' as 'tambah' | 'kurangi',
       tambah: '',
       kurangi:'',
       minimal: '',
     },
 
-    validationSchema: Yup.object({
-      produk: Yup.string().required('Produk wajib dipilih'),
-      toko: Yup.string().required('Toko wajib dipilih'),
-      tambah: Yup.number()
-        .positive('Kuantitas > 0')
-        .required('Kuantitas wajib diisi'),
-        kurangi: Yup.number()
-        .min(0, 'Tidak boleh negatif')
-        .required('Wajib diisi'),
-        minimal: Yup.number()
-        .min(0, 'Tidak boleh negatif')
-        .required('Wajib diisi'),
-    }),
+    validationSchema: getValidationSchema(),
 
     onSubmit: async (values, { resetForm }) => {
       let success = false;
@@ -343,5 +346,7 @@ export default function UseInventoryManagement() {
     products,
     handleStoreFilter,
     handleCategoryFilter,
+    setIsEditMode,
+    setEditingInventoryId
   };
 }

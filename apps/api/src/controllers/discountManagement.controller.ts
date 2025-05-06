@@ -5,12 +5,22 @@ import { Request, Response, NextFunction } from 'express'
 class DiscountManagementController{
     async getDiscounts(req:Request,res:Response,next:NextFunction){
         try {
-            const data = await discountManagementService.listAllDiscounts()
+            const page = parseInt(req.query.page as string, 10) || 1;
+            const take = parseInt(req.query.take as string, 10) || 10;
+
+            const {total,data} = await discountManagementService.listAllDiscounts(page,take)
 
             res.status(200).send({
                 success:true,
                 message:"Discounts fetched successfully",
-                data
+                data,
+                pagination:{
+                    currentPage:page,
+                    pageSize:take,
+                    totalItems:total,
+                    totalPages:Math.ceil(total/take)
+
+                }
             })
         } catch (error) {
             next(error)

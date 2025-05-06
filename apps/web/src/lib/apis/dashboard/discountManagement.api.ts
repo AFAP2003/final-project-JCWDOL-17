@@ -9,15 +9,17 @@ export function discountManagementAPI() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchDiscounts = async () => {
+  const fetchDiscounts = async (pageIndex:number,pageSize:number) => {
     setIsLoading(true);
     try {
-      const discountRes = await fetch(`${API_BASE_URL}/dashboard/discounts`);
+      const page = pageIndex + 1
+      const discountRes = await fetch(`${API_BASE_URL}/dashboard/discounts?page=${page}&take=${pageSize}`);
       const discountData = await discountRes.json();
 
       if (discountRes.ok) {
         setDiscounts(discountData.data);
         console.log('Discounts fetched successfully: ', discountData);
+        return discountData
       } else {
         console.error(
           'Failed to fetch Discounts:',

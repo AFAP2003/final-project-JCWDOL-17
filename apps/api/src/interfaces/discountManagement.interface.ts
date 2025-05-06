@@ -1,10 +1,13 @@
+import { DiscountType } from "@prisma/client";
+
 export interface Discount {
   id: string;
   storeId: string;
   name: string;
   description?: string | null;
-  type: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'BUY_X_GET_Y';
-  value: string;
+  type: DiscountType;
+  value?: string;
+  isPercentage?:boolean
   minPurchase?: string | null;
   maxDiscount?: string | null;
   buyQuantity?: number | null;

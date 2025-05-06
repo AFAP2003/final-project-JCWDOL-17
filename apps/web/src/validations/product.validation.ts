@@ -13,6 +13,7 @@ export const getValidationSchema = ()=>
         nama: Yup.string().required('Nama produk wajib diisi').trim().min(2,'Nama produk setidaknya harus 2 karakter').max(100,'Nama produk maksimal harus 100 karakter'),
         deskripsi: Yup.string().max(5000, 'Maksimal 5000 karakter'),
         harga: Yup.number()
+        .typeError('Harga harus diisi angka')
           .positive('Harga harus lebih dari 0')
           .required('Harga wajib diisi'),
         berat: Yup.number().required().positive(),
