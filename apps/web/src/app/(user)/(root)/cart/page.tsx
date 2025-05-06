@@ -1,9 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -11,11 +8,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { formatCurrency } from '@/lib/utils';
+import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 
+import MaxWidthWrapper from '@/components/max-width-wrapper';
 import { CartSkeleton } from '@/components/skeleton/cart-skeleton';
+import { useCart } from '@/context/cart-provider';
+import { toast } from '@/hooks/use-toast';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 // Mock data for development
 const items = [
@@ -59,45 +62,37 @@ const items = [
 ];
 
 export default function Cart() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [cartItems, setCartItems] = useState(items);
+  const {
+    items,
+    subtotal,
+    isLoading,
+    updateCartItem,
+    removeFromCart,
+    totalItems,
+  } = useCart();
   const router = useRouter();
 
-  // Calculate totals
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0,
-  );
-  const shippingCost = 15000; // Mock data
-  const total = subtotal + shippingCost;
-
   // Handle quantity changes
-  const updateQuantity = (itemId, newQuantity) => {
+  const updateQuantity = (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
-
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item,
-      ),
-    );
+    updateCartItem(itemId, newQuantity);
   };
 
   // Handle remove item
-  const removeItem = (itemId) => {
-    setCartItems((items) => items.filter((item) => item.id !== itemId));
-  };
-
-  const proceedToCheckout = () => {
-    router.push('/checkout');
+  const removeItem = (itemId: string) => {
+    removeFromCart(itemId);
+    toast({
+      description: 'Item removed from cart',
+    });
   };
 
   if (isLoading) {
     return <CartSkeleton />;
   }
 
-  if (cartItems.length === 0) {
+  if (items.length === 0) {
     return (
-      <div className="container max-w-4xl mx-auto py-8 px-4">
+      <MaxWidthWrapper className="container max-w-4xl mx-auto py-8 px-4">
         <h1 className="text-xl font-bold mb-6">Keranjang Belanja</h1>
         <div className="flex flex-col items-center justify-center py-12">
           <ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
@@ -109,27 +104,30 @@ export default function Cart() {
             Lanjutkan Belanja
           </Button>
         </div>
-      </div>
+      </MaxWidthWrapper>
     );
   }
 
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
+    <MaxWidthWrapper className="container max-w-4xl mx-auto px-4">
       <h1 className="text-xl font-bold mb-6">Keranjang Belanja</h1>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="md:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Item Keranjang ({cartItems.length})</CardTitle>
+              <CardTitle>Item Keranjang ({totalItems})</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              {cartItems.map((item) => (
+              {items.map((item) => (
                 <div
                   key={item.id}
                   className="flex flex-col sm:flex-row gap-4 py-4 border-b last:border-0"
                 >
-                  <div className="w-full sm:w-24 h-24 relative">
+                  <div
+                    onClick={() => router.push(`/product/${item.productId}`)}
+                    className="w-full sm:w-24 h-24 relative cursor-pointer"
+                  >
                     <Image
                       src={
                         item.product.images.find((img) => img.isMain)
@@ -140,7 +138,10 @@ export default function Cart() {
                       className="object-cover rounded-md"
                     />
                   </div>
-                  <div className="flex-1">
+                  <div
+                    onClick={() => router.push(`/product/${item.productId}`)}
+                    className="flex-1 cursor-pointer"
+                  >
                     <h3 className="font-medium">{item.product.name}</h3>
                     <p className="text-sm text-muted-foreground mb-2">
                       {item.product.description?.substring(0, 60)}...
@@ -168,9 +169,9 @@ export default function Cart() {
                         variant="outline"
                         size="icon"
                         className="h-8 w-8 rounded-l-none"
-                        onClick={() =>
-                          updateQuantity(item.id, item.quantity + 1)
-                        }
+                        onClick={(e) => {
+                          updateQuantity(item.id, item.quantity + 1);
+                        }}
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
@@ -203,20 +204,17 @@ export default function Cart() {
               <Separator className="my-4" />
               <div className="flex justify-between font-bold">
                 <span>Total</span>
-                <span>{formatCurrency(total)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
             </CardContent>
             <CardFooter>
-              <Button
-                className="w-full"
-                onClick={() => (window.location.href = '/checkout')}
-              >
-                Checkout
+              <Button className="w-full" asChild>
+                <Link href={'/checkout'}>Checkout</Link>
               </Button>
             </CardFooter>
           </Card>
         </div>
       </div>
-    </div>
+    </MaxWidthWrapper>
   );
 }

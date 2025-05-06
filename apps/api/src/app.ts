@@ -6,6 +6,7 @@ import { auth } from './auth';
 import { BASE_FRONTEND_URL, PORT } from './config';
 import { withError, withNotFound } from './middlewares/errors.middleware';
 import { AuthRouter } from './routers/auth.router';
+import { CartRouter } from './routers/cart.router';
 import apiRouter from './routers/dashboardApi.router';
 import { HealthRouter } from './routers/health.router';
 import { LocationRouter } from './routers/location.router';
@@ -51,6 +52,7 @@ export default class App {
     const locationRouter = new LocationRouter();
     const productCategoryRouter = new ProductCategoryRouter();
     const productRouter = new ProductRouter();
+    const cartRouter = new CartRouter();
 
     this.app.use('/api', healthRouter.getRouter());
     this.app.use('/api/auth', authRouter.getRouter());
@@ -60,6 +62,7 @@ export default class App {
     this.app.use('/api/product-category', productCategoryRouter.getRouter());
     this.app.use('/api/product', productRouter.getRouter());
     this.app.use('/api/dashboard', apiRouter);
+    this.app.use('/api/cart', cartRouter.getRouter());
   }
 
   public start(): void {

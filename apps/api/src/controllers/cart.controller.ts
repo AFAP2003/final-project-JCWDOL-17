@@ -27,7 +27,10 @@ export class CartController {
   };
 
   updateCartItem = async (req: Request, res: Response) => {
-    const { data: dto, error } = UpdateCartItemDTO.safeParse(req.body);
+    const { data: dto, error } = UpdateCartItemDTO.safeParse({
+      ...req.body,
+      ...req.params,
+    });
     if (error) {
       throw new UnprocessableEntityError(formatZodError(error));
     }
@@ -42,6 +45,12 @@ export class CartController {
     const itemId = req.params.itemId;
 
     await this.cartService.removeCartItem(user.id, itemId);
+    res.json({ message: 'Item removed from cart' });
+  };
+
+  clearCart = async (req: Request, res: Response) => {
+    const { user } = getSessionUser(req);
+    await this.cartService.clearCart(user.id);
     res.json({ message: 'Item removed from cart' });
   };
 }

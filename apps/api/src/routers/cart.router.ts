@@ -20,7 +20,10 @@ export class CartRouter {
     // Cart routes
     this.router.get('/', asynchandler(this.controller.getCart));
     this.router.post('/items', asynchandler(this.controller.addToCart));
-    this.router.put('/items', asynchandler(this.controller.updateCartItem));
+    this.router.put(
+      '/items/:itemId',
+      asynchandler(this.controller.updateCartItem),
+    );
     this.router.delete(
       '/items/:itemId',
       asynchandler(this.controller.removeCartItem),

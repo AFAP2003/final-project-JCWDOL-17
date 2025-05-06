@@ -1,7 +1,12 @@
+import { useCart } from '@/context/cart-provider';
+import { toast } from '@/hooks/use-toast';
+import { useSession } from '@/lib/auth/client';
 import { formatCurrency } from '@/lib/utils';
 import { ShoppingBasket } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
+import LoginDialog from '../login-dialog';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 
@@ -57,65 +62,105 @@ type Props = {
 export default function ProductCard({ product }: Props) {
   const images = product.images;
   const discount = product.discounts.at(0);
+  const { items, addToCart, updateCartItem, isLoading } = useCart();
+  const { data: session, isPending } = useSession();
+  const [loginDialog, setLoginDialog] = useState(false);
+
+  const handleAddToCart = () => {
+    if (isPending || isLoading) return;
+    if (!session) {
+      setLoginDialog(true);
+      return;
+    }
+
+    const item = items.find((item) => item.productId === product.id);
+    if (item) {
+      updateCartItem(item.id, item.quantity + 1);
+    } else {
+      addToCart(product.id, 1);
+    }
+    toast({
+      description: 'Item added to cart',
+    });
+  };
 
   return (
-    <div className="p-1.5 bg-neutral-100 shadow rounded-lg border border-neutral-100 group/container">
-      <Link
-        href={`/product/${product.id}`}
-        className="bg-neutral-50 rounded-md overflow-hidden flex flex-col size-full hover:cursor-pointer"
-      >
-        <div className="rounded-lg relative">
-          {/* TODO: IMAGE handle isMain image */}
-          {images.length > 1 ? (
-            <div className="group/image relative aspect-square">
-              <Image
-                src={images[0].imageUrl}
-                alt={product.name}
-                fill
-                className="object-cover"
-              />
-              <Image
-                src={images[1].imageUrl}
-                alt={product.name}
-                fill
-                className="object-cover absolute opacity-0 group-hover/image:opacity-100 transition-all duration-300 "
-              />
-            </div>
-          ) : (
-            <div className="group relative aspect-square">
-              <Image src={product.images[0].imageUrl} alt={product.name} fill />
-            </div>
-          )}
+    <>
+      <div className="p-1.5 bg-neutral-100 shadow rounded-lg border border-neutral-100 group/container">
+        <Link
+          href={`/product/${product.id}`}
+          className="bg-neutral-50 rounded-md overflow-hidden flex flex-col size-full hover:cursor-pointer"
+        >
+          <div className="rounded-lg relative">
+            {/* TODO: IMAGE handle isMain image */}
+            {images.length > 1 ? (
+              <div className="group/image relative aspect-square">
+                <Image
+                  src={images[0].imageUrl}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                />
+                <Image
+                  src={images[1].imageUrl}
+                  alt={product.name}
+                  fill
+                  className="object-cover absolute opacity-0 group-hover/image:opacity-100 transition-all duration-300 "
+                />
+              </div>
+            ) : (
+              <div className="group relative aspect-square">
+                <Image
+                  src={product.images[0].imageUrl}
+                  alt={product.name}
+                  fill
+                />
+              </div>
+            )}
 
-          {discount && (
-            <div className="absolute top-1 left-1">
-              <Badge className="text-xs bg-red-600 hover:bg-red-600">
-                {discount.name}
-              </Badge>
-            </div>
-          )}
-        </div>
-
-        {/* DETAIL */}
-        <div className="p-3 text-neutral-700 font-semibold h-full flex flex-col">
-          <div className="mb-3 space-y-1">
-            <h3 className="line-clamp-1">{product.name}</h3>
-            <p className="text-sm text-neutral-500 line-clamp-2">
-              {product.description}
-            </p>
+            {discount && (
+              <div className="absolute top-1 left-1">
+                <Badge className="text-xs bg-red-600 hover:bg-red-600">
+                  {discount.name}
+                </Badge>
+              </div>
+            )}
           </div>
 
-          <div className="mb-4 grow">
-            <Price price={product.price} discount={discount} />
-          </div>
+          {/* DETAIL */}
+          <div className="p-3 text-neutral-700 font-semibold h-full flex flex-col">
+            <div className="mb-3 space-y-1">
+              <h3 className="line-clamp-1">{product.name}</h3>
+              <p className="text-sm text-neutral-500 line-clamp-2">
+                {product.description}
+              </p>
+            </div>
 
-          <Button className="w-full bg-neutral-800 hover:bg-neutral-800/95 text-neutral-100 hover:text-neutral-200">
-            <ShoppingBasket className="size-12" />
-            Tambahkan
-          </Button>
-        </div>
-      </Link>
-    </div>
+            <div className="mb-4 grow">
+              <Price price={product.price} discount={discount} />
+            </div>
+
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAddToCart();
+              }}
+              className="w-full bg-neutral-800 hover:bg-neutral-800/95 text-neutral-100 hover:text-neutral-200 disabled:opacity-90"
+            >
+              <ShoppingBasket className="size-12" />
+              Tambahkan
+            </Button>
+          </div>
+        </Link>
+      </div>
+
+      <LoginDialog
+        open={loginDialog}
+        onOpenChange={setLoginDialog}
+        onCancel={() => setLoginDialog(false)}
+      />
+    </>
   );
 }
 
