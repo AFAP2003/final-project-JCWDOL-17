@@ -229,6 +229,7 @@ export class ShippingService {
     return Math.round((baseShippingCost + additionalCost) * 100) / 100;
   }
 
+  // Reusing the existing methods for finding nearest store with stock
   private async findNearestStoreWithStock(
     userLat: number,
     userLng: number,

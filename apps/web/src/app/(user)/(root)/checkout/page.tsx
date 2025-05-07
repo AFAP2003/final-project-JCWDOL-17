@@ -110,52 +110,38 @@ export default function Checkout() {
     fetchCheckoutData();
   }, [session, router]);
 
-  // Calculate shipping cost based on address and shipping method
   useEffect(() => {
-    const calculateShippingCost = async () => {
-      if (!selectedAddressId || !selectedShippingId || items.length === 0)
-        return;
-
+    const fetchCheckoutData = async () => {
       try {
-        setCalculatingShipping(true);
-        const response = await apiclient.post('/shipping/calculation', {
-          addressId: selectedAddressId,
-          shippingMethodId: selectedShippingId,
-          items: items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-          })),
-        });
+        setIsLoading(true);
 
-        setShippingDistance(response.data.distance);
-        setShippingCost(response.data.shippingCost);
-        setNearestStore(response.data.store);
-        setServiceDetails(response.data.serviceDetails);
-        setStockAvailability({
-          available: response.data.hasAllItems,
-          missingItems: response.data.missingItems || [],
-        });
-      } catch (error: any) {
-        console.error('Error calculating shipping cost:', error);
-        if (error.response?.data?.error?.message?.includes('not available')) {
-          // If there's a stock availability issue
-          setStockAvailability({
-            available: false,
-            missingItems: error.response.data.missingItems || [],
-          });
-        } else {
-          toast({
-            description: 'Failed to calculate shipping cost',
-            variant: 'destructive',
-          });
+        // Get user addresses
+        const addressResponse = await apiclient.get('/user/address');
+        console.log('Address response:', addressResponse.data); // Debug log
+        setAddresses(addressResponse.data.addresses || []);
+
+        if (addressResponse.data.addresses?.length > 0) {
+          // Set default address if available, otherwise use the first one
+          const defaultAddress =
+            addressResponse.data.addresses.find((addr) => addr.isDefault) ||
+            addressResponse.data.addresses[0];
+          setSelectedAddressId(defaultAddress.id);
         }
+
+        // Rest of your code...
+      } catch (error) {
+        console.error('Error fetching checkout data:', error); // Expanded error logging
+        toast({
+          description: 'Failed to load checkout information',
+          variant: 'destructive',
+        });
       } finally {
-        setCalculatingShipping(false);
+        setIsLoading(false);
       }
     };
 
-    calculateShippingCost();
-  }, [selectedAddressId, selectedShippingId, items]);
+    fetchCheckoutData();
+  }, [session, router]);
 
   const selectedAddress = addresses.find(
     (addr) => addr.id === selectedAddressId,
@@ -434,6 +420,7 @@ export default function Checkout() {
                             method.id === selectedShippingId && (
                               <div className="mt-1">
                                 <Badge variant="outline" className="text-xs">
+                                  {serviceDetails.courier.toUpperCase()} •{' '}
                                   {serviceDetails.service} •{' '}
                                   {serviceDetails.etd} days
                                 </Badge>
