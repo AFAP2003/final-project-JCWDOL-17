@@ -111,37 +111,42 @@ export default function Checkout() {
   }, [session, router]);
 
   useEffect(() => {
-    const fetchCheckoutData = async () => {
+    const calculateShippingCost = async () => {
+      if (!selectedAddressId || !selectedShippingId || items.length === 0)
+        return;
+
       try {
-        setIsLoading(true);
+        setCalculatingShipping(true);
+        const response = await apiclient.post('/shipping/calculation', {
+          addressId: selectedAddressId,
+          shippingMethodId: selectedShippingId,
+          items: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+        });
 
-        // Get user addresses
-        const addressResponse = await apiclient.get('/user/address');
-        console.log('Address response:', addressResponse.data); // Debug log
-        setAddresses(addressResponse.data.addresses || []);
-
-        if (addressResponse.data.addresses?.length > 0) {
-          // Set default address if available, otherwise use the first one
-          const defaultAddress =
-            addressResponse.data.addresses.find((addr) => addr.isDefault) ||
-            addressResponse.data.addresses[0];
-          setSelectedAddressId(defaultAddress.id);
-        }
-
-        // Rest of your code...
+        setShippingDistance(response.data.distance);
+        setShippingCost(response.data.shippingCost);
+        setNearestStore(response.data.store);
+        setServiceDetails(response.data.serviceDetails);
+        setStockAvailability({
+          available: response.data.hasAllItems,
+          missingItems: response.data.missingItems || [],
+        });
       } catch (error) {
-        console.error('Error fetching checkout data:', error); // Expanded error logging
+        console.error('Error calculating shipping cost:', error);
         toast({
-          description: 'Failed to load checkout information',
+          description: 'Failed to calculate shipping cost',
           variant: 'destructive',
         });
       } finally {
-        setIsLoading(false);
+        setCalculatingShipping(false);
       }
     };
 
-    fetchCheckoutData();
-  }, [session, router]);
+    calculateShippingCost();
+  }, [selectedAddressId, selectedShippingId, items]);
 
   const selectedAddress = addresses.find(
     (addr) => addr.id === selectedAddressId,
@@ -440,13 +445,11 @@ export default function Checkout() {
                 ))}
               </RadioGroup>
             )}
-
-            {/* Show distance to store note */}
             {shippingDistance !== null && (
               <div className="mt-3 text-sm text-muted-foreground">
                 <p>
-                  * Shipping from nearest store ({shippingDistance.toFixed(2)}{' '}
-                  km away)
+                  * Shipping from nearest store (
+                  {shippingDistance?.toFixed(2) || 0} km away)
                 </p>
               </div>
             )}

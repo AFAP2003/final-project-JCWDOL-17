@@ -125,6 +125,49 @@ async function SEED_STORE_ADMIN() {
   return admins;
 }
 
+async function SEED_SHIPPING_METHODS() {
+  const shippingMethods = [
+    {
+      name: 'JNE Regular (REG)',
+      description: 'Estimasi pengiriman 2-3 hari',
+      baseCost: 15000,
+      isActive: true,
+    },
+    {
+      name: 'JNE Express (YES)',
+      description: 'Estimasi pengiriman 1 hari',
+      baseCost: 25000,
+      isActive: true,
+    },
+    {
+      name: 'TIKI Regular',
+      description: 'Estimasi pengiriman 3-4 hari',
+      baseCost: 12000,
+      isActive: true,
+    },
+    {
+      name: 'POS Indonesia Standard',
+      description: 'Estimasi pengiriman 3-5 hari',
+      baseCost: 10000,
+      isActive: true,
+    },
+  ];
+
+  console.log('Seeding shipping methods...');
+
+  await prismaclient.shippingMethod.deleteMany({});
+
+  for (const method of shippingMethods) {
+    await prismaclient.shippingMethod.create({
+      data: method,
+    });
+  }
+
+  console.log(`Created ${shippingMethods.length} shipping methods`);
+
+  return await prismaclient.shippingMethod.findMany();
+}
+
 async function SEED_USER() {
   const datas = [
     {
@@ -1182,11 +1225,12 @@ async function main() {
         const categories = await SEED_PRODUCT_CATEGORY();
         const products = await SEED_PRODUCT(categories);
         const stores = await SEED_STORES(admins);
+        const shippingMethods = await SEED_SHIPPING_METHODS();
         const productDiscounts = await SEED_PRODUCT_DISCOUNT(products, stores);
       },
       {
-        maxWait: 10000, // 10s max wait
-        timeout: 60000, // 60s transaction timeout
+        maxWait: 10000,
+        timeout: 60000,
       },
     );
 

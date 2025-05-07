@@ -294,12 +294,14 @@ model PaymentProof {
 
 model ShippingMethod {
   id          String   @id @default(uuid())
-  name        String
-  description String?
-  baseCost    Decimal  @db.Decimal(10, 2)
+  name        String   @unique
+  description String   @default("")
+  baseCost    Decimal  @default(0) @db.Decimal(10, 2)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
+  // Relationships
   orders Order[]
 }
 

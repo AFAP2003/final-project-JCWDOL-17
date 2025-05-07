@@ -1,9 +1,9 @@
+import { RAJA_ONGKIR_API } from '@/config';
+import { CalculateShippingDTO } from '@/dtos/calculate-shipping.dto';
 import { BadRequestError, NotFoundError } from '@/errors';
 import { prismaclient } from '@/prisma';
-import { RAJA_ONGKIR_API } from '@/config';
 import axios from 'axios';
 import { z } from 'zod';
-import { CalculateShippingDTO } from '@/dtos/calculate-shipping.dto';
 
 export class ShippingService {
   calculateShipping = async (
@@ -34,12 +34,25 @@ export class ShippingService {
       throw new BadRequestError('Shipping method not found');
     }
 
+    // Get product information for all items in the cart
+    const productIds = dto.items.map((item) => item.productId);
+    const products = await prismaclient.product.findMany({
+      where: {
+        id: {
+          in: productIds,
+        },
+      },
+    });
+
     // Find nearest store with stock
     const nearestStoreResult = await this.findNearestStoreWithStock(
-      address.latitude ?? 0,
-      address.longitude ?? 0,
+      address.latitude || 0,
+      address.longitude || 0,
       dto.items,
     );
+
+    // Calculate total weight of all items
+    const totalWeight = this.calculateTotalWeight(products, dto.items);
 
     // We'll use the base cost from ShippingMethod as a fallback
     // but try to get a more accurate cost from RajaOngkir
@@ -47,12 +60,19 @@ export class ShippingService {
     let serviceDetails = null;
 
     try {
+      // If address is missing coordinates, we can't accurately calculate distance
+      if (!address.latitude || !address.longitude) {
+        throw new BadRequestError(
+          'Address coordinates are required for shipping calculation',
+        );
+      }
+
       // Get shipping cost using RajaOngkir
       const shippingDetails = await this.getShippingCostFromRajaOngkir(
         nearestStoreResult.store.city, // origin city
         address.city, // destination city
-        this.getCourierFromShippingMethodName(shippingMethod.name), // Derive courier from method name
-        this.calculateTotalWeight(dto.items), // weight in grams
+        this.getCourierFromShippingMethodName(shippingMethod.name), // courier code
+        totalWeight, // weight in grams
       );
 
       if (shippingDetails) {
@@ -64,8 +84,9 @@ export class ShippingService {
         };
       }
     } catch (error) {
-      console.error('Error getting shipping cost from RajaOngkir', error);
-      // Fall back to base cost and distance-based calculation
+      console.error('Error getting shipping cost from RajaOngkir:', error);
+
+      // Fall back to distance-based calculation
       shippingCost = this.calculateDistanceBasedShipping(
         nearestStoreResult.distance,
         Number(shippingMethod.baseCost),
@@ -74,12 +95,17 @@ export class ShippingService {
 
     // Return shipping calculation result
     return {
-      store: nearestStoreResult.store,
-      distance: nearestStoreResult.distance,
-      hasAllItems: nearestStoreResult.hasAllItems,
-      missingItems: nearestStoreResult.missingItems,
-      shippingCost,
-      serviceDetails,
+      success: true,
+      message: 'Shipping calculation completed successfully',
+      data: {
+        store: nearestStoreResult.store,
+        distance: nearestStoreResult.distance,
+        hasAllItems: nearestStoreResult.hasAllItems,
+        missingItems: nearestStoreResult.missingItems || [],
+        shippingCost,
+        serviceDetails,
+        calculationMethod: serviceDetails ? 'rajaongkir' : 'distance',
+      },
     };
   };
 
@@ -122,7 +148,7 @@ export class ShippingService {
       }
 
       // Get the first available service
-      const costs = result.results[0].costs;
+      const costs = result.results[0]?.costs;
       if (!costs || costs.length === 0) {
         return null;
       }
@@ -184,18 +210,17 @@ export class ShippingService {
   }
 
   // Calculate total weight of items in grams
-  private async calculateTotalWeight(
+  private calculateTotalWeight(
+    products: any[],
     items: { productId: string; quantity: number }[],
-  ): Promise<number> {
+  ): number {
     // Default weight if product doesn't have one
     const DEFAULT_WEIGHT = 500; // 500 grams
 
     let totalWeight = 0;
 
     for (const item of items) {
-      const product = await prismaclient.product.findUnique({
-        where: { id: item.productId },
-      });
+      const product = products.find((p) => p.id === item.productId);
 
       // Convert weight from kg to grams, or use default
       const productWeight = product?.weight
@@ -229,7 +254,7 @@ export class ShippingService {
     return Math.round((baseShippingCost + additionalCost) * 100) / 100;
   }
 
-  // Reusing the existing methods for finding nearest store with stock
+  // Find nearest store with available stock
   private async findNearestStoreWithStock(
     userLat: number,
     userLng: number,

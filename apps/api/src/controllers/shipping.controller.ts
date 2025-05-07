@@ -22,7 +22,13 @@ export class ShippingController {
     try {
       const { user } = getSessionUser(req);
       const result = await this.shippingService.calculateShipping(user.id, dto);
-      res.json(result);
+
+      // Return detailed shipping calculation result
+      res.json({
+        success: true,
+        message: 'Shipping calculation completed',
+        data: result,
+      });
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;
