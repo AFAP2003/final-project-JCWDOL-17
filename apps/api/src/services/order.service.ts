@@ -19,7 +19,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 export class OrderService {
-  // User methods
   async createOrder(userId: string, dto: z.infer<typeof CreateOrderDTO>) {
     return prismaclient.$transaction(async (tx) => {
       // Get cart and validate
@@ -32,14 +31,34 @@ export class OrderService {
         dto.addressId,
       );
 
-      // Find nearest store with stock
-      const nearestStore = await this.findNearestStoreWithStock();
+      // Check if address has coordinates
+      if (!address.latitude || !address.longitude) {
+        throw new BadRequestError(
+          'Address coordinates are required for delivery. Please update your address.',
+        );
+      }
 
-      // if (!nearestStore) {
-      //   throw new BadRequestError(
-      //     'No stores available with the required stock. Please modify your cart.',
-      //   );
-      // }
+      // Find nearest store with stock
+      const nearestStoreResult = await this.findNearestStoreWithStock(
+        tx,
+        cart.items,
+        address.latitude,
+        address.longitude,
+      );
+
+      // If not all items are available, inform the user
+      if (!nearestStoreResult.hasAllItems && nearestStoreResult.missingItems) {
+        const missingItemsMessage = nearestStoreResult.missingItems
+          .map((item) => `"${item.name}"`)
+          .join(', ');
+
+        throw new BadRequestError(
+          `The following items are not available at the nearest store: ${missingItemsMessage}. Please remove or replace these items to continue.`,
+        );
+      }
+
+      const nearestStore = nearestStoreResult.store;
+      const distance = nearestStoreResult.distance;
 
       // Get shipping method
       const shippingMethod = await tx.shippingMethod.findUnique({
@@ -61,7 +80,10 @@ export class OrderService {
         subtotal,
       );
 
-      const shippingCost = Number(shippingMethod.baseCost);
+      // Calculate shipping cost based on distance
+      const baseCost = Number(shippingMethod.baseCost);
+      const shippingCost = this.calculateShippingFee(distance, baseCost);
+
       const total = subtotal + shippingCost - totalDiscount;
 
       const orderNumber = this.generateOrderNumber();
@@ -70,6 +92,13 @@ export class OrderService {
           ? addHours(new Date(), 1)
           : null;
 
+      // Add distance info to order notes
+      const distanceNote = `Distance to store: ${distance.toFixed(2)} km`;
+      const orderNotes = dto.notes
+        ? `${dto.notes}\n${distanceNote}`
+        : distanceNote;
+
+      // Create order with shipping details
       const order = await this.createOrderRecord(
         tx,
         userId,
@@ -81,7 +110,7 @@ export class OrderService {
         totalDiscount,
         total,
         dto.paymentMethod,
-        dto.notes,
+        orderNotes, // Include distance in notes
         expiresAt,
         orderNumber,
         orderItems,
@@ -105,7 +134,10 @@ export class OrderService {
         where: { cartId: cart.id },
       });
 
-      return order;
+      return {
+        ...order,
+        distance, // Add distance to the response but don't store in DB
+      };
     });
   }
 
@@ -161,12 +193,50 @@ export class OrderService {
 
   async getUserOrders(
     userId: string,
-    status?: string,
+    filters: {
+      status?: string;
+      startDate?: string;
+      endDate?: string;
+      orderNumber?: string;
+    },
     page: number = 1,
     limit: number = 10,
   ) {
     const skip = (page - 1) * limit;
-    const where = status ? { userId, status } : { userId };
+
+    // Build where condition object
+    const where: any = { userId };
+
+    // Add status filter if provided and valid
+    if (
+      filters.status &&
+      Object.values(OrderStatus).includes(filters.status as OrderStatus)
+    ) {
+      where.status = filters.status as OrderStatus;
+    }
+
+    // Add date range filters if provided
+    if (filters.startDate) {
+      where.createdAt = {
+        ...(where.createdAt || {}),
+        gte: new Date(filters.startDate),
+      };
+    }
+
+    if (filters.endDate) {
+      where.createdAt = {
+        ...(where.createdAt || {}),
+        lte: new Date(filters.endDate),
+      };
+    }
+
+    // Add order number filter if provided
+    if (filters.orderNumber) {
+      where.orderNumber = {
+        contains: filters.orderNumber,
+        mode: 'insensitive',
+      };
+    }
 
     const total = await prismaclient.order.count({ where });
 
@@ -193,8 +263,34 @@ export class OrderService {
       },
     });
 
+    // Add distance calculation to each order
+    const ordersWithDistance = await Promise.all(
+      orders.map(async (order) => {
+        let distance = null;
+
+        if (
+          order.store.latitude &&
+          order.store.longitude &&
+          order.address?.latitude &&
+          order.address?.longitude
+        ) {
+          distance = this.calculateDistance(
+            order.address.latitude,
+            order.address.longitude,
+            order.store.latitude,
+            order.store.longitude,
+          );
+        }
+
+        return {
+          ...order,
+          distance,
+        };
+      }),
+    );
+
     return {
-      data: orders,
+      data: ordersWithDistance,
       meta: {
         total,
         page,
@@ -202,42 +298,6 @@ export class OrderService {
         totalPages: Math.ceil(total / limit),
       },
     };
-  }
-
-  async getUserOrderById(userId: string, orderId: string) {
-    const order = await prismaclient.order.findUnique({
-      where: {
-        id: orderId,
-        userId,
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                images: {
-                  where: { isMain: true },
-                  take: 1,
-                },
-              },
-            },
-          },
-        },
-        store: true,
-        paymentProofs: true,
-        appliedVouchers: {
-          include: {
-            voucher: true,
-          },
-        },
-      },
-    });
-
-    if (!order) {
-      throw new Error('Order not found');
-    }
-
-    return order;
   }
 
   async confirmOrder(userId: string, orderId: string) {
@@ -280,8 +340,10 @@ export class OrderService {
 
   // Admin methods
   async getAdminStore(adminId: string) {
-    return await prismaclient.store.findUnique({
-      where: { adminId },
+    return await prismaclient.store.findFirst({
+      where: {
+        adminId,
+      },
     });
   }
 
@@ -339,9 +401,12 @@ export class OrderService {
         );
       }
 
-      // Verify payment if requested
-      if (dto.verifyPayment) {
+      if (dto.verifyPayment && dto.paymentProofId) {
         await this.verifyPaymentProof(tx, order, dto.paymentProofId, adminId);
+      } else if (dto.verifyPayment && !dto.paymentProofId) {
+        throw new Error(
+          'paymentProofId is required when verifyPayment is true',
+        );
       }
 
       // Update stock
@@ -588,6 +653,7 @@ export class OrderService {
     orderNumber: string,
     orderItems: any[],
     appliedVouchers: any[],
+    distance?: number,
   ) {
     return await tx.order.create({
       data: {
@@ -772,17 +838,22 @@ export class OrderService {
 
     const adminStore = await tx.store.findFirst({
       where: {
-        OR: [
-          { adminId },
-          { userId: adminId }, // For super admin
-        ],
+        adminId,
       },
     });
 
-    if (
-      !adminStore ||
-      (adminStore.id !== order.storeId && !adminStore.isSuperAdmin)
-    ) {
+    // Check if the user is an admin for this store
+    const hasStoreAccess = adminStore && adminStore.id === order.storeId;
+
+    // Check if the user is a super admin
+    const isSuperAdmin = await tx.user.findFirst({
+      where: {
+        id: adminId,
+        role: 'SUPER',
+      },
+    });
+
+    if (!hasStoreAccess && !isSuperAdmin) {
       throw new ForbiddenError(
         'You do not have permission to manage this order',
       );
@@ -794,24 +865,28 @@ export class OrderService {
   private async validateAdminPermission(adminId: string, storeId: string) {
     const adminStore = await prismaclient.store.findFirst({
       where: {
-        OR: [
-          { adminId },
-          { userId: adminId }, // For super admin
-        ],
+        adminId,
       },
     });
 
-    if (
-      !adminStore ||
-      (adminStore.id !== storeId && !adminStore.isSuperAdmin)
-    ) {
-      throw new ForbiddenError(
-        'You do not have permission to manage this order',
-      );
+    if (!adminStore || adminStore.id !== storeId) {
+      // Check if user is a super admin by role instead of a property
+      const isSuperAdmin = await prismaclient.user.findFirst({
+        where: {
+          id: adminId,
+          role: 'SUPER',
+        },
+      });
+
+      if (!isSuperAdmin) {
+        throw new ForbiddenError(
+          'You do not have permission to manage this order',
+        );
+      }
     }
   }
 
-  private async verifyPaymentProof(
+  public async verifyPaymentProof(
     tx: any,
     order: any,
     paymentProofId: string,
@@ -931,11 +1006,162 @@ export class OrderService {
     }
   }
 
-  private async findNearestStoreWithStock() {}
+  private async findNearestStoreWithStock(
+    tx: any,
+    cartItems: any[],
+    userLat: number,
+    userLng: number,
+  ) {
+    // Get all active stores
+    const stores = await tx.store.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        latitude: true,
+        longitude: true,
+        maxDistance: true,
+      },
+    });
 
-  private calculateDistance() {}
+    if (!stores || stores.length === 0) {
+      throw new BadRequestError('No active stores available');
+    }
 
-  private deg2rad(deg: number) {}
+    // Calculate distances and check stock availability
+    const storesWithDistance: Array<{
+      store: any;
+      distance: number;
+      missingItems: Array<{ productId: string; name: string }>;
+    }> = [];
+
+    for (const store of stores) {
+      // Skip stores without coordinates
+      if (!store.latitude || !store.longitude) continue;
+
+      // Calculate distance
+      const distance = this.calculateDistance(
+        userLat,
+        userLng,
+        store.latitude,
+        store.longitude,
+      );
+
+      // Check if distance exceeds store's max delivery distance
+      if (distance > store.maxDistance) continue;
+
+      // Check stock availability for all items
+      const missingItems: Array<{ productId: string; name: string }> = [];
+      for (const item of cartItems) {
+        const inventory = await tx.inventory.findFirst({
+          where: {
+            productId: item.productId,
+            storeId: store.id,
+            quantity: { gte: item.quantity },
+          },
+          include: {
+            product: {
+              select: { name: true },
+            },
+          },
+        });
+
+        if (!inventory) {
+          const product = await tx.product.findUnique({
+            where: { id: item.productId },
+            select: { name: true },
+          });
+          missingItems.push({
+            productId: item.productId,
+            name: product?.name || 'Unknown product',
+          });
+        }
+      }
+
+      storesWithDistance.push({
+        store,
+        distance,
+        missingItems,
+      });
+    }
+
+    // Sort by distance
+    storesWithDistance.sort((a, b) => a.distance - b.distance);
+
+    // Find the first store with all items in stock
+    const storeWithStock = storesWithDistance.find(
+      (store) => store.missingItems.length === 0,
+    );
+
+    if (storeWithStock) {
+      return {
+        store: storeWithStock.store,
+        distance: storeWithStock.distance,
+        hasAllItems: true,
+      };
+    }
+
+    // If no store has all items, return the nearest store with missing items info
+    if (storesWithDistance.length > 0) {
+      return {
+        store: storesWithDistance[0].store,
+        distance: storesWithDistance[0].distance,
+        hasAllItems: false,
+        missingItems: storesWithDistance[0].missingItems,
+      };
+    }
+
+    throw new BadRequestError(
+      'No stores available with any of the required items',
+    );
+  }
+
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
+    // Earth's radius in kilometers
+    const R = 6371;
+
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.deg2rad(lat1)) *
+        Math.cos(this.deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in kilometers
+
+    return distance;
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI / 180);
+  }
+
+  private calculateShippingFee(
+    distance: number,
+    baseShippingCost: number,
+  ): number {
+    const freeDistance = 5;
+    const costPerKm = 0.5;
+
+    if (distance <= freeDistance) {
+      return baseShippingCost;
+    }
+
+    const additionalDistance = distance - freeDistance;
+    const additionalCost = additionalDistance * costPerKm;
+
+    return baseShippingCost + additionalCost;
+  }
 
   private generateOrderNumber() {
     const timestamp = new Date().getTime().toString().slice(-8);

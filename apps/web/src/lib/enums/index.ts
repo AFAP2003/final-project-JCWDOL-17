@@ -5,3 +5,8 @@ export enum VerificationIdentifier {
   NewPassword = 'NewPassword',
   AnonymusSignin = 'AnonymusSignin',
 }
+
+export const PaymentMethod = {
+  BANK_TRANSFER: 'BANK_TRANSFER',
+  PAYMENT_GATEWAY: 'PAYMENT_GATEWAY',
+};
