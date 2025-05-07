@@ -3,6 +3,7 @@
 import { toast } from '@/hooks/use-toast';
 import { API_BASE_URL } from '@/lib/constant';
 import { Discount } from '@/lib/interfaces/discountManagement.interface';
+import { toISO } from '@/lib/utils';
 import { useState } from 'react';
 
 export function discountManagementAPI() {
@@ -35,6 +36,8 @@ export function discountManagementAPI() {
 
   const handleCreateDiscount = async (values) => {
     try {
+      
+      
       const discountRes = await fetch(`${API_BASE_URL}/dashboard/discounts`, {
         method: 'POST',
         headers: {
@@ -42,16 +45,23 @@ export function discountManagementAPI() {
         },
         body: JSON.stringify({
           name: values.nama,
-          description: values.deskripsi,
-          image: values.gambar,
-          isActive: values.isActive,
+        description: values.deskripsi,
+        storeId: values.toko === 'all' ? null : values.toko,
+        type: values.tipe_diskon === 'diskon_normal' ? 'NO_RULES_DISCOUNT' :
+              values.tipe_diskon === 'diskon_syarat' ? 'WITH_MAX_PRICE' :
+              values.tipe_diskon === 'bogo' ? 'BUY_X_GET_Y' : '',
+        isPercentage: values.tipe_nilai_diskon === 'percentage',
+        value: Number(values.nilai_diskon),
+        minPurchase: values.min_pembelian ? Number(values.min_pembelian) : 0,
+        maxDiscount: values.potongan_maks ? Number(values.potongan_maks) : 0,
+        startDate: toISO(values.tanggal_mulai),
+        endDate: toISO(values.kadaluwarsa) || null,
         }),
       });
 
       const discountData = await discountRes.json();
 
       if (discountRes.ok) {
-        fetchDiscounts();
         console.log('Discount Created Successfully: ', discountData);
         toast({
           description: 'Discount Created Successfully !',
@@ -63,7 +73,7 @@ export function discountManagementAPI() {
           description: 'Failed to Create Discount.',
         });
         console.error(
-          'Failed to create inventory:',
+          'Failed to create Discount:',
           discountData.message || 'Unknown error',
         );
         return false;
@@ -80,6 +90,7 @@ export function discountManagementAPI() {
 
   const handleUpdateDiscount = async (id: string, values) => {
     try {
+     
       const discountRes = await fetch(
         `${API_BASE_URL}/dashboard/discounts/${id}`,
         {
@@ -90,8 +101,16 @@ export function discountManagementAPI() {
           body: JSON.stringify({
             name: values.nama,
             description: values.deskripsi,
-            image: values.gambar,
-            isActive: values.isActive,
+            storeId: values.toko === 'all' ? null : values.toko,
+            type: values.tipe_diskon === 'diskon_normal' ? 'NO_RULES_DISCOUNT' :
+                  values.tipe_diskon === 'diskon_syarat' ? 'WITH_MAX_PRICE' :
+                  values.tipe_diskon === 'bogo' ? 'BUY_X_GET_Y' : '',
+            isPercentage: values.tipe_nilai_diskon === 'percentage',
+            value: Number(values.nilai_diskon),
+            minPurchase: values.min_pembelian ? Number(values.min_pembelian) : 0,
+            maxDiscount: values.potongan_maks ? Number(values.potongan_maks) : 0,
+            startDate: toISO(values.tanggal_mulai),
+            endDate: toISO(values.kadaluwarsa || null)
           }),
         },
       );
@@ -99,7 +118,6 @@ export function discountManagementAPI() {
       const discountData = await discountRes.json();
 
       if (discountRes.ok) {
-        fetchDiscounts();
         toast({
           description: 'Discount Updated Successfully !',
         });
@@ -111,7 +129,7 @@ export function discountManagementAPI() {
           description: 'Failed to Create Discount.',
         });
         console.error(
-          'Failed to update inventory:',
+          'Failed to update Discount:',
           discountData.message || 'Unknown error',
         );
         return false;
@@ -138,11 +156,11 @@ export function discountManagementAPI() {
       const discountData = await discountRes.json();
 
       if (discountRes.ok) {
-        fetchDiscounts();
         toast({
           description: 'Discount Deleted Successfully !',
         });
         console.log('Discount deleted successfully:', discountData);
+        return true
       } else {
         toast({
           variant: 'destructive',
@@ -152,6 +170,7 @@ export function discountManagementAPI() {
           'Failed to delete Discount:',
           discountData.message || 'Unknown error',
         );
+        return false
       }
     } catch (error) {
       toast({
@@ -159,6 +178,7 @@ export function discountManagementAPI() {
         description: 'Error deleting Discount.',
       });
       console.error('Error deleting inventory:', error);
+      return false
     }
   };
   return {

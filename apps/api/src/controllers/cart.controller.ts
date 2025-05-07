@@ -31,7 +31,7 @@ export class CartController {
     if (error) {
       throw new UnprocessableEntityError(formatZodError(error));
     }
-
+    
     const { user } = getSessionUser(req);
     const cartItem = await this.cartService.updateCartItem(user.id, dto);
     res.json(cartItem);

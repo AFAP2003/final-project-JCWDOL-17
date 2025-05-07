@@ -33,7 +33,7 @@ export default function UseInventoryManagement() {
     fetchInventories: apiFetchInventories,
     handleCreateInventory,
     handleUpdateInventory,
-    handleDeleteInventory,
+    handleDeleteInventory:apiDeleteInventory,
   } = inventoryManagementAPI()
 
   const { stores, fetchStores } = storeManagementAPI();
@@ -166,8 +166,8 @@ export default function UseInventoryManagement() {
                     toko:inventory.storeId,
                     tambah:'',
                     kurangi:'',
-                    minimal:inventory.minStock
-
+                    minimal:inventory.minStock,
+                    mode:'tambah'
                    
                    })
                 }}>
@@ -236,6 +236,7 @@ export default function UseInventoryManagement() {
       if(success){
         resetForm();
         setDialogOpen(false)
+        fetchInventories(pagination.pageIndex, pagination.pageSize)
       }
 
     },
@@ -315,8 +316,16 @@ export default function UseInventoryManagement() {
     table
       .getColumn('category')
       ?.setFilterValue(value === 'all' ? undefined : value);
-  };
+  };  
 
+  const handleDeleteInventory = async (id: string) => {
+    const ok = await apiDeleteInventory(id)
+    if (ok) {
+      await fetchInventories(pagination.pageIndex, pagination.pageSize)
+    }
+    return ok
+  }
+  
   return {
     table,
     handleSearchChange,

@@ -30,7 +30,7 @@ export default function UseDiscountManagement() {
     fetchDiscounts:apiFetchDiscounts,
     handleCreateDiscount,
     handleUpdateDiscount,
-    handleDeleteDiscount,
+    handleDeleteDiscount:apiDeleteDiscount,
   } = discountManagementAPI();
   const {stores,fetchStores} = storeManagementAPI()
   const [globalFilter, setGlobalFilter] = useState('');
@@ -209,9 +209,7 @@ const columns: ColumnDef<Discount>[] = [
           <DropdownMenuCheckboxItem
             className="text-red-600"
             onClick={() => {
-              /* your delete handler here, e.g.
-                 handleDeleteDiscount(row.original.id!);
-              */
+              handleDeleteDiscount(discount.id)
             }}
           >
             Delete
@@ -225,6 +223,7 @@ const columns: ColumnDef<Discount>[] = [
   const formik = useFormik({
     initialValues: {
       nama: '',
+      toko:'',
       deskripsi:'',
       tipe_diskon: '',
       tipe_nilai_diskon:'',
@@ -232,13 +231,24 @@ const columns: ColumnDef<Discount>[] = [
       min_pembelian: '',
       potongan_maks: '',
       tanggal_mulai: '',
-      tanggal_kadaluwarsa: '',
+      kadaluwarsa: '',
 
     },
     validationSchema: getValidationSchema() ,
-    onSubmit: (vals, { resetForm }) => {
-      console.log('CREATE DISCOUNT', vals);
-      resetForm();
+    onSubmit: async  (values, { resetForm }) => {
+      let success = false;
+
+      if (isEditMode && editingDiscountId) {
+        success = await handleUpdateDiscount(editingDiscountId, values);
+      } else {
+        success = await handleCreateDiscount(values);
+      }
+
+      if(success){
+        resetForm();
+        setDialogOpen(false)
+        fetchDiscounts(pagination.pageIndex, pagination.pageSize)
+      }
     },
   });
 
@@ -306,6 +316,15 @@ const columns: ColumnDef<Discount>[] = [
     if (value === 'all') table.getColumn('tipe_nilai_diskon')?.setFilterValue(undefined)
     else table.getColumn('tipe_nilai_diskon')?.setFilterValue(value)
   }
+
+  const handleDeleteDiscount = async (id: string) => {
+    const ok = await apiDeleteDiscount(id)
+    if (ok) {
+      await fetchDiscounts(pagination.pageIndex, pagination.pageSize)
+    }
+    return ok
+  }
+  
   
 
   return {

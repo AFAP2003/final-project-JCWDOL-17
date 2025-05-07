@@ -19,9 +19,10 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
+import { FormikProps } from 'formik';
 import { Plus } from 'lucide-react';
 interface DiscountManagementFormProps{
-  formik:any,
+  formik: FormikProps<any>
   stores:Store[]
   setDialogOpen: (open: boolean) => void;
   isEditMode:boolean
@@ -108,7 +109,6 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>Pilih Toko</SelectLabel>
-                  <SelectItem value="all">Semua Toko</SelectItem>
                  {
                     stores.map((store)=>(
                       <SelectItem value={store.id} key={store.id}>{store.name}</SelectItem>

@@ -26,3 +26,8 @@ export function formatDate(dateString: string) {
 export function genRandomString() {
   return uuidv4().replace(/-/g, '').substring(0, 25);
 }
+
+export function toISO(d?:string){
+  return   d ? new Date(d).toISOString() : null;
+
+}

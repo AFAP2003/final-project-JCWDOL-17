@@ -174,7 +174,9 @@ export default function InventoryManagementForm({
  value={formik.values.mode} 
  onValueChange={(newMode) => {
   formik.setFieldValue('mode', newMode); // ← write back into Formik
-  // optionally clear the opposite field:
+
+  setActiveTab(newMode as 'tambah' | 'kurangi')
+
   if (newMode === 'tambah') {
     formik.setFieldValue('kurangi', '');
   } else {
