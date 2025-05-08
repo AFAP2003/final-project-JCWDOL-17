@@ -121,21 +121,6 @@ export default function Checkout() {
         setCalculatingShipping(true);
         calculatingShippingRef.current = true;
 
-        // const timeoutId = setTimeout(() => {
-        //   if (calculatingShippingRef.current) {
-        //     setCalculatingShipping(false);
-        //     calculatingShippingRef.current = false;
-        //     setShippingError(
-        //       'Shipping calculation timed out. Using base shipping cost.',
-        //     );
-
-        //     const selectedMethod = shippingMethods.find(
-        //       (m) => m.id === selectedShippingId,
-        //     );
-        //     if (selectedMethod) setShippingCost(selectedMethod.baseCost);
-        //   }
-        // }, 100); // 10 second timeout
-
         const response = await apiclient.post('/shipping/calculation', {
           addressId: selectedAddressId,
           shippingMethodId: selectedShippingId,
@@ -145,32 +130,66 @@ export default function Checkout() {
           })),
         });
 
-        clearTimeout(timeoutId);
+        console.log('Shipping API response:', response.data);
 
-        const responseData = response.data;
-        const shippingData =
-          responseData.data?.data || responseData.data || responseData;
+        // Correctly navigate the nested structure
+        let shippingData;
+        if (response.data?.data?.data) {
+          // Handle double nested data structure
+          shippingData = response.data.data.data;
+        } else if (response.data?.data) {
+          // Handle single nested data structure
+          shippingData = response.data.data;
+        } else {
+          // Direct data
+          shippingData = response.data;
+        }
 
-        console.log('Shipping calculation response:', shippingData);
+        console.log('Extracted shipping data:', shippingData);
 
-        if (shippingData.store) setNearestStore(shippingData.store);
-        if (shippingData.distance !== undefined)
-          setShippingDistance(shippingData.distance);
-        if (shippingData.serviceDetails?.isMock) {
+        if (!shippingData) {
+          setShippingError('Shipping data is missing.');
+          return;
+        }
+
+        // Set the nearest store data directly from the response
+        if (shippingData.store) {
+          console.log('Setting nearest store:', shippingData.store);
+          setNearestStore(shippingData.store);
+
+          // If distance is available, set it
+          if (shippingData.distance !== undefined) {
+            setShippingDistance(shippingData.distance);
+          }
+        } else {
+          console.warn('No store data found in the response');
+        }
+
+        // Only set shipping error if using mock data from RajaOngkir API limit
+        if (
+          shippingData.serviceDetails?.isMock ||
+          shippingData.calculationMethod === 'mock'
+        ) {
           setShippingError('Using estimated shipping due to API limit.');
         }
+
+        // Set other shipping information
         setStockAvailability({
           available: shippingData.hasAllItems ?? true,
           missingItems: shippingData.missingItems || [],
         });
 
-        if (shippingData.shippingCost) {
+        if (shippingData.shippingCost !== undefined) {
           setShippingCost(shippingData.shippingCost);
         } else {
           const selectedMethod = shippingMethods.find(
             (m) => m.id === selectedShippingId,
           );
           if (selectedMethod) setShippingCost(selectedMethod.baseCost);
+        }
+
+        if (shippingData.serviceDetails) {
+          setServiceDetails(shippingData.serviceDetails);
         }
 
         if (shippingData.shippingMethods?.length > 0) {
@@ -211,7 +230,7 @@ export default function Checkout() {
     (addr) => addr.id === selectedAddressId,
   );
 
-  const total = subtotal + shippingCost;
+  const total = Number(subtotal) + Number(shippingCost);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -322,7 +341,6 @@ export default function Checkout() {
       <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Shipping Address */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -384,18 +402,11 @@ export default function Checkout() {
                   <span className="font-medium">Postal Code:</span>{' '}
                   {selectedAddress.postalCode}
                 </p>
-                {selectedAddress.latitude && selectedAddress.longitude && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Coordinates: {selectedAddress.latitude.toFixed(6)},{' '}
-                    {selectedAddress.longitude.toFixed(6)}
-                  </p>
-                )}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Nearest Store */}
         {nearestStore && (
           <Card>
             <CardHeader>
@@ -424,7 +435,6 @@ export default function Checkout() {
           </Card>
         )}
 
-        {/* Shipping Error Notice */}
         {shippingError && (
           <Alert>
             <AlertTriangle className="h-4 w-4" />
@@ -433,7 +443,6 @@ export default function Checkout() {
           </Alert>
         )}
 
-        {/* Stock Availability Warning */}
         {!stockAvailability.available &&
           stockAvailability.missingItems.length > 0 && (
             <Alert variant="destructive">
@@ -451,7 +460,6 @@ export default function Checkout() {
             </Alert>
           )}
 
-        {/* Shipping Method */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -519,7 +527,6 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
-        {/* Payment Method */}
         <Card>
           <CardHeader>
             <CardTitle>Payment Method</CardTitle>
@@ -580,7 +587,6 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
-        {/* Order Notes */}
         <Card>
           <CardHeader>
             <CardTitle>Order Notes (Optional)</CardTitle>
@@ -596,13 +602,11 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
-        {/* Order Summary */}
         <Card>
           <CardHeader>
             <CardTitle>Order Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Cart Items */}
             <div className="space-y-3 mb-3">
               {items.map((item) => (
                 <div key={item.id} className="flex items-center gap-3">
@@ -631,7 +635,6 @@ export default function Checkout() {
 
             <Separator className="my-3" />
 
-            {/* Totals */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>

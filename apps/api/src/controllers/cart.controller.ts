@@ -53,4 +53,10 @@ export class CartController {
     await this.cartService.clearCart(user.id);
     res.json({ message: 'Item removed from cart' });
   };
+
+  getCartTotalQuantity = async (req: Request, res: Response) => {
+    const { user } = getSessionUser(req);
+    const totalQuantity = await this.cartService.getCartTotalQuantity(user.id);
+    res.json({ totalQuantity });
+  };
 }

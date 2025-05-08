@@ -29,6 +29,10 @@ export class CartRouter {
       asynchandler(this.controller.removeCartItem),
     );
     this.router.delete('/', asynchandler(this.controller.clearCart));
+    this.router.get(
+      '/total',
+      asynchandler(this.controller.getCartTotalQuantity),
+    );
   }
 
   getRouter(): Router {

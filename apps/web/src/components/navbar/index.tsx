@@ -2,11 +2,13 @@
 
 import { useNavbar } from '@/context/navbar-provider';
 import { useSession } from '@/lib/auth/client';
+import { apiclient } from '@/lib/apiclient';
 import { cn } from '@/lib/utils';
 import { Search, ShoppingBag } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Input } from '../ui/input';
 import { Separator } from '../ui/separator';
 import UserLocation from '../user-location';
@@ -15,12 +17,25 @@ import AvatarPopup from './avatar-popup';
 
 export default function Navbar() {
   const { data: session, isPending } = useSession();
-
   const { isFullNavbar } = useNavbar();
   const router = useRouter();
 
-  // TODO: cart count state
-  const cartcount = 12;
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      try {
+        const res = await apiclient.get('/cart/total');
+        setCartCount(res.data.totalQuantity);
+      } catch (error) {
+        console.error('Failed to fetch cart total:', error);
+      }
+    };
+
+    if (session?.user?.id) {
+      fetchCartCount();
+    }
+  }, [session?.user?.id]);
 
   return (
     <nav className="relative text-neutral-800 overflow-hidden z-50">
@@ -57,7 +72,6 @@ export default function Navbar() {
           )}
         >
           <div className="flex w-full h-full justify-between items-center">
-            {/* Left Content */}
             <div className="relative -left-1 flex items-center justify-center max-md:mr-1">
               <div
                 onClick={() => router.push('/')}
@@ -69,10 +83,7 @@ export default function Navbar() {
                 <Image src={'/images/app-logo-black.png'} alt="App Logo" fill />
               </div>
             </div>
-
-            {/* Center Content */}
             <div className="grow flex justify-center items-center gap-4 w-full max-w-xl">
-              {/* Search Bar */}
               <div className="flex gap-3 justify-center items-center w-full relative">
                 <Search className="absolute left-2 text-neutral-600" />
                 <Input
@@ -80,25 +91,22 @@ export default function Navbar() {
                   className="w-full border-t-0 border-x-0 focus-visible:ring-0 bg-neutral-50 shadow-none border-neutral-500 rounded-none pl-12"
                 />
               </div>
-              {/* Cart */}
               <div className="flex items-center relative">
                 <Link
                   href="/cart"
                   className="flex items-center text-neutral-600"
                 >
                   <ShoppingBag className="size-[25px]" />
-                  <span className="absolute text-[10px] -top-3 -right-4 text-neutral-50 bg-red-500 px-[6px] py-[2px] rounded-full font-mono">
-                    {cartcount}
-                  </span>
+                  {cartCount > 0 && (
+                    <span className="absolute text-[10px] -top-3 -right-4 text-neutral-50 bg-red-500 px-[6px] py-[2px] rounded-full font-mono">
+                      {cartCount}
+                    </span>
+                  )}
                 </Link>
               </div>
-
               <UserLocation iconClass="text-neutral-600" />
             </div>
-
-            {/* Right Content */}
             <div className="flex items-center justify-center max-md:ml-2">
-              {/* User Profile | Auth Button */}
               <div>
                 {isPending || !session ? (
                   <AuthButton />
