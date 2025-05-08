@@ -1,25 +1,20 @@
 'use client';
 
-import { useCart } from '@/context/cart-provider';
 import { useNavbar } from '@/context/navbar-provider';
 import { useSession } from '@/lib/auth/client';
 import { cn } from '@/lib/utils';
-import { ShoppingBag } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import LoginDialog from '../login-dialog';
 import { Separator } from '../ui/separator';
 import UserLocation from '../user-location';
 import AuthButton from './auth-button';
 import AvatarPopup from './avatar-popup';
+import { CartButton } from './cart-button';
+import { LocationButton } from './location-button';
 import SearchBox from './search-box';
 
 export default function Navbar() {
   const { data: session, isPending } = useSession();
-  const { totalItems } = useCart();
-  const [loginDialog, setLoginDialog] = useState(false);
-
   const { isFullNavbar } = useNavbar();
   const router = useRouter();
 
@@ -81,28 +76,12 @@ export default function Navbar() {
                 {/* Search Bar */}
                 <SearchBox />
 
-                {/* Cart */}
-                <div className="flex items-center relative">
-                  <div
-                    onClick={() => {
-                      if (!session?.user) {
-                        setLoginDialog(true);
-                      } else {
-                        router.push('/cart');
-                      }
-                    }}
-                    className="flex items-center text-neutral-600 cursor-pointer"
-                  >
-                    <ShoppingBag className="size-[25px]" />
-                    {totalItems > 0 && (
-                      <span className="absolute text-[10px] -top-3 -right-4 text-neutral-50 bg-red-500 px-[6px] py-[2px] rounded-full font-mono">
-                        {totalItems}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <CartButton />
 
-                <UserLocation iconClass="text-neutral-600" />
+                {/* MAP Lokasi */}
+                <UserLocation>
+                  <LocationButton />
+                </UserLocation>
               </div>
 
               {/* Right Content */}
@@ -120,12 +99,6 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
-
-      <LoginDialog
-        open={loginDialog}
-        onOpenChange={setLoginDialog}
-        onCancel={() => setLoginDialog(false)}
-      />
     </>
   );
 }

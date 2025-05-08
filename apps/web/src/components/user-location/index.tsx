@@ -1,120 +1,55 @@
-'use client';
-
-import { useCurrentLocation } from '@/context/current-location-provider';
-import { cn } from '@/lib/utils';
-import { MapPinCheck, MapPinned } from 'lucide-react';
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
-import { Separator } from '../ui/separator';
-import PintPointButton from './pint-point-button';
-import UseCurrentLocationButton from './use-current-location-button';
-import UseMyAddressButton from './use-my-address-button';
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { useLocation } from '@/context/location-provider';
+import { cn } from '@/lib/utils';
+import { DialogTitle } from '@radix-ui/react-dialog';
+import { ReactNode, useState } from 'react';
+import CurrentLocationButton from './current-location-button';
+import MyAddressButton from './my-address-button';
+import SearchLocationButton from './search-location-button';
+import SelectedLocation from './selected-location';
 
 type Props = {
-  iconClass?: string;
-  iconContainerClass?: string;
+  children: ReactNode;
 };
 
-export default function UserLocation(props: Props) {
-  const { data, isPending } = useCurrentLocation();
-  const [isStacking, setIsStacking] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
+export default function UserLocation({ children }: Props) {
+  const { data: location } = useLocation({ fallbackAddress: true });
+  const [rootDialogHidden, setRootDialogHidden] = useState(false);
 
   return (
-    <>
-      <div
-        onClick={() => setDialogOpen(true)}
-        className={cn('cursor-pointer', props.iconContainerClass)}
-      >
-        <MapPinned className={cn('size-7', props.iconClass)} />
-      </div>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        {isPending ? (
-          <DialogContent>
-            <DialogTitle></DialogTitle>
-            <DialogDescription></DialogDescription>
-          </DialogContent>
-        ) : (
-          <DialogContent
-            className={cn(
-              'bg-neutral-800 border-neutral-500 text-neutral-200 p-6 opacity-100',
-              isStacking && 'opacity-0',
-            )}
-          >
-            <DialogHeader>
-              <DialogTitle>Where are you at now?</DialogTitle>
-              <DialogDescription></DialogDescription>
-            </DialogHeader>
-
-            <Separator className="bg-neutral-500 my-3" />
-
-            {/* Selected Location */}
-            <div className="mb-6">
-              {data ? (
-                <div className="flex w-full gap-6 items-center">
-                  <div className="text-red-500">
-                    <MapPinCheck className="shrink-0" />
-                  </div>
-                  <div className="space-y-1.5">
-                    {data.source === 'geolocation' && (
-                      <>
-                        <p className="text-base">{data.location.label}</p>
-                        <p className="text-sm text-neutral-300">
-                          {data.location.address}
-                        </p>
-                      </>
-                    )}
-
-                    {data.source === 'address' && (
-                      <>
-                        <p className="text-base">{data.location.label}</p>
-                        <p className="text-sm text-neutral-300">
-                          {data.location.address}
-                        </p>
-                        <p className="text-sm">
-                          {data.location.addressDetail.city},{' '}
-                          {data.location.addressDetail.province} |{' '}
-                          {data.location.addressDetail.postalCode}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div>No Location has been selected.</div>
-              )}
-            </div>
-
-            {/* Buttons */}
-            <div className="flex flex-col size-full gap-3">
-              <UseMyAddressButton
-                onDialogOpenChange={(val) => {
-                  setIsStacking(val);
-                }}
-              />
-              <UseCurrentLocationButton
-                onDialogOpenChange={(val) => {
-                  setIsStacking(val);
-                }}
-              />
-
-              <PintPointButton
-                onDialogOpenChange={(val) => {
-                  console.log({ val });
-                  setIsStacking(val);
-                }}
-              />
-            </div>
-          </DialogContent>
+    <Dialog>
+      <DialogTrigger>{children}</DialogTrigger>
+      <DialogContent
+        id="root:dialog"
+        className={cn(
+          'bg-neutral-800 border-neutral-500 text-neutral-200',
+          rootDialogHidden && 'opacity-0',
         )}
-      </Dialog>
-    </>
+      >
+        <DialogTitle className="hidden" />
+        <DialogDescription className="hidden" />
+
+        <div>
+          <h3 className="text-lg font-semibold leading-none tracking-tight">
+            Lagi di mana sekarang?
+          </h3>
+          <Separator className="bg-neutral-500 my-6" />
+
+          <SelectedLocation location={location} />
+
+          <div className="flex flex-col size-full gap-3">
+            <MyAddressButton setRootDialogHidden={setRootDialogHidden} />
+            <CurrentLocationButton setRootDialogHidden={setRootDialogHidden} />
+            <SearchLocationButton setRootDialogHidden={setRootDialogHidden} />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

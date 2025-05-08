@@ -9,7 +9,9 @@ type Props = {
 
 export default function LocoScroll({ children }: Props) {
   useEffect(() => {
-    const lenis = new Lenis();
+    const lenis = new Lenis({
+      prevent: (node) => node.id === 'prevent-lenis',
+    });
 
     function raf(time: any) {
       lenis.raf(time);
@@ -18,28 +20,32 @@ export default function LocoScroll({ children }: Props) {
 
     requestAnimationFrame(raf);
 
-    const handleWheel = (e: WheelEvent) => {
-      const isInsideHorizontal = (e.target as HTMLElement)?.closest(
-        '.horizontal-scroll',
-      );
+    // const handleWheel = (e: WheelEvent) => {
+    //   const isInsideHorizontal = (e.target as HTMLElement)?.closest(
+    //     '.horizontal-scroll',
+    //   );
 
-      if (isInsideHorizontal && e.shiftKey) {
-        lenis.stop();
+    //   // const isInsideVertical = (e.target as HTMLElement)?.closest(
+    //   //   '.vertical-scroll',
+    //   // );
 
-        // Resume scrolling after user stops wheel input for 300ms
-        clearTimeout((handleWheel as any)._timeout);
-        (handleWheel as any)._timeout = setTimeout(() => {
-          lenis.start();
-        }, 300);
-      }
-    };
+    //   if (isInsideHorizontal && e.shiftKey) {
+    //     lenis.stop();
 
-    window.addEventListener('wheel', handleWheel, { passive: true });
+    //     // Resume scrolling after user stops wheel input for 300ms
+    //     clearTimeout((handleWheel as any)._timeout);
+    //     (handleWheel as any)._timeout = setTimeout(() => {
+    //       lenis.start();
+    //     }, 300);
+    //   }
+    // };
 
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-      lenis.destroy();
-    };
+    // window.addEventListener('wheel', handleWheel, { passive: true });
+
+    // return () => {
+    //   window.removeEventListener('wheel', handleWheel);
+    //   lenis.destroy();
+    // };
   }, []);
 
   return <>{children}</>;

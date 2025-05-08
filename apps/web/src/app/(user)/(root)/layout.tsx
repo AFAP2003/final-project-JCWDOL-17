@@ -3,7 +3,7 @@ import LocoScroll from '@/components/loco-scroll';
 import Navbar from '@/components/navbar';
 import PageWrapper from '@/components/page-wrapper';
 import { CartProvider } from '@/context/cart-provider';
-import { CurrentLocationProvider } from '@/context/current-location-provider';
+import { LocationProvider } from '@/context/location-provider';
 import { NavbarProvider } from '@/context/navbar-provider';
 import React from 'react';
 
@@ -13,7 +13,7 @@ type Props = {
 
 export default function UserLayout({ children }: Props) {
   return (
-    <CurrentLocationProvider>
+    <LocationProvider>
       <CartProvider>
         <NavbarProvider>
           <LocoScroll>
@@ -25,6 +25,6 @@ export default function UserLayout({ children }: Props) {
           </LocoScroll>
         </NavbarProvider>
       </CartProvider>
-    </CurrentLocationProvider>
+    </LocationProvider>
   );
 }

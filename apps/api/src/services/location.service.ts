@@ -21,8 +21,10 @@ export class LocationService {
   geocoding = async (dto: z.infer<typeof GeocodingDTO>) => {
     if (!dto.name && !dto.lat && !dto.lng) return [];
 
-    const baseurl =
-      'https://google-map-places.p.rapidapi.com/maps/api/geocode/json';
+    // const baseurl =
+    // 'https://google-map-places.p.rapidapi.com/maps/api/geocode/json';
+
+    const baseurl = 'https://maps.googleapis.com/maps/api/geocode/json';
 
     const param = {
       address: dto.name || '',
@@ -31,6 +33,7 @@ export class LocationService {
       region: 'id',
       // result_type: 'street_address',
       // location_type: 'ROOFTOP',
+      key: RAPID_API_KEY,
     };
 
     const query = qs.stringify(param, {
@@ -38,19 +41,52 @@ export class LocationService {
       skipNull: true,
     });
 
-    const { data } = await axios.get(`${baseurl}?${query}`, {
-      headers: {
-        'x-rapidapi-host': 'google-map-places.p.rapidapi.com',
-        'x-rapidapi-key': RAPID_API_KEY,
-      },
-    });
+    // const { data } = await axios.get(`${baseurl}?${query}`, {
+    //   headers: {
+    //     'x-rapidapi-host': 'google-map-places.p.rapidapi.com',
+    //     'x-rapidapi-key': RAPID_API_KEY,
+    //   },
+    // });
+    const { data } = await axios.get(`${baseurl}?${query}`);
 
     const results = data.results as RapidFindPlaceResponse[];
 
     const formatted = results.map((place) => {
+      let name = place.address_components.find((ac) =>
+        ac.types.includes('point_of_interest'),
+      )?.long_name;
+      if (!name) {
+        name = place.address_components.find((ac) =>
+          ac.types.includes('establishment'),
+        )?.long_name;
+      }
+      if (!name) {
+        name = place.address_components.find((ac) =>
+          ac.types.includes('route'),
+        )?.long_name;
+      }
+      if (!name) {
+        name = place.address_components.at(0)?.long_name;
+      }
+
+      let province = place.address_components.find((ac) =>
+        ac.types.includes('administrative_area_level_1'),
+      )?.long_name;
+
+      let city = place.address_components.find((ac) =>
+        ac.types.includes('administrative_area_level_2'),
+      )?.long_name;
+
+      let postalCode = place.address_components.find((ac) =>
+        ac.types.includes('postal_code'),
+      )?.long_name;
+
       return {
-        name: place.address_components.at(0)?.long_name,
         address: place.formatted_address,
+        name: name || null,
+        city: city || null,
+        province: province || null,
+        postalCode: postalCode || null,
         latitude: place.geometry.location.lat,
         longitude: place.geometry.location.lng,
       };

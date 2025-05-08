@@ -8,13 +8,16 @@ import {
 } from '@/components/ui/accordion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import { useSession } from '@/lib/auth/client';
-import { Settings, Ticket } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { useLocation } from '@/context/location-provider';
+import { signOut, useSession } from '@/lib/auth/client';
+import { LogOut, Settings, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 export default function UserSidebar() {
   const { data, isPending } = useSession();
+  const { mutate: setLocation } = useLocation();
 
   if (isPending) return null;
   if (!data) redirect('/auth/signin');
@@ -22,49 +25,72 @@ export default function UserSidebar() {
   const { user } = data;
 
   return (
-    <Card className="w-full max-w-64 max-h-[720px] top-0 sticky flex flex-col rounded-lg overflow-hidden bg-gradient-to-b from-neutral-800 to-neutral-700 text-neutral-200">
-      <div className="flex gap-3 items-center p-6">
-        <Avatar className="size-12">
-          <AvatarImage src={user.image} alt="User Image"></AvatarImage>
-          <AvatarFallback className="bg-neutral-200 text-neutral-800">{`${user.name.at(0)?.toUpperCase()}`}</AvatarFallback>
-        </Avatar>
-        <div>
-          <div className="font-medium text-lg">{user.name}</div>
+    <Card className="w-full max-w-64 max-h-[720px] top-0 sticky flex flex-col rounded-lg overflow-hidden border border-neutral-200 bg-white shadow-sm">
+      {/* User Profile Section */}
+      <div className="bg-neutral-50 p-6">
+        <div className="flex gap-4 items-center">
+          <Avatar className="size-14 border-2 border-white shadow-sm">
+            <AvatarImage
+              src={user.image || '/placeholder.svg'}
+              alt={`${user.name}'s profile`}
+            />
+            <AvatarFallback className="bg-neutral-100 text-neutral-700 font-medium">{`${user.name.at(0)?.toUpperCase()}`}</AvatarFallback>
+          </Avatar>
+          <div className="space-y-1">
+            <div className="font-semibold text-lg text-neutral-700">
+              {user.name}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* <Separator className="" /> */}
+      <Separator className="bg-neutral-200" />
 
-      <div className="grow px-6 pb-6">
+      {/* Navigation Section */}
+      <div className="grow px-4 py-4 bg-white">
         <Accordion
           type="multiple"
           defaultValue={['Account']}
           className="w-full"
         >
-          <AccordionItem value="Account">
-            {/* Account Group */}
-            <AccordionTrigger className="text-base">Account</AccordionTrigger>
+          <AccordionItem value="Account" className="border-b-neutral-200">
+            <AccordionTrigger className="text-base font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 rounded-md px-2 py-3">
+              Account
+            </AccordionTrigger>
 
-            <AccordionContent className="text-sm text-neutral-300">
+            <AccordionContent className="text-sm pt-1 pb-2">
               <Link href={'/user/settings'} passHref>
-                <div className="flex items-center gap-2 rounded-md hover:px-3 py-2 cursor-pointer font-medium transition-all hover:bg-neutral-700 text-neutral-200">
-                  <Settings className="size-5" /> <span>Settings</span>
+                <div className="flex items-center gap-3 rounded-md px-3 py-2.5 cursor-pointer font-medium transition-all hover:bg-neutral-100 text-neutral-700 hover:text-neutral-900">
+                  <Settings className="size-4" />
+                  <span>Pengaturan</span>
                 </div>
               </Link>
-            </AccordionContent>
 
-            {/* TODO: */}
-            <AccordionContent className="text-sm text-neutral-300">
               <Link href={'#'} passHref>
-                <div className="flex items-center gap-2 rounded-md hover:px-3 py-2 cursor-pointer font-medium transition-all hover:bg-neutral-700 text-neutral-200">
-                  <Ticket className="size-5" /> <span>My Voucher</span>
+                <div className="flex items-center gap-3 rounded-md px-3 py-2.5 cursor-pointer font-medium transition-all hover:bg-neutral-100 text-neutral-700 hover:text-neutral-900">
+                  <Ticket className="size-4" />
+                  <span>Voucher Saya</span>
                 </div>
               </Link>
             </AccordionContent>
           </AccordionItem>
-
-          {/* Other Group */}
         </Accordion>
+      </div>
+
+      {/* Footer Section */}
+      <div className="mt-auto p-4 bg-neutral-50 border-t border-neutral-200">
+        <div
+          onClick={async () => {
+            await signOut();
+            setLocation(null);
+            window.location.reload();
+          }}
+        >
+          <div className="flex items-center gap-3 rounded-md px-3 py-2.5 cursor-pointer font-medium transition-all hover:bg-neutral-200/70 text-neutral-700">
+            <LogOut className="size-4" />
+            <span className="text-sm">Logout</span>
+          </div>
+        </div>
       </div>
     </Card>
   );

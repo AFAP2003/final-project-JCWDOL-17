@@ -41,7 +41,8 @@ export default function PopularCategory() {
       </h2>
       {!isPending && !error && (
         <Swiper
-          className="mt-9 horizontal-scroll cursor-grab"
+          id="prevent-lenis"
+          className="mt-9 cursor-grab"
           breakpoints={{
             0: {
               slidesPerView: 1,

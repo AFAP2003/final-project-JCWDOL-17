@@ -1,5 +1,5 @@
 import { useCart } from '@/context/cart-provider';
-import { useCurrentLocation } from '@/context/current-location-provider';
+import { useLocation } from '@/context/location-provider';
 import { apiclient } from '@/lib/apiclient';
 import { useSession } from '@/lib/auth/client';
 import { CheckStockResponse } from '@/lib/types/check-stock-response';
@@ -17,8 +17,7 @@ export type CheckoutErrorType =
 
 export function useCheckout() {
   const [isPreparing, setIsPreparing] = useState(true);
-  const { data: userLocation, isPending: locationPending } =
-    useCurrentLocation();
+  const { data: userLocation, isPending: locationPending } = useLocation();
   const {
     items: cartItems,
     totalItems: cartCount,
@@ -41,7 +40,7 @@ export function useCheckout() {
     mutationFn: async () => {
       // get nearest store
       const { data: fetchStore } = await apiclient.get<GetNearestStoreResponse>(
-        `/store/nearest?latitude=${userLocation?.location.latitude}&longitude=${userLocation?.location.longitude}`,
+        `/store/nearest?latitude=${userLocation?.latitude}&longitude=${userLocation?.longitude}`,
       );
       if (!fetchStore.store) {
         throw new Error('No store found for current user location');

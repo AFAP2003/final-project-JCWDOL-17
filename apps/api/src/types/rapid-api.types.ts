@@ -9,7 +9,23 @@ export type RapidFindPlaceResponse = {
 type AddressComponent = {
   long_name: string;
   short_name: string;
-  types: string[];
+  types: (
+    | 'street_number'
+    | 'route'
+    | 'establishment'
+    | 'point_of_interest'
+    | 'subpremise'
+    | 'administrative_area_level_1'
+    | 'administrative_area_level_2'
+    | 'administrative_area_level_3'
+    | 'administrative_area_level_4'
+    | 'administrative_area_level_5'
+    | 'administrative_area_level_6'
+    | 'administrative_area_level_7'
+    | 'political'
+    | 'country'
+    | 'postal_code'
+  )[];
 };
 
 type Geometry = {
@@ -18,7 +34,7 @@ type Geometry = {
     southwest: LatLong;
   };
   location: LatLong;
-  location_type: string;
+  location_type: 'ROOFTOP';
   viewport: {
     northeast: LatLong;
     southwest: LatLong;

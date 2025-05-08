@@ -1,6 +1,5 @@
 'use client';
 
-import Logo from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import {
   CardContent,
@@ -31,6 +30,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import AuthLogo from '../../../../components/auth-logo';
 
 const formSchema = z
   .object({
@@ -127,9 +127,8 @@ export default function SetPasswordForm({ token, intend }: Props) {
 
         {/* Header */}
         <CardHeader className="space-y-2 pb-6">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Logo showText={false} />
-          </div>
+          <AuthLogo />
+
           <CardTitle className="text-2xl font-bold">
             Create New Password
           </CardTitle>
