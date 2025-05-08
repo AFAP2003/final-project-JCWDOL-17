@@ -28,3 +28,7 @@ export const RAPID_API_KEY = process.env.RAPID_API_KEY || '';
 export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || '';
 export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || '';
 export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || '';
+export const MIDTRANS_CLIENT_KEY =
+  process.env.MIDTRANS_CLIENT_KEY || 'SB-Mid-client-YOUR_KEY_HERE';
+export const MIDTRANS_SERVER_KEY =
+  process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-YOUR_KEY_HERE';

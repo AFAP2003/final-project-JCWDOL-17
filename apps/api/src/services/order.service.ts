@@ -3,7 +3,7 @@ import { ProcessOrderDTO } from '@/dtos/process-order.dto';
 import { ShipOrderDTO } from '@/dtos/ship-order.dto';
 import { UploadPaymentDTO } from '@/dtos/upload-payment.dto';
 
-import { BadRequestError, ForbiddenError } from '@/errors';
+import { BadRequestError, ForbiddenError, NotFoundError } from '@/errors';
 import { prismaclient } from '@/prisma';
 import {
   OrderStatus,
@@ -21,24 +21,20 @@ import { z } from 'zod';
 export class OrderService {
   async createOrder(userId: string, dto: z.infer<typeof CreateOrderDTO>) {
     return prismaclient.$transaction(async (tx) => {
-      // Get cart and validate
       const cart = await this.getAndValidateCart(tx, userId);
 
-      // Get address and validate
       const address = await this.getAndValidateAddress(
         tx,
         userId,
         dto.addressId,
       );
 
-      // Check if address has coordinates
       if (!address.latitude || !address.longitude) {
         throw new BadRequestError(
           'Address coordinates are required for delivery. Please update your address.',
         );
       }
 
-      // Find nearest store with stock
       const nearestStoreResult = await this.findNearestStoreWithStock(
         tx,
         cart.items,
@@ -46,7 +42,6 @@ export class OrderService {
         address.longitude,
       );
 
-      // If not all items are available, inform the user
       if (!nearestStoreResult.hasAllItems && nearestStoreResult.missingItems) {
         const missingItemsMessage = nearestStoreResult.missingItems
           .map((item) => `"${item.name}"`)
@@ -60,7 +55,6 @@ export class OrderService {
       const nearestStore = nearestStoreResult.store;
       const distance = nearestStoreResult.distance;
 
-      // Get shipping method
       const shippingMethod = await tx.shippingMethod.findUnique({
         where: {
           id: dto.shippingMethodId,
@@ -80,7 +74,6 @@ export class OrderService {
         subtotal,
       );
 
-      // Calculate shipping cost based on distance
       const baseCost = Number(shippingMethod.baseCost);
       const shippingCost = this.calculateShippingFee(distance, baseCost);
 
@@ -92,13 +85,11 @@ export class OrderService {
           ? addHours(new Date(), 1)
           : null;
 
-      // Add distance info to order notes
       const distanceNote = `Distance to store: ${distance.toFixed(2)} km`;
       const orderNotes = dto.notes
         ? `${dto.notes}\n${distanceNote}`
         : distanceNote;
 
-      // Create order with shipping details
       const order = await this.createOrderRecord(
         tx,
         userId,
@@ -110,14 +101,13 @@ export class OrderService {
         totalDiscount,
         total,
         dto.paymentMethod,
-        orderNotes, // Include distance in notes
+        orderNotes,
         expiresAt,
         orderNumber,
         orderItems,
         appliedVouchers,
       );
 
-      // Process payment gateway if selected
       if (dto.paymentMethod === PaymentMethod.PAYMENT_GATEWAY) {
         await this.processPaymentGateway(
           tx,
@@ -129,14 +119,13 @@ export class OrderService {
         );
       }
 
-      // Clear the cart
       await tx.cartItem.deleteMany({
         where: { cartId: cart.id },
       });
 
       return {
         ...order,
-        distance, // Add distance to the response but don't store in DB
+        distance,
       };
     });
   }
@@ -145,7 +134,6 @@ export class OrderService {
     userId: string,
     dto: z.infer<typeof UploadPaymentDTO>,
   ) {
-    // Get and validate order
     const order = await this.getAndValidateUserOrder(userId, dto.orderId);
 
     if (order.status !== OrderStatus.WAITING_PAYMENT) {
@@ -158,14 +146,11 @@ export class OrderService {
       throw new BadRequestError('Order has expired');
     }
 
-    // Validate file
     const file = dto.file;
     this.validateFile(file);
 
-    // Save file
     const filePath = await this.savePaymentProofFile(file);
 
-    // Create payment proof record
     await prismaclient.paymentProof.create({
       data: {
         orderId: order.id,
@@ -174,7 +159,6 @@ export class OrderService {
       },
     });
 
-    // Update order status
     return await prismaclient.order.update({
       where: { id: order.id },
       data: {
@@ -204,10 +188,8 @@ export class OrderService {
   ) {
     const skip = (page - 1) * limit;
 
-    // Build where condition object
     const where: any = { userId };
 
-    // Add status filter if provided and valid
     if (
       filters.status &&
       Object.values(OrderStatus).includes(filters.status as OrderStatus)
@@ -215,7 +197,6 @@ export class OrderService {
       where.status = filters.status as OrderStatus;
     }
 
-    // Add date range filters if provided
     if (filters.startDate) {
       where.createdAt = {
         ...(where.createdAt || {}),
@@ -230,7 +211,6 @@ export class OrderService {
       };
     }
 
-    // Add order number filter if provided
     if (filters.orderNumber) {
       where.orderNumber = {
         contains: filters.orderNumber,
@@ -263,7 +243,6 @@ export class OrderService {
       },
     });
 
-    // Add distance calculation to each order
     const ordersWithDistance = await Promise.all(
       orders.map(async (order) => {
         let distance = null;
@@ -338,7 +317,6 @@ export class OrderService {
     });
   }
 
-  // Admin methods
   async getAdminStore(adminId: string) {
     return await prismaclient.store.findFirst({
       where: {
@@ -388,7 +366,6 @@ export class OrderService {
 
   async processOrder(adminId: string, dto: z.infer<typeof ProcessOrderDTO>) {
     return prismaclient.$transaction(async (tx) => {
-      // Get order and validate admin permissions
       const { order, adminStore } = await this.getAndValidateAdminOrder(
         tx,
         adminId,
@@ -409,7 +386,6 @@ export class OrderService {
         );
       }
 
-      // Update stock
       await this.updateStockForProcessing(
         tx,
         order.items,
@@ -418,7 +394,6 @@ export class OrderService {
         order.orderNumber,
       );
 
-      // Update order status
       return await tx.order.update({
         where: { id: order.id },
         data: {
@@ -441,7 +416,6 @@ export class OrderService {
   }
 
   async shipOrder(adminId: string, dto: z.infer<typeof ShipOrderDTO>) {
-    // Get order and validate admin permissions
     const order = await prismaclient.order.findUnique({
       where: { id: dto.orderId },
       include: { store: true },
@@ -473,7 +447,6 @@ export class OrderService {
 
   async adminCancelOrder(adminId: string, orderId: string, reason: string) {
     return prismaclient.$transaction(async (tx) => {
-      // Get order and validate admin permissions
       const { order } = await this.getAndValidateAdminOrder(
         tx,
         adminId,
@@ -487,12 +460,10 @@ export class OrderService {
         throw new BadRequestError('Cannot cancel shipped or confirmed orders');
       }
 
-      // If order was being processed, restore stock
       if (order.status === OrderStatus.PROCESSING) {
         await this.restoreStockForCancellation(tx, order, adminId, reason);
       }
 
-      // Update order status
       return await tx.order.update({
         where: { id: order.id },
         data: {
@@ -509,7 +480,6 @@ export class OrderService {
     });
   }
 
-  // Helper methods
   private async getAndValidateCart(tx: any, userId: string) {
     const cart = await tx.cart.findUnique({
       where: { userId },
@@ -566,7 +536,7 @@ export class OrderService {
         productId: item.productId,
         quantity: item.quantity,
         price: item.product.price,
-        discount: 0, // Will be updated if vouchers apply
+        discount: 0,
         subtotal: itemSubtotal,
       });
     }
@@ -594,13 +564,11 @@ export class OrderService {
 
         if (!voucher) continue;
 
-        // Skip if usage limit reached or minimum purchase not met
         if (voucher.maxUsage && voucher.usageCount >= voucher.maxUsage)
           continue;
         if (voucher.minPurchase && subtotal < Number(voucher.minPurchase))
           continue;
 
-        // Calculate discount
         let voucherDiscount = this.calculateVoucherDiscount(voucher, subtotal);
         totalDiscount += voucherDiscount;
 
@@ -609,7 +577,6 @@ export class OrderService {
           discount: voucherDiscount,
         });
 
-        // Increment voucher usage count
         await tx.voucher.update({
           where: { id: voucher.id },
           data: { usageCount: { increment: 1 } },
@@ -625,12 +592,11 @@ export class OrderService {
 
     if (voucher.valueType === 'PERCENTAGE') {
       discount = (subtotal * Number(voucher.value)) / 100;
-      // Apply max discount if specified
+
       if (voucher.maxDiscount && discount > Number(voucher.maxDiscount)) {
         discount = Number(voucher.maxDiscount);
       }
     } else {
-      // Fixed amount discount
       discount = Number(voucher.value);
     }
 
@@ -708,7 +674,6 @@ export class OrderService {
     userId: string,
     orderNumber: string,
   ) {
-    // Update order status
     await tx.order.update({
       where: { id: order.id },
       data: {
@@ -721,7 +686,6 @@ export class OrderService {
       },
     });
 
-    // Update inventory and create stock journals
     for (const item of cartItems) {
       const inventory = await tx.inventory.findFirst({
         where: {
@@ -731,13 +695,11 @@ export class OrderService {
       });
 
       if (inventory) {
-        // Update inventory quantity
         await tx.inventory.update({
           where: { id: inventory.id },
           data: { quantity: { decrement: item.quantity } },
         });
 
-        // Create stock journal entry
         await tx.stockJournal.create({
           data: {
             inventoryId: inventory.id,
@@ -753,14 +715,12 @@ export class OrderService {
   }
 
   private validateFile(file: any) {
-    // Check file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (!allowedTypes.includes(file.mimetype)) {
       throw new BadRequestError('Only JPG, JPEG, and PNG files are allowed');
     }
 
-    // Check file size (max 1MB)
-    const maxSize = 1 * 1024 * 1024; // 1MB
+    const maxSize = 1 * 1024 * 1024;
     if (file.size > maxSize) {
       throw new BadRequestError('File size must be less than 1MB');
     }
@@ -769,7 +729,6 @@ export class OrderService {
   private async savePaymentProofFile(file: any) {
     const uploadDir = path.join(__dirname, '../../uploads/payment-proofs');
 
-    // Create directory if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -777,7 +736,6 @@ export class OrderService {
     const fileName = `${uuidv4()}-${file.originalname}`;
     const filePath = path.join(uploadDir, fileName);
 
-    // Move the file to the upload directory
     await fs.promises.writeFile(filePath, file.buffer);
 
     return `/uploads/payment-proofs/${fileName}`;
@@ -842,10 +800,8 @@ export class OrderService {
       },
     });
 
-    // Check if the user is an admin for this store
     const hasStoreAccess = adminStore && adminStore.id === order.storeId;
 
-    // Check if the user is a super admin
     const isSuperAdmin = await tx.user.findFirst({
       where: {
         id: adminId,
@@ -870,7 +826,6 @@ export class OrderService {
     });
 
     if (!adminStore || adminStore.id !== storeId) {
-      // Check if user is a super admin by role instead of a property
       const isSuperAdmin = await prismaclient.user.findFirst({
         where: {
           id: adminId,
@@ -902,7 +857,6 @@ export class OrderService {
       throw new BadRequestError('Valid payment proof not found');
     }
 
-    // Update payment proof status
     await tx.paymentProof.update({
       where: { id: paymentProof.id },
       data: {
@@ -912,7 +866,6 @@ export class OrderService {
       },
     });
 
-    // Update payment status
     await tx.order.update({
       where: { id: order.id },
       data: {
@@ -929,7 +882,6 @@ export class OrderService {
     orderNumber: string,
   ) {
     for (const item of orderItems) {
-      // Find inventory for the product in the store
       const inventory = await tx.inventory.findFirst({
         where: {
           productId: item.productId,
@@ -943,20 +895,17 @@ export class OrderService {
         );
       }
 
-      // Check if enough stock is available
       if (inventory.quantity < item.quantity) {
         throw new BadRequestError(
           `Not enough stock for product ${item.productId}`,
         );
       }
 
-      // Update inventory quantity
       await tx.inventory.update({
         where: { id: inventory.id },
         data: { quantity: { decrement: item.quantity } },
       });
 
-      // Create stock journal entry
       await tx.stockJournal.create({
         data: {
           inventoryId: inventory.id,
@@ -985,13 +934,11 @@ export class OrderService {
       });
 
       if (inventory) {
-        // Update inventory quantity
         await tx.inventory.update({
           where: { id: inventory.id },
           data: { quantity: { increment: item.quantity } },
         });
 
-        // Create stock journal entry
         await tx.stockJournal.create({
           data: {
             inventoryId: inventory.id,
@@ -1012,7 +959,6 @@ export class OrderService {
     userLat: number,
     userLng: number,
   ) {
-    // Get all active stores
     const stores = await tx.store.findMany({
       where: { isActive: true },
       select: {
@@ -1029,7 +975,6 @@ export class OrderService {
       throw new BadRequestError('No active stores available');
     }
 
-    // Calculate distances and check stock availability
     const storesWithDistance: Array<{
       store: any;
       distance: number;
@@ -1037,10 +982,8 @@ export class OrderService {
     }> = [];
 
     for (const store of stores) {
-      // Skip stores without coordinates
       if (!store.latitude || !store.longitude) continue;
 
-      // Calculate distance
       const distance = this.calculateDistance(
         userLat,
         userLng,
@@ -1048,10 +991,8 @@ export class OrderService {
         store.longitude,
       );
 
-      // Check if distance exceeds store's max delivery distance
       if (distance > store.maxDistance) continue;
 
-      // Check stock availability for all items
       const missingItems: Array<{ productId: string; name: string }> = [];
       for (const item of cartItems) {
         const inventory = await tx.inventory.findFirst({
@@ -1086,10 +1027,8 @@ export class OrderService {
       });
     }
 
-    // Sort by distance
     storesWithDistance.sort((a, b) => a.distance - b.distance);
 
-    // Find the first store with all items in stock
     const storeWithStock = storesWithDistance.find(
       (store) => store.missingItems.length === 0,
     );
@@ -1102,7 +1041,6 @@ export class OrderService {
       };
     }
 
-    // If no store has all items, return the nearest store with missing items info
     if (storesWithDistance.length > 0) {
       return {
         store: storesWithDistance[0].store,
@@ -1123,7 +1061,6 @@ export class OrderService {
     lat2: number,
     lon2: number,
   ): number {
-    // Earth's radius in kilometers
     const R = 6371;
 
     const dLat = this.deg2rad(lat2 - lat1);
@@ -1137,7 +1074,7 @@ export class OrderService {
         Math.sin(dLon / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in kilometers
+    const distance = R * c;
 
     return distance;
   }
@@ -1169,5 +1106,244 @@ export class OrderService {
       .toString()
       .padStart(4, '0');
     return `ORD-${timestamp}${random}`;
+  }
+
+  async checkExpiredOrders() {
+    try {
+      const expiredOrders = await prismaclient.order.findMany({
+        where: {
+          status: OrderStatus.WAITING_PAYMENT,
+          expiresAt: {
+            lt: new Date(),
+          },
+        },
+      });
+
+      for (const order of expiredOrders) {
+        await this.autoCancelExpiredOrder(order.id);
+      }
+
+      return { processed: expiredOrders.length };
+    } catch (error) {
+      console.error('Error checking expired orders:', error);
+      throw error;
+    }
+  }
+
+  async autoCancelExpiredOrder(orderId: string) {
+    try {
+      return await prismaclient.order.update({
+        where: { id: orderId },
+        data: {
+          status: OrderStatus.CANCELLED,
+          statusHistory: {
+            ...((
+              await prismaclient.order.findUnique({ where: { id: orderId } })
+            )?.statusHistory as object),
+            [OrderStatus.CANCELLED]: new Date().toISOString(),
+          },
+          lastStatusChange: new Date(),
+          lastChangedBy: 'SYSTEM',
+          cancelReason: 'Order expired due to no payment within time limit',
+        },
+      });
+    } catch (error) {
+      console.error(`Error auto-cancelling order ${orderId}:`, error);
+      throw error;
+    }
+  }
+
+  async checkOrdersForAutoConfirmation() {
+    try {
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+      const ordersToConfirm = await prismaclient.order.findMany({
+        where: {
+          status: OrderStatus.SHIPPED,
+          lastStatusChange: {
+            lt: twoDaysAgo,
+          },
+        },
+      });
+
+      for (const order of ordersToConfirm) {
+        await this.autoConfirmOrder(order.id);
+      }
+
+      return { processed: ordersToConfirm.length };
+    } catch (error) {
+      console.error('Error checking orders for auto-confirmation:', error);
+      throw error;
+    }
+  }
+
+  async autoConfirmOrder(orderId: string) {
+    try {
+      return await prismaclient.order.update({
+        where: { id: orderId },
+        data: {
+          status: OrderStatus.CONFIRMED,
+          statusHistory: {
+            ...((
+              await prismaclient.order.findUnique({ where: { id: orderId } })
+            )?.statusHistory as object),
+            [OrderStatus.CONFIRMED]: new Date().toISOString(),
+          },
+          lastStatusChange: new Date(),
+          lastChangedBy: 'SYSTEM',
+        },
+      });
+    } catch (error) {
+      console.error(`Error auto-confirming order ${orderId}:`, error);
+      throw error;
+    }
+  }
+
+  async applyVoucher(orderId: string, voucherCode: string, userId: string) {
+    return prismaclient.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({
+        where: { id: orderId, userId },
+        include: {
+          items: true,
+          appliedVouchers: true,
+        },
+      });
+
+      if (!order) {
+        throw new NotFoundError('Order not found');
+      }
+
+      if (order.status !== OrderStatus.WAITING_PAYMENT) {
+        throw new BadRequestError(
+          'Vouchers can only be applied to orders awaiting payment',
+        );
+      }
+
+      const voucher = await tx.voucher.findFirst({
+        where: {
+          code: voucherCode,
+          isActive: true,
+          startDate: { lte: new Date() },
+          endDate: { gte: new Date() },
+        },
+      });
+
+      if (!voucher) {
+        throw new BadRequestError('Voucher not found or expired');
+      }
+
+      if (voucher.maxUsage && voucher.usageCount >= voucher.maxUsage) {
+        throw new BadRequestError('Voucher usage limit reached');
+      }
+
+      if (voucher.minPurchase && order.subtotal < Number(voucher.minPurchase)) {
+        throw new BadRequestError(
+          `Minimum purchase of ${formatCurrency(voucher.minPurchase)} required for this voucher`,
+        );
+      }
+
+      if (order.appliedVouchers.some((v) => v.voucherId === voucher.id)) {
+        throw new BadRequestError('Voucher already applied to this order');
+      }
+
+      let discountAmount = 0;
+      if (voucher.valueType === 'PERCENTAGE') {
+        discountAmount = (order.subtotal * Number(voucher.value)) / 100;
+        if (
+          voucher.maxDiscount &&
+          discountAmount > Number(voucher.maxDiscount)
+        ) {
+          discountAmount = Number(voucher.maxDiscount);
+        }
+      } else {
+        discountAmount = Number(voucher.value);
+      }
+
+      const newTotal =
+        order.subtotal +
+        Number(order.shippingCost) -
+        (Number(order.discount) + discountAmount);
+
+      await tx.orderVoucher.create({
+        data: {
+          orderId: order.id,
+          voucherId: voucher.id,
+          discount: discountAmount,
+        },
+      });
+
+      await tx.voucher.update({
+        where: { id: voucher.id },
+        data: { usageCount: { increment: 1 } },
+      });
+
+      const updatedOrder = await tx.order.update({
+        where: { id: order.id },
+        data: {
+          discount: Number(order.discount) + discountAmount,
+          total: newTotal,
+        },
+        include: {
+          items: true,
+          appliedVouchers: {
+            include: {
+              voucher: true,
+            },
+          },
+        },
+      });
+
+      return updatedOrder;
+    });
+  }
+
+  async searchOrders(userId: string, query: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+
+    const searchQuery = {
+      OR: [
+        { orderNumber: { contains: query, mode: 'insensitive' } },
+        { status: { equals: query as OrderStatus } },
+      ],
+      userId,
+    };
+
+    const total = await prismaclient.order.count({
+      where: searchQuery,
+    });
+
+    const orders = await prismaclient.order.findMany({
+      where: searchQuery,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                images: {
+                  where: { isMain: true },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+        store: true,
+        paymentProofs: true,
+      },
+    });
+
+    return {
+      data: orders,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }

@@ -16,6 +16,9 @@ import { TokenRouter } from './routers/token.router';
 import { UserRouter } from './routers/user.router';
 import { ShippingRouter } from './routers/shipping.router';
 import { ShippingMethodRouter } from './routers/shipping-method.router';
+import { OrderRouter } from './routers/order.router';
+import { PaymentRouter } from './routers/payment.router';
+import { WebhookRouter } from './routers/webhook.router';
 
 export default class App {
   static VERSION = '1.0.0';
@@ -57,6 +60,10 @@ export default class App {
     const cartRouter = new CartRouter();
     const shippingRouter = new ShippingRouter();
     const shippingMethodRouter = new ShippingMethodRouter();
+    const orderRouter = new OrderRouter();
+    const paymentRouter = new PaymentRouter();
+    const webhookRouter = new WebhookRouter();
+
     this.app.use('/api', healthRouter.getRouter());
     this.app.use('/api/auth', authRouter.getRouter());
     this.app.use('/api/user', userRouter.getRouter());
@@ -68,6 +75,9 @@ export default class App {
     this.app.use('/api/cart', cartRouter.getRouter());
     this.app.use('/api/shipping', shippingRouter.getRouter());
     this.app.use('/api/shipping-methods', shippingMethodRouter.getRouter());
+    this.app.use('/api/orders', orderRouter.getRouter());
+    this.app.use('/api/payment', paymentRouter.getRouter());
+    this.app.use('/api/webhooks', webhookRouter.getRouter());
   }
 
   public start(): void {

@@ -166,6 +166,32 @@ Table Inventory {
   }
 }
 
+Table PaymentGateway {
+  id String [pk]
+  orderId String [unique, not null]
+  provider String [not null]
+  token String [not null]
+  redirectUrl String
+  expiresAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  order Order [not null]
+}
+
+Table PaymentTransaction {
+  id String [pk]
+  orderId String [not null]
+  amount Decimal [not null]
+  status PaymentStatus [not null]
+  provider String [not null]
+  providerTransactionId String
+  providerOrderId String
+  paymentMethod String
+  transactionTime DateTime [not null]
+  rawResponse String
+  createdAt DateTime [default: `now()`, not null]
+  order Order [not null]
+}
+
 Table StockJournal {
   id String [pk]
   inventoryId String [not null]
@@ -235,6 +261,8 @@ Table Order {
   items OrderItem [not null]
   appliedVouchers OrderVoucher [not null]
   paymentProofs PaymentProof [not null]
+  PaymentTransaction PaymentTransaction [not null]
+  PaymentGateway PaymentGateway
 }
 
 Table OrderItem {
@@ -431,6 +459,10 @@ Ref: ProductImage.productId > Product.id [delete: Cascade]
 Ref: Inventory.productId > Product.id
 
 Ref: Inventory.storeId > Store.id
+
+Ref: PaymentGateway.orderId - Order.id [delete: Cascade]
+
+Ref: PaymentTransaction.orderId > Order.id [delete: Cascade]
 
 Ref: StockJournal.inventoryId > Inventory.id
 

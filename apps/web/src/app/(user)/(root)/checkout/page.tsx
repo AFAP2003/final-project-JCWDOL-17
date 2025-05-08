@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,7 +12,15 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { cn, formatCurrency } from '@/lib/utils';
-import { AlertTriangle, CheckCircle, MapPin, Store, Truck } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle,
+  MapPin,
+  Store,
+  Truck,
+  Receipt,
+  Tag,
+} from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Image from 'next/image';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,262 +36,47 @@ import { useRouter } from 'next/navigation';
 import { useSession } from '@/lib/auth/client';
 import { useCart } from '@/context/cart-provider';
 import { PaymentMethod } from '@/lib/enums';
-import { apiclient } from '@/lib/apiclient';
-import { toast } from '@/hooks/use-toast';
 import MaxWidthWrapper from '@/components/max-width-wrapper';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useCheckout } from '@/context/checkout-provider';
 
 export default function Checkout() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { items, subtotal, isLoading: cartLoading, clearCart } = useCart();
-  const calculatingShippingRef = useRef(false);
-
-  const [addresses, setAddresses] = useState([]);
-  const [shippingMethods, setShippingMethods] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [orderNumber, setOrderNumber] = useState('');
-
-  const [selectedAddressId, setSelectedAddressId] = useState('');
-  const [selectedShippingId, setSelectedShippingId] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState(
-    PaymentMethod.BANK_TRANSFER,
-  );
-  const [notes, setNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [shippingCost, setShippingCost] = useState(0);
-  const [nearestStore, setNearestStore] = useState(null);
-  const [shippingDistance, setShippingDistance] = useState(null);
-  const [serviceDetails, setServiceDetails] = useState(null);
-  const [stockAvailability, setStockAvailability] = useState({
-    available: true,
-    missingItems: [],
-  });
-  const [calculatingShipping, setCalculatingShipping] = useState(false);
-  const [shippingError, setShippingError] = useState(null);
-
-  useEffect(() => {
-    if (!session) {
-      router.push('/auth/signin?redirect=/checkout');
-      return;
-    }
-
-    const fetchCheckoutData = async () => {
-      try {
-        setIsLoading(true);
-
-        const addressResponse = await apiclient.get('/user/address');
-        const addressesData = addressResponse.data.addresses || [];
-        setAddresses(addressesData);
-
-        if (addressesData.length > 0) {
-          const defaultAddress =
-            addressesData.find((addr) => addr.isDefault) || addressesData[0];
-          setSelectedAddressId(defaultAddress.id);
-        }
-
-        const shippingResponse = await apiclient.get('/shipping-methods');
-        const shippingData = shippingResponse.data || [];
-        setShippingMethods(shippingData);
-
-        if (shippingData.length > 0) {
-          setSelectedShippingId(shippingData[0].id);
-        }
-      } catch (error) {
-        console.error('Error fetching checkout data:', error);
-        toast({
-          description:
-            'Failed to load checkout information. Please refresh the page.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCheckoutData();
-  }, [session, router]);
-
-  useEffect(() => {
-    setShippingError(null);
-
-    if (
-      !selectedAddressId ||
-      !selectedShippingId ||
-      items.length === 0 ||
-      isLoading
-    )
-      return;
-
-    const calculateShippingCost = async () => {
-      try {
-        setCalculatingShipping(true);
-        calculatingShippingRef.current = true;
-
-        const response = await apiclient.post('/shipping/calculation', {
-          addressId: selectedAddressId,
-          shippingMethodId: selectedShippingId,
-          items: items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-          })),
-        });
-
-        console.log('Shipping API response:', response.data);
-
-        // Correctly navigate the nested structure
-        let shippingData;
-        if (response.data?.data?.data) {
-          // Handle double nested data structure
-          shippingData = response.data.data.data;
-        } else if (response.data?.data) {
-          // Handle single nested data structure
-          shippingData = response.data.data;
-        } else {
-          // Direct data
-          shippingData = response.data;
-        }
-
-        console.log('Extracted shipping data:', shippingData);
-
-        if (!shippingData) {
-          setShippingError('Shipping data is missing.');
-          return;
-        }
-
-        // Set the nearest store data directly from the response
-        if (shippingData.store) {
-          console.log('Setting nearest store:', shippingData.store);
-          setNearestStore(shippingData.store);
-
-          // If distance is available, set it
-          if (shippingData.distance !== undefined) {
-            setShippingDistance(shippingData.distance);
-          }
-        } else {
-          console.warn('No store data found in the response');
-        }
-
-        // Only set shipping error if using mock data from RajaOngkir API limit
-        if (
-          shippingData.serviceDetails?.isMock ||
-          shippingData.calculationMethod === 'mock'
-        ) {
-          setShippingError('Using estimated shipping due to API limit.');
-        }
-
-        // Set other shipping information
-        setStockAvailability({
-          available: shippingData.hasAllItems ?? true,
-          missingItems: shippingData.missingItems || [],
-        });
-
-        if (shippingData.shippingCost !== undefined) {
-          setShippingCost(shippingData.shippingCost);
-        } else {
-          const selectedMethod = shippingMethods.find(
-            (m) => m.id === selectedShippingId,
-          );
-          if (selectedMethod) setShippingCost(selectedMethod.baseCost);
-        }
-
-        if (shippingData.serviceDetails) {
-          setServiceDetails(shippingData.serviceDetails);
-        }
-
-        if (shippingData.shippingMethods?.length > 0) {
-          setShippingMethods(shippingData.shippingMethods);
-        }
-      } catch (error) {
-        console.error('Error calculating shipping cost:', error);
-        setShippingError(
-          'There was a problem calculating shipping. Using standard rates.',
-        );
-
-        const selectedMethod = shippingMethods.find(
-          (m) => m.id === selectedShippingId,
-        );
-        if (selectedMethod) setShippingCost(selectedMethod.baseCost);
-
-        toast({
-          description:
-            'Could not calculate exact shipping cost. Using standard rates.',
-          variant: 'default',
-        });
-      } finally {
-        setCalculatingShipping(false);
-        calculatingShippingRef.current = false;
-      }
-    };
-
-    calculateShippingCost();
-  }, [
+  const { items, subtotal, isLoading: cartLoading } = useCart();
+  const {
+    addresses,
+    shippingMethods,
     selectedAddressId,
     selectedShippingId,
-    items,
+    paymentMethod,
+    notes,
+    voucherCode,
     isLoading,
-    shippingMethods,
-  ]);
+    isSubmitting,
+    shippingCost,
+    nearestStore,
+    shippingDistance,
+    stockAvailability,
+    serviceDetails,
+    calculatingShipping,
+    shippingError,
+    isOrderSuccess,
+    orderNumber,
+    total,
+    setSelectedAddressId,
+    setSelectedShippingId,
+    setPaymentMethod,
+    setNotes,
+    setVoucherCode,
+    handleSubmit,
+    applyVoucher,
+  } = useCheckout();
 
   const selectedAddress = addresses.find(
     (addr) => addr.id === selectedAddressId,
   );
-
-  const total = Number(subtotal) + Number(shippingCost);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!selectedAddressId) {
-      toast({
-        description: 'Please select a delivery address',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!selectedShippingId) {
-      toast({
-        description: 'Please select a shipping method',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!stockAvailability.available) {
-      toast({
-        description: 'Some items are unavailable at the nearest store',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      const response = await apiclient.post('/orders', {
-        addressId: selectedAddressId,
-        shippingMethodId: selectedShippingId,
-        paymentMethod: paymentMethod,
-        notes: notes || undefined,
-      });
-
-      await clearCart();
-
-      setOrderNumber(response.data.orderNumber);
-      setOrderSuccess(true);
-    } catch (error) {
-      console.error('Error creating order:', error);
-      toast({
-        description:
-          error.response?.data?.error?.message || 'Failed to create order',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   if (isLoading || cartLoading) {
     return (
@@ -296,7 +89,7 @@ export default function Checkout() {
     );
   }
 
-  if (items.length === 0 && !orderSuccess) {
+  if (items.length === 0 && !isOrderSuccess) {
     return (
       <MaxWidthWrapper className="container max-w-2xl mx-auto py-8 px-4">
         <Alert variant="destructive">
@@ -313,7 +106,7 @@ export default function Checkout() {
     );
   }
 
-  if (orderSuccess) {
+  if (isOrderSuccess) {
     return (
       <MaxWidthWrapper className="container max-w-md mx-auto py-8 px-4">
         <Alert className="mb-6">
@@ -341,6 +134,7 @@ export default function Checkout() {
       <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Delivery Address Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -407,6 +201,7 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
+        {/* Nearest Store Card */}
         {nearestStore && (
           <Card>
             <CardHeader>
@@ -435,8 +230,9 @@ export default function Checkout() {
           </Card>
         )}
 
+        {/* Error and Warning Alerts */}
         {shippingError && (
-          <Alert>
+          <Alert variant="default">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Shipping Notice</AlertTitle>
             <AlertDescription>{shippingError}</AlertDescription>
@@ -460,6 +256,7 @@ export default function Checkout() {
             </Alert>
           )}
 
+        {/* Shipping Method Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -503,10 +300,17 @@ export default function Checkout() {
                         <span className="text-sm text-muted-foreground">
                           {method.description}
                         </span>
+                        {serviceDetails && method.id === selectedShippingId && (
+                          <span className="text-xs text-muted-foreground mt-1">
+                            Est. delivery: {serviceDetails.etd} days
+                          </span>
+                        )}
                       </label>
                     </div>
                     <div className="text-sm font-medium">
-                      {formatCurrency(method.baseCost)}
+                      {method.id === selectedShippingId
+                        ? formatCurrency(shippingCost)
+                        : formatCurrency(method.baseCost)}
                     </div>
                   </div>
                 ))
@@ -527,9 +331,37 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
+        {/* Voucher Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Payment Method</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5" /> Voucher
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex gap-3">
+            <Input
+              placeholder="Enter voucher code"
+              value={voucherCode}
+              onChange={(e) => setVoucherCode(e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={applyVoucher}
+              disabled={!voucherCode}
+            >
+              Apply
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Payment Method Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5" /> Payment Method
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <RadioGroup
@@ -578,7 +410,7 @@ export default function Checkout() {
                   >
                     <span className="font-medium">Payment Gateway</span>
                     <span className="text-sm text-muted-foreground">
-                      Pay online securely
+                      Pay online securely with Midtrans
                     </span>
                   </label>
                 </div>
@@ -587,6 +419,7 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
+        {/* Order Notes Card */}
         <Card>
           <CardHeader>
             <CardTitle>Order Notes (Optional)</CardTitle>
@@ -602,6 +435,7 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
+        {/* Order Summary Card */}
         <Card>
           <CardHeader>
             <CardTitle>Order Summary</CardTitle>
@@ -644,6 +478,8 @@ export default function Checkout() {
                 <span className="text-muted-foreground">Shipping</span>
                 <span>{formatCurrency(shippingCost)}</span>
               </div>
+              {/* Show discount if voucher applied */}
+              {/* We'll implement this when the backend supports it */}
               <Separator className="my-2" />
               <div className="flex justify-between font-bold">
                 <span>Total</span>

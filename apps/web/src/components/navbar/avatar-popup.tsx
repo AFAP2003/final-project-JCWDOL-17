@@ -54,7 +54,15 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
           {/* Content */}
           <div className="flex w-full text-sm text-muted-foreground h-40">
             {/* Left Content */}
-            <div className="grow">[OTHER]</div>
+            <div className="grow">
+              <Link
+                href={'/orders'}
+                onClick={() => setOpenPopup(false)}
+                passHref
+              >
+                Orders
+              </Link>
+            </div>
 
             <Separator orientation="vertical" className="mx-2" />
 

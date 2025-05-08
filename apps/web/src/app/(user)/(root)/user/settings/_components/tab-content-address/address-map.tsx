@@ -290,7 +290,7 @@ function DummyFetch(param: {
   if (!param.name && !param.lat && !param.lng) return [];
   const places = [
     {
-      name: '',
+      name: 'Jalan Karangrejo Tengah',
       address:
         'Jl. Karangrejo Tengah, Karangrejo, Kec. Gajahmungkur, Kota Semarang, Jawa Tengah 50231, Indonesia',
       latitude: -7.027455,

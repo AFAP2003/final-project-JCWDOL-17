@@ -4,12 +4,15 @@ import {
   BadRequestError,
   ForbiddenError,
   InternalSeverError,
+  NotFoundError,
   UnprocessableEntityError,
 } from '@/errors';
 import { formatZodError } from '@/helpers/format-zod-error';
 import { getSessionUser } from '@/helpers/session-helper';
 import { prismaclient } from '@/prisma';
 import { OrderService } from '@/services/order.service';
+import { PaymentService } from '@/services/payment.service';
+import { PaymentMethod } from '@prisma/client';
 import { Request, Response } from 'express';
 
 export class OrderController {
@@ -310,5 +313,166 @@ export class OrderController {
     }
 
     return user;
+  };
+
+  applyVoucher = async (req: Request, res: Response) => {
+    try {
+      const { user } = getSessionUser(req);
+      const { orderId, voucherCode } = req.body;
+
+      if (!orderId || !voucherCode) {
+        throw new BadRequestError('Order ID and voucher code are required');
+      }
+
+      const result = await this.orderService.applyVoucher(
+        orderId,
+        voucherCode,
+        user.id,
+      );
+      res.json(result);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  searchOrders = async (req: Request, res: Response) => {
+    try {
+      const { user } = getSessionUser(req);
+      const { query } = req.query;
+      const page = Number(req.query.page || 1);
+      const limit = Number(req.query.limit || 10);
+
+      if (!query) {
+        return this.getUserOrders(req, res);
+      }
+
+      const orders = await this.orderService.searchOrders(
+        user.id,
+        query as string,
+        page,
+        limit,
+      );
+
+      res.json(orders);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  getUserOrderByNumber = async (req: Request, res: Response) => {
+    try {
+      const { user } = getSessionUser(req);
+      const { orderNumber } = req.params;
+
+      console.log('Fetching order with number:', orderNumber);
+
+      if (!orderNumber) {
+        throw new BadRequestError('Order number is required');
+      }
+
+      const order = await prismaclient.order.findFirst({
+        where: {
+          orderNumber: orderNumber,
+          userId: user.id,
+        },
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  images: {
+                    where: { isMain: true },
+                    take: 1,
+                  },
+                },
+              },
+            },
+          },
+          store: true,
+          paymentProofs: true,
+          address: true,
+          appliedVouchers: {
+            include: {
+              voucher: true,
+            },
+          },
+          PaymentGateway: true,
+        },
+      });
+
+      if (!order) {
+        throw new NotFoundError();
+      }
+
+      res.json(order);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  initializePayment = async (req: Request, res: Response) => {
+    try {
+      const { user } = getSessionUser(req);
+      const { orderId } = req.body;
+
+      // Verify ownership
+      const order = await prismaclient.order.findUnique({
+        where: {
+          id: orderId,
+          userId: user.id,
+        },
+      });
+
+      if (!order) {
+        throw new NotFoundError('Order not found');
+      }
+
+      if (order.paymentMethod !== PaymentMethod.PAYMENT_GATEWAY) {
+        throw new BadRequestError('Order is not set up for payment gateway');
+      }
+
+      const paymentService = new PaymentService();
+      const paymentData =
+        await paymentService.createMidtransTransaction(orderId);
+
+      res.json(paymentData);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  midtransWebhook = async (req: Request, res: Response) => {
+    try {
+      const payload = req.body;
+
+      // Process the webhook
+      const paymentService = new PaymentService();
+      await paymentService.handleMidtransWebhook(payload);
+
+      // Always return 200 to Midtrans
+      res.status(200).json({ status: 'ok' });
+    } catch (error) {
+      console.error('Error processing Midtrans webhook:', error);
+      // Still return 200 to prevent Midtrans from retrying
+      res
+        .status(200)
+        .json({ status: 'error', message: 'Error processing webhook' });
+    }
   };
 }
