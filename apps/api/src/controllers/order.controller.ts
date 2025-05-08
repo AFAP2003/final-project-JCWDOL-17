@@ -373,8 +373,6 @@ export class OrderController {
       const { user } = getSessionUser(req);
       const { orderNumber } = req.params;
 
-      console.log('Fetching order with number:', orderNumber);
-
       if (!orderNumber) {
         throw new BadRequestError('Order number is required');
       }
@@ -431,8 +429,7 @@ export class OrderController {
 
     const { addressId, shippingMethodId, vouchers, notes } = req.body;
 
-    // Type assertion to tell TypeScript this is a user
-    const user = (req as any).user;
+    const { user } = getSessionUser(req);
 
     if (!user) {
       res.status(401).json({ message: 'Unauthorized' });
@@ -447,7 +444,7 @@ export class OrderController {
       paymentMethod: PaymentMethod.PAYMENT_GATEWAY,
     });
 
-    const grossAmount = order.total;
+    const grossAmount = Math.round(Number(order.total));
     const orderId = order.orderNumber;
 
     const parameter = {

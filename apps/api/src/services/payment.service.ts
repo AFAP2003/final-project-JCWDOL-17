@@ -74,7 +74,7 @@ export class PaymentService {
       const transactionRequest: MidtransPaymentRequest = {
         transaction_details: {
           order_id: order.orderNumber,
-          gross_amount: Number(order.total),
+          gross_amount: Math.round(Number(order.total)),
         },
         credit_card: {
           secure: true,

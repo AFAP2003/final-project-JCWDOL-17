@@ -1211,7 +1211,7 @@ export class OrderService {
       });
 
       if (!order) {
-        throw new NotFoundError('Order not found');
+        throw new NotFoundError();
       }
 
       if (order.status !== OrderStatus.WAITING_PAYMENT) {

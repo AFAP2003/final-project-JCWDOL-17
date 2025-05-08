@@ -249,39 +249,23 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsSubmitting(true);
 
       if (paymentMethod === PaymentMethod.PAYMENT_GATEWAY) {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/payment/initialize`,
-          {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              addressId: selectedAddressId,
-              shippingMethodId: selectedShippingId,
-              vouchers: voucherCode ? [voucherCode] : [],
-              notes,
-            }),
-          },
-        );
+        const response = await apiclient.post('/payment/initialize', {
+          addressId: selectedAddressId,
+          shippingMethodId: selectedShippingId,
+          vouchers: voucherCode ? [voucherCode] : [],
+          notes,
+        });
 
-        console.error('Midtrans response error:', await response.text());
+        const data = response.data;
+        const { snapToken } = data;
 
-        if (!response.ok) {
-          throw new Error('Failed to initialize Midtrans payment');
-        }
-
-        const data = await response.json();
-        const { snapToken, orderNumber } = data;
-
-        setOrderNumber(orderNumber); // for use elsewhere
-        setIsOrderSuccess(false); // keep false until snap confirms
+        setOrderNumber(data.orderNumber || '');
+        setIsOrderSuccess(false);
 
         openMidtransSnap(
           snapToken,
           process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '',
-          orderNumber,
+          data.orderNumber,
         );
       } else {
         // Bank transfer flow → call backend /orders directly
