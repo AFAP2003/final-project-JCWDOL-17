@@ -90,29 +90,22 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const fetchOrderDetails = async (orderNumber: string) => {
-    if (!session) return;
+    if (!session || !orderNumber) return;
 
     try {
       setIsLoading(true);
-      console.log('Fetching order details for:', orderNumber); // Debug log
-
       const response = await apiclient.get(`/orders/${orderNumber}`);
-      console.log('Order details response:', response.data); // Debug log
-
       setCurrentOrder(response.data);
-      setIsLoading(false); // Important: Make sure loading state is updated
       return response.data;
     } catch (error) {
       console.error('Error fetching order details:', error);
-      console.error('Error response:', error.response?.data); // Log the error response
-
       toast({
-        description: `Failed to load order details: ${error.response?.data?.message || error.message}`,
+        description: 'Failed to load order details',
         variant: 'destructive',
       });
 
-      // Important: Set currentOrder to null and isLoading to false
       setCurrentOrder(null);
+    } finally {
       setIsLoading(false);
     }
   };

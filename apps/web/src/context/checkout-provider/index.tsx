@@ -42,6 +42,12 @@ type CheckoutContextType = {
   resetCheckout: () => void;
 };
 
+interface MidtransConfig {
+  token: string;
+  clientKey: string;
+  redirectUrl?: string;
+}
+
 const CheckoutContext = createContext<CheckoutContextType | null>(null);
 
 export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -49,6 +55,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const router = useRouter();
   const { data: session } = useSession();
+  const token = session?.session?.token;
   const { items, subtotal, clearCart } = useCart();
 
   const [addresses, setAddresses] = useState([]);
@@ -220,17 +227,9 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedAddressId) {
+    if (!selectedAddressId || !selectedShippingId) {
       toast({
-        description: 'Please select a delivery address',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!selectedShippingId) {
-      toast({
-        description: 'Please select a shipping method',
+        description: 'Please complete your address and shipping selections.',
         variant: 'destructive',
       });
       return;
@@ -238,37 +237,76 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (!stockAvailability.available) {
       toast({
-        description: 'Some items are unavailable at the nearest store',
+        description: 'Some items are unavailable. Please update your cart.',
         variant: 'destructive',
       });
       return;
     }
 
+    console.log('Session:', session);
+
     try {
       setIsSubmitting(true);
 
-      const response = await apiclient.post('/orders', {
-        addressId: selectedAddressId,
-        shippingMethodId: selectedShippingId,
-        paymentMethod: paymentMethod,
-        notes: notes || undefined,
-        voucherCode: voucherCode || undefined,
-      });
-
       if (paymentMethod === PaymentMethod.PAYMENT_GATEWAY) {
-        await initializePayment(response.data.id);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/payment/initialize`,
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              addressId: selectedAddressId,
+              shippingMethodId: selectedShippingId,
+              vouchers: voucherCode ? [voucherCode] : [],
+              notes,
+            }),
+          },
+        );
+
+        console.error('Midtrans response error:', await response.text());
+
+        if (!response.ok) {
+          throw new Error('Failed to initialize Midtrans payment');
+        }
+
+        const data = await response.json();
+        const { snapToken, orderNumber } = data;
+
+        setOrderNumber(orderNumber); // for use elsewhere
+        setIsOrderSuccess(false); // keep false until snap confirms
+
+        openMidtransSnap(
+          snapToken,
+          process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '',
+          orderNumber,
+        );
+      } else {
+        // Bank transfer flow → call backend /orders directly
+        const response = await apiclient.post('/orders', {
+          addressId: selectedAddressId,
+          shippingMethodId: selectedShippingId,
+          paymentMethod: paymentMethod,
+          notes: notes || undefined,
+          voucherCode: voucherCode || undefined,
+        });
+
+        const orderId = response.data.id;
+        setCreatedOrderId(orderId);
+        setOrderNumber(response.data.orderNumber);
+        setIsOrderSuccess(true);
+        clearCart();
+
+        router.push(`/orders/${response.data.orderNumber}`);
       }
-
-      await clearCart();
-
-      setOrderNumber(response.data.orderNumber);
-      setCreatedOrderId(response.data.id);
-      setIsOrderSuccess(true);
     } catch (error) {
-      console.error('Error creating order:', error);
+      console.error('Checkout error:', error);
       toast({
         description:
-          error.response?.data?.error?.message || 'Failed to create order',
+          (error as any)?.response?.data?.error?.message ||
+          'Failed to place order',
         variant: 'destructive',
       });
     } finally {
@@ -300,28 +338,98 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const initializePayment = async (orderId: string) => {
+  const initializePayment = async (orderId: string): Promise<void> => {
     try {
+      setIsSubmitting(true);
+
       const response = await apiclient.post('/payment/initialize', {
         orderId,
       });
 
-      if (response.data.redirectUrl) {
-        window.location.href = response.data.redirectUrl;
-      } else if (response.data.token) {
-        console.log('Payment token received:', response.data.token);
-      }
+      const paymentData: MidtransConfig = response.data;
 
-      return response.data;
+      openMidtransSnap(paymentData.token, paymentData.clientKey, orderId);
     } catch (error) {
-      console.error('Error initializing payment:', error);
+      console.error('Payment initialization error:', error);
       toast({
+        title: 'Payment Error',
         description:
-          error.response?.data?.error?.message ||
-          'Failed to initialize payment',
+          error instanceof Error
+            ? error.message
+            : 'Failed to initialize payment',
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const openMidtransSnap = (
+    token: string,
+    clientKey: string,
+    orderId: string,
+  ): void => {
+    if (typeof window === 'undefined') return;
+
+    const invokeSnap = () => {
+      window.snap.pay(token, {
+        onSuccess: () => handlePaymentSuccess(orderId),
+        onPending: () => handlePaymentPending(orderId),
+        onError: () => handlePaymentError(orderId),
+        onClose: () => handlePaymentClose(orderId),
+      });
+    };
+
+    if (window.snap) {
+      invokeSnap();
+    } else {
+      const existingScript = document.querySelector(
+        'script[src="https://app.sandbox.midtrans.com/snap/snap.js"]',
+      );
+      if (!existingScript) {
+        const script = document.createElement('script');
+        script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+        script.setAttribute('data-client-key', clientKey);
+        script.onload = invokeSnap;
+        document.body.appendChild(script);
+      } else {
+        existingScript.addEventListener('load', invokeSnap);
+      }
+    }
+  };
+
+  const handlePaymentSuccess = (orderId: string): void => {
+    toast({
+      title: 'Payment Successful',
+      description: 'Your payment has been processed successfully.',
+    });
+    // Fetch the updated order or navigate to order details
+    router.push(`/orders/${orderId}?status=success`);
+  };
+
+  const handlePaymentPending = (orderId: string): void => {
+    toast({
+      title: 'Payment Pending',
+      description: 'Your payment is being processed.',
+    });
+    router.push(`/orders/${orderId}?status=pending`);
+  };
+
+  const handlePaymentError = (orderId: string): void => {
+    toast({
+      title: 'Payment Failed',
+      description: 'There was an error processing your payment.',
+      variant: 'destructive',
+    });
+    router.push(`/orders/${orderId}?status=error`);
+  };
+
+  const handlePaymentClose = (orderId: string): void => {
+    toast({
+      title: 'Payment Canceled',
+      description: 'Payment window was closed.',
+    });
+    router.push(`/orders/${orderId}`);
   };
 
   const resetCheckout = () => {

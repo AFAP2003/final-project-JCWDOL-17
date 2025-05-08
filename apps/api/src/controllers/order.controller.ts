@@ -14,6 +14,7 @@ import { OrderService } from '@/services/order.service';
 import { PaymentService } from '@/services/payment.service';
 import { PaymentMethod } from '@prisma/client';
 import { Request, Response } from 'express';
+import midtransClient from 'midtrans-client';
 
 export class OrderController {
   private orderService = new OrderService();
@@ -422,57 +423,64 @@ export class OrderController {
     }
   };
 
-  initializePayment = async (req: Request, res: Response) => {
-    try {
-      const { user } = getSessionUser(req);
-      const { orderId } = req.body;
+  initializePayment = async (req: Request, res: Response): Promise<void> => {
+    const snap = new midtransClient.Snap({
+      isProduction: false,
+      serverKey: process.env.MIDTRANS_SERVER_KEY!,
+    });
 
-      // Verify ownership
-      const order = await prismaclient.order.findUnique({
-        where: {
-          id: orderId,
-          userId: user.id,
-        },
-      });
+    const { addressId, shippingMethodId, vouchers, notes } = req.body;
 
-      if (!order) {
-        throw new NotFoundError('Order not found');
-      }
+    // Type assertion to tell TypeScript this is a user
+    const user = (req as any).user;
 
-      if (order.paymentMethod !== PaymentMethod.PAYMENT_GATEWAY) {
-        throw new BadRequestError('Order is not set up for payment gateway');
-      }
-
-      const paymentService = new PaymentService();
-      const paymentData =
-        await paymentService.createMidtransTransaction(orderId);
-
-      res.json(paymentData);
-    } catch (error) {
-      if (!(error instanceof ApiError)) {
-        const err = error as Error;
-        throw new InternalSeverError(err);
-      }
-      throw error;
+    if (!user) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
     }
+
+    const order = await this.orderService.createOrder(user.id, {
+      addressId,
+      shippingMethodId,
+      vouchers,
+      notes,
+      paymentMethod: PaymentMethod.PAYMENT_GATEWAY,
+    });
+
+    const grossAmount = order.total;
+    const orderId = order.orderNumber;
+
+    const parameter = {
+      transaction_details: {
+        order_id: orderId,
+        gross_amount: grossAmount,
+      },
+      customer_details: {
+        first_name: user.name,
+        email: user.email,
+      },
+    };
+
+    const transaction = await snap.createTransaction(parameter);
+    res.json({ snapToken: transaction.token });
   };
 
   midtransWebhook = async (req: Request, res: Response) => {
     try {
       const payload = req.body;
 
-      // Process the webhook
+      // Handle the Midtrans webhook response (status updates, etc.)
       const paymentService = new PaymentService();
       await paymentService.handleMidtransWebhook(payload);
 
-      // Always return 200 to Midtrans
+      // Respond 200 to Midtrans to acknowledge receipt
       res.status(200).json({ status: 'ok' });
     } catch (error) {
-      console.error('Error processing Midtrans webhook:', error);
-      // Still return 200 to prevent Midtrans from retrying
-      res
-        .status(200)
-        .json({ status: 'error', message: 'Error processing webhook' });
+      console.error('Midtrans webhook error:', error);
+      res.status(200).json({
+        status: 'error',
+        message: 'Webhook error, but acknowledged to prevent retry',
+      });
     }
   };
 }

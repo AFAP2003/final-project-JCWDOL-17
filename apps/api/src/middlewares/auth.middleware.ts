@@ -13,6 +13,8 @@ export const withAuthentication = async (
       headers: fromNodeHeaders(req.headers),
     });
 
+    console.log('HEADERS', req.headers);
+
     if (!session) {
       throw new UnauthorizedError('Invalid or missing access token');
     }

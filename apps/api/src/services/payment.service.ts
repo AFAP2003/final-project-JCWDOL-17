@@ -31,7 +31,7 @@ export class PaymentService {
       });
 
       if (!order) {
-        throw new NotFoundError('Order not found');
+        throw new NotFoundError();
       }
 
       if (order.paymentMethod !== PaymentMethod.PAYMENT_GATEWAY) {
