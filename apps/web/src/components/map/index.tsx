@@ -3,7 +3,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-// import { apiclient } from '@/lib/apiclient';
+import { apiclient } from '@/lib/apiclient';
 import { IDN_LATLONG_BOUND } from '@/lib/constants/indonesian-latlong-bounds';
 import { GeocodingResponse } from '@/lib/types/geocoding-response';
 import { useMutation } from '@tanstack/react-query';
@@ -27,6 +27,8 @@ import {
 import { FullscreenControl } from 'react-leaflet-fullscreen';
 import 'react-leaflet-fullscreen/styles.css';
 import { useDebounceValue } from 'usehooks-ts';
+import qs from 'query-string';
+import { toast } from '@/hooks/use-toast';
 
 type Props = {
   initialPosition: {
@@ -60,20 +62,24 @@ export default function Map(props: Props) {
       lng?: number;
       resultSize: number;
     }) => {
-      // const query = qs.stringify(param, {
-      //   skipNull: true,
-      //   skipEmptyString: true,
-      // });
-      // const { data } = await apiclient.get(`/location/geocoding?${query}`);
-      // return data as GeocodingResponse;
-      return DummyFetch(param);
+      const query = qs.stringify(param, {
+        skipNull: true,
+        skipEmptyString: true,
+      });
+      const { data } = await apiclient.get(`/location/geocoding?${query}`);
+      return data as GeocodingResponse;
     },
 
     onError: (error: AxiosError) => {
-      // TODO:
+      toast({
+        variant: 'destructive',
+        title: 'Error fetching location',
+        description: 'Please try again or enter your address manually.',
+      });
     },
   });
 
+  // Get location by coordinates when map marker is moved
   useEffect(() => {
     if (isAfterSearch) return;
 
@@ -94,12 +100,13 @@ export default function Map(props: Props) {
     );
   }, [dbMarkerPosition]);
 
+  // Get location results when user searches
   useEffect(() => {
-    if (isInitial) return;
+    if (isInitial || !dbInputSearch.trim()) return;
 
     fetchLocation(
       {
-        name: inputSearch,
+        name: dbInputSearch,
         resultSize: 5,
       },
       {
@@ -110,6 +117,7 @@ export default function Map(props: Props) {
     );
   }, [dbInputSearch]);
 
+  // Pass location changes to parent component
   useEffect(() => {
     props.onLocationChange(pinnedLocation);
   }, [pinnedLocation]);
@@ -124,6 +132,7 @@ export default function Map(props: Props) {
         maxBoundsViscosity={1.0}
         wheelPxPerZoomLevel={1000}
         style={{ borderRadius: '0.5rem' }}
+        className="h-full w-full"
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -160,6 +169,9 @@ export default function Map(props: Props) {
             className="focus-visible:ring-0 shadow-none border-none text-neutral-700"
             placeholder="Search for location"
           />
+          {isPending && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+          )}
         </div>
 
         {resultSearch.length > 0 && (
@@ -192,7 +204,7 @@ export default function Map(props: Props) {
                       setResultSearch([]);
                       setIsAfterSearch(true);
                     }}
-                    className="text-left text-xs pb-1 hover:bg-neutral-200 rounded-lg px-2"
+                    className="text-left text-xs pb-1 hover:bg-neutral-200 rounded-lg px-2 w-full"
                   >
                     <p className="font-medium text-neutral-700 text-sm">
                       {loc.name}
@@ -205,6 +217,19 @@ export default function Map(props: Props) {
             </div>
           </>
         )}
+
+        {/* Location verification display */}
+        {pinnedLocation && (
+          <div className="bg-blue-50 p-2 text-xs">
+            <p className="font-medium">Selected Location:</p>
+            <p>{pinnedLocation.name}</p>
+            <p className="text-gray-600 text-xs">{pinnedLocation.address}</p>
+            <p className="text-gray-500 text-xs mt-1">
+              Coordinates: {pinnedLocation.latitude.toFixed(6)},{' '}
+              {pinnedLocation.longitude.toFixed(6)}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -214,8 +239,11 @@ export default function Map(props: Props) {
 function MarkerIcon() {
   return divIcon({
     className: 'marker-icon',
-    html: `<div class="marker-shadow"></div>`,
-    iconSize: [50, 50],
+    html: `<div class="w-8 h-8 bg-red-500 rounded-full border-2 border-white shadow-md flex items-center justify-center">
+      <div class="w-2 h-2 bg-white rounded-full"></div>
+    </div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
   });
 }
 
@@ -268,44 +296,4 @@ function MapEvent(props: CenterTrackerProps) {
   });
 
   return null;
-}
-
-function DummyFetch(param: {
-  name?: string;
-  lat?: number;
-  lng?: number;
-  resultSize: number;
-}) {
-  if (!param.name && !param.lat && !param.lng) return [];
-  const places = [
-    {
-      name: 'Jalan Karangrejo Tengah',
-      address:
-        'Jl. Karangrejo Tengah, Karangrejo, Kec. Gajahmungkur, Kota Semarang, Jawa Tengah 50231, Indonesia',
-      latitude: -7.027455,
-      longitude: 110.4134411,
-    },
-    {
-      name: 'Karangrejo',
-      address:
-        'Karangrejo, Kec. Gajahmungkur, Kota Semarang, Jawa Tengah, Indonesia',
-      latitude: -7.025345799999999,
-      longitude: 110.4128027,
-    },
-    {
-      name: 'Karangrejo',
-      address:
-        'Karangrejo, Kec. Grobogan, Kabupaten Grobogan, Jawa Tengah, Indonesia',
-      latitude: -7.010573,
-      longitude: 110.9298005,
-    },
-    {
-      name: 'Karangrejo',
-      address:
-        'Karangrejo, Kecamatan Gabus, Kabupaten Grobogan, Jawa Tengah, Indonesia',
-      latitude: -7.1273304,
-      longitude: 111.1950767,
-    },
-  ];
-  return places;
 }

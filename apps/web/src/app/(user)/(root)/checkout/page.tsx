@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -36,6 +36,7 @@ export default function Checkout() {
   const router = useRouter();
   const { data: session } = useSession();
   const { items, subtotal, isLoading: cartLoading, clearCart } = useCart();
+  const calculatingShippingRef = useRef(false);
 
   const [addresses, setAddresses] = useState([]);
   const [shippingMethods, setShippingMethods] = useState([]);
@@ -45,26 +46,22 @@ export default function Checkout() {
 
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [selectedShippingId, setSelectedShippingId] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<string>(
+  const [paymentMethod, setPaymentMethod] = useState(
     PaymentMethod.BANK_TRANSFER,
   );
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // New state for shipping calculation
-  const [shippingCost, setShippingCost] = useState<number>(0);
-  const [nearestStore, setNearestStore] = useState<any>(null);
-  const [shippingDistance, setShippingDistance] = useState<number | null>(null);
-  const [serviceDetails, setServiceDetails] = useState<{
-    courier: string;
-    service: string;
-    etd: string;
-  } | null>(null);
+  const [shippingCost, setShippingCost] = useState(0);
+  const [nearestStore, setNearestStore] = useState(null);
+  const [shippingDistance, setShippingDistance] = useState(null);
+  const [serviceDetails, setServiceDetails] = useState(null);
   const [stockAvailability, setStockAvailability] = useState({
     available: true,
     missingItems: [],
   });
   const [calculatingShipping, setCalculatingShipping] = useState(false);
+  const [shippingError, setShippingError] = useState(null);
 
   useEffect(() => {
     if (!session) {
@@ -76,30 +73,28 @@ export default function Checkout() {
       try {
         setIsLoading(true);
 
-        // Get user addresses
         const addressResponse = await apiclient.get('/user/address');
-        setAddresses(addressResponse.data.addresses || []);
+        const addressesData = addressResponse.data.addresses || [];
+        setAddresses(addressesData);
 
-        if (addressResponse.data.addresses.length > 0) {
-          // Set default address if available, otherwise use the first one
+        if (addressesData.length > 0) {
           const defaultAddress =
-            addressResponse.data.addresses.find(
-              (addr: any) => addr.isDefault,
-            ) || addressResponse.data.addresses[0];
+            addressesData.find((addr) => addr.isDefault) || addressesData[0];
           setSelectedAddressId(defaultAddress.id);
         }
 
-        // Get shipping methods
         const shippingResponse = await apiclient.get('/shipping-methods');
-        setShippingMethods(shippingResponse.data || []);
+        const shippingData = shippingResponse.data || [];
+        setShippingMethods(shippingData);
 
-        if (shippingResponse.data.length > 0) {
-          setSelectedShippingId(shippingResponse.data[0].id);
+        if (shippingData.length > 0) {
+          setSelectedShippingId(shippingData[0].id);
         }
       } catch (error) {
         console.error('Error fetching checkout data:', error);
         toast({
-          description: 'Failed to load checkout information',
+          description:
+            'Failed to load checkout information. Please refresh the page.',
           variant: 'destructive',
         });
       } finally {
@@ -111,12 +106,36 @@ export default function Checkout() {
   }, [session, router]);
 
   useEffect(() => {
-    const calculateShippingCost = async () => {
-      if (!selectedAddressId || !selectedShippingId || items.length === 0)
-        return;
+    setShippingError(null);
 
+    if (
+      !selectedAddressId ||
+      !selectedShippingId ||
+      items.length === 0 ||
+      isLoading
+    )
+      return;
+
+    const calculateShippingCost = async () => {
       try {
         setCalculatingShipping(true);
+        calculatingShippingRef.current = true;
+
+        // const timeoutId = setTimeout(() => {
+        //   if (calculatingShippingRef.current) {
+        //     setCalculatingShipping(false);
+        //     calculatingShippingRef.current = false;
+        //     setShippingError(
+        //       'Shipping calculation timed out. Using base shipping cost.',
+        //     );
+
+        //     const selectedMethod = shippingMethods.find(
+        //       (m) => m.id === selectedShippingId,
+        //     );
+        //     if (selectedMethod) setShippingCost(selectedMethod.baseCost);
+        //   }
+        // }, 100); // 10 second timeout
+
         const response = await apiclient.post('/shipping/calculation', {
           addressId: selectedAddressId,
           shippingMethodId: selectedShippingId,
@@ -126,27 +145,67 @@ export default function Checkout() {
           })),
         });
 
-        setShippingDistance(response.data.distance);
-        setShippingCost(response.data.shippingCost);
-        setNearestStore(response.data.store);
-        setServiceDetails(response.data.serviceDetails);
+        clearTimeout(timeoutId);
+
+        const responseData = response.data;
+        const shippingData =
+          responseData.data?.data || responseData.data || responseData;
+
+        console.log('Shipping calculation response:', shippingData);
+
+        if (shippingData.store) setNearestStore(shippingData.store);
+        if (shippingData.distance !== undefined)
+          setShippingDistance(shippingData.distance);
+        if (shippingData.serviceDetails?.isMock) {
+          setShippingError('Using estimated shipping due to API limit.');
+        }
         setStockAvailability({
-          available: response.data.hasAllItems,
-          missingItems: response.data.missingItems || [],
+          available: shippingData.hasAllItems ?? true,
+          missingItems: shippingData.missingItems || [],
         });
+
+        if (shippingData.shippingCost) {
+          setShippingCost(shippingData.shippingCost);
+        } else {
+          const selectedMethod = shippingMethods.find(
+            (m) => m.id === selectedShippingId,
+          );
+          if (selectedMethod) setShippingCost(selectedMethod.baseCost);
+        }
+
+        if (shippingData.shippingMethods?.length > 0) {
+          setShippingMethods(shippingData.shippingMethods);
+        }
       } catch (error) {
         console.error('Error calculating shipping cost:', error);
+        setShippingError(
+          'There was a problem calculating shipping. Using standard rates.',
+        );
+
+        const selectedMethod = shippingMethods.find(
+          (m) => m.id === selectedShippingId,
+        );
+        if (selectedMethod) setShippingCost(selectedMethod.baseCost);
+
         toast({
-          description: 'Failed to calculate shipping cost',
-          variant: 'destructive',
+          description:
+            'Could not calculate exact shipping cost. Using standard rates.',
+          variant: 'default',
         });
       } finally {
         setCalculatingShipping(false);
+        calculatingShippingRef.current = false;
       }
     };
 
     calculateShippingCost();
-  }, [selectedAddressId, selectedShippingId, items]);
+  }, [
+    selectedAddressId,
+    selectedShippingId,
+    items,
+    isLoading,
+    shippingMethods,
+  ]);
 
   const selectedAddress = addresses.find(
     (addr) => addr.id === selectedAddressId,
@@ -191,13 +250,11 @@ export default function Checkout() {
         notes: notes || undefined,
       });
 
-      // Clear cart after successful order
       await clearCart();
 
-      // Show success message
       setOrderNumber(response.data.orderNumber);
       setOrderSuccess(true);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating order:', error);
       toast({
         description:
@@ -237,7 +294,6 @@ export default function Checkout() {
     );
   }
 
-  // Show success screen
   if (orderSuccess) {
     return (
       <MaxWidthWrapper className="container max-w-md mx-auto py-8 px-4">
@@ -328,6 +384,12 @@ export default function Checkout() {
                   <span className="font-medium">Postal Code:</span>{' '}
                   {selectedAddress.postalCode}
                 </p>
+                {selectedAddress.latitude && selectedAddress.longitude && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Coordinates: {selectedAddress.latitude.toFixed(6)},{' '}
+                    {selectedAddress.longitude.toFixed(6)}
+                  </p>
+                )}
               </div>
             )}
           </CardContent>
@@ -362,6 +424,15 @@ export default function Checkout() {
           </Card>
         )}
 
+        {/* Shipping Error Notice */}
+        {shippingError && (
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Shipping Notice</AlertTitle>
+            <AlertDescription>{shippingError}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Stock Availability Warning */}
         {!stockAvailability.available &&
           stockAvailability.missingItems.length > 0 && (
@@ -388,23 +459,27 @@ export default function Checkout() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {calculatingShipping ? (
-              <div className="flex items-center justify-center py-6">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2"></div>
-                <p>Calculating shipping costs...</p>
+            {calculatingShipping && (
+              <div className="flex items-center justify-center py-4">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2"></div>
+                <p className="text-sm">Calculating shipping costs...</p>
               </div>
-            ) : (
-              <RadioGroup
-                value={selectedShippingId}
-                onValueChange={setSelectedShippingId}
-                className="space-y-3"
-              >
-                {shippingMethods.map((method) => (
+            )}
+
+            <RadioGroup
+              value={selectedShippingId}
+              onValueChange={setSelectedShippingId}
+              className="space-y-3"
+              disabled={calculatingShipping}
+            >
+              {shippingMethods && shippingMethods.length > 0 ? (
+                shippingMethods.map((method) => (
                   <div
                     key={method.id}
                     className={cn(
                       'flex items-start space-x-3 rounded-md border p-3',
                       method.id === selectedShippingId && 'border-primary',
+                      calculatingShipping && 'opacity-50 pointer-events-none',
                     )}
                   >
                     <RadioGroupItem
@@ -414,37 +489,25 @@ export default function Checkout() {
                     <div className="flex-1">
                       <label
                         htmlFor={`shipping-${method.id}`}
-                        className="flex justify-between cursor-pointer"
+                        className="flex flex-col cursor-pointer"
                       >
-                        <div>
-                          <p className="font-medium">{method.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {method.description}
-                          </p>
-                          {serviceDetails &&
-                            method.id === selectedShippingId && (
-                              <div className="mt-1">
-                                <Badge variant="outline" className="text-xs">
-                                  {serviceDetails.courier.toUpperCase()} •{' '}
-                                  {serviceDetails.service} •{' '}
-                                  {serviceDetails.etd} days
-                                </Badge>
-                              </div>
-                            )}
-                        </div>
-                        <div className="font-medium">
-                          {formatCurrency(
-                            method.id === selectedShippingId
-                              ? shippingCost
-                              : method.baseCost,
-                          )}
-                        </div>
+                        <span className="font-medium">{method.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {method.description}
+                        </span>
                       </label>
                     </div>
+                    <div className="text-sm font-medium">
+                      {formatCurrency(method.baseCost)}
+                    </div>
                   </div>
-                ))}
-              </RadioGroup>
-            )}
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  No shipping methods available
+                </div>
+              )}
+            </RadioGroup>
             {shippingDistance !== null && (
               <div className="mt-3 text-sm text-muted-foreground">
                 <p>
@@ -546,7 +609,7 @@ export default function Checkout() {
                   <div className="w-12 h-12 relative rounded bg-muted">
                     <Image
                       src={
-                        item.product.images[0]?.imageUrl || '/placeholder.png'
+                        item.product.images?.[0]?.imageUrl || '/placeholder.png'
                       }
                       alt={item.product.name}
                       fill
@@ -592,7 +655,9 @@ export default function Checkout() {
               disabled={
                 isSubmitting ||
                 calculatingShipping ||
-                !stockAvailability.available
+                !selectedAddressId ||
+                !selectedShippingId ||
+                (!stockAvailability.available && !shippingError)
               }
             >
               {isSubmitting ? 'Processing...' : 'Place Order'}
