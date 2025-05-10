@@ -138,8 +138,12 @@ export function useUserManagement() {
     },
     {
       header: 'Toko',
-      accessorFn: (row: any) =>
-        row.store?.name ?? '-',    },
+     
+      cell: ({ row }) => {
+        return row.original.managedStore?.name ?? '-';
+
+      },
+    },
     { accessorKey: 'referralCode', header: 'Kode Rujukan' },
     {id: 'verifikasi',
       header: 'Verifikasi',

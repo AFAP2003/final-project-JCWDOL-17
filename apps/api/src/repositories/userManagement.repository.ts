@@ -10,7 +10,7 @@ class UserManagementRepository {
     const data = await prismaclient.user.findMany({
       include: {
         addresses: true,
-        stores: true,
+        managedStore: true,
       },
       skip,
       take: realTake,
@@ -76,6 +76,18 @@ class UserManagementRepository {
       },
     });
 
+    if(data.storeId){
+      await prismaclient.store.update({
+        where:{
+          id:
+            data.storeId
+          
+        },
+        data:{
+          adminId:user.id
+        }
+      })
+    }
     return user;
   }
 

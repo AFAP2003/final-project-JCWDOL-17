@@ -283,7 +283,7 @@ export default function UserManagementForm({
                 <SelectGroup>
                   <SelectLabel>Stores</SelectLabel>
                   {stores.map((store) => (
-                    <SelectItem value={store.name} key={store.id}>
+                    <SelectItem value={store.id} key={store.id}>
                       {store.name}
                     </SelectItem>
                   ))}
