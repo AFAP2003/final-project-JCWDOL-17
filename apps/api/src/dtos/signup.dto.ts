@@ -2,16 +2,7 @@ import { z } from 'zod';
 
 export const SignupCredConfirmDTO = z.object({
   email: z.string().email('Invalid email format'),
-  firstName: z
-    .string()
-    .trim()
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must be at most 50 characters')
-    .regex(
-      /^[A-Za-z]+(?:[' -][A-Za-z]+)*$/,
-      'Name can only contain letters, spaces, hyphens, and apostrophes',
-    ),
-  lastName: z
+  name: z
     .string()
     .trim()
     .min(2, 'Name must be at least 2 characters')

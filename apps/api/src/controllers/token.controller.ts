@@ -28,6 +28,4 @@ export class TokenController {
       throw error;
     }
   };
-
-  whoami = async (req: Request, res: Response) => {};
 }

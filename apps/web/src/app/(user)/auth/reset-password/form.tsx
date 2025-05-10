@@ -1,6 +1,5 @@
 'use client';
 
-import Logo from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import {
   CardContent,
@@ -31,6 +30,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import AuthLogo from '../../../../components/auth-logo';
 
 const formSchema = z
   .object({
@@ -67,7 +67,8 @@ type Props = {
   token: string;
   intend:
     | VerificationIdentifier.AnonymusSignin
-    | VerificationIdentifier.ResetPassword;
+    | VerificationIdentifier.ResetPassword
+    | VerificationIdentifier.NewPassword;
 };
 
 export default function SetPasswordForm({ token, intend }: Props) {
@@ -126,9 +127,8 @@ export default function SetPasswordForm({ token, intend }: Props) {
 
         {/* Header */}
         <CardHeader className="space-y-2 pb-6">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Logo showText={false} />
-          </div>
+          <AuthLogo />
+
           <CardTitle className="text-2xl font-bold">
             Create New Password
           </CardTitle>
@@ -210,7 +210,9 @@ export default function SetPasswordForm({ token, intend }: Props) {
                 disabled={isPending}
                 size="lg"
               >
-                Reset My Password
+                {intend === VerificationIdentifier.NewPassword
+                  ? 'Set My Password'
+                  : 'Reset My Password'}
                 {isPending ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 ) : (

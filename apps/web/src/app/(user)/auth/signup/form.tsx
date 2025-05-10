@@ -1,6 +1,5 @@
 'use client';
 
-import Logo from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import {
   CardContent,
@@ -42,19 +41,11 @@ import { useForm } from 'react-hook-form';
 import { FcGoogle } from 'react-icons/fc';
 import { SiFacebook } from 'react-icons/si';
 import { z } from 'zod';
+import AuthLogo from '../../../../components/auth-logo';
 
 const formSchema = z.object({
   email: z.string().email('Please input valid email address'),
-  firstName: z
-    .string()
-    .trim()
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must be at most 50 characters')
-    .regex(
-      /^[A-Za-z]+(?:[' -][A-Za-z]+)*$/,
-      'Name can only contain letters, spaces, hyphens, and apostrophes',
-    ),
-  lastName: z
+  name: z
     .string()
     .trim()
     .min(2, 'Name must be at least 2 characters')
@@ -92,8 +83,7 @@ export default function SignupForm({ searchParams }: Props) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: '',
-      firstName: '',
-      lastName: '',
+      name: '',
       referralCode: '',
     },
   });
@@ -172,9 +162,8 @@ export default function SignupForm({ searchParams }: Props) {
           <div className="w-full max-w-md overflow-hidden">
             {/* Header */}
             <CardHeader className="space-y-2 pb-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Logo showText={false} />
-              </div>
+              <AuthLogo />
+
               <CardTitle className=" text-2xl font-bold">
                 Create a App account
               </CardTitle>
@@ -198,51 +187,27 @@ export default function SignupForm({ searchParams }: Props) {
                   })}
                   className="space-y-4"
                 >
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="firstName">First Name</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                id="firstName"
-                                placeholder="John"
-                                className="pl-10"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="lastName">Last Name</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                id="lastName"
-                                placeholder="Smith"
-                                className="pl-10"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="name">Full Name</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="name"
+                              placeholder="John"
+                              className="pl-10"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}

@@ -15,31 +15,33 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(uuid())
-  role           UserRole  @default(USER)
-  name           String
-  email          String    @unique
-  emailVerified  Boolean   @default(false)
-  password       String?
-  image          String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id            String             @id @default(uuid())
+  role          UserRole
+  name          String
+  email         String             @unique
+  emailVerified Boolean
+  image         String?
+  phone         String?
+  gender        Gender?
+  dateOfBirth   DateTime?
+  signupMethod  SignupMethodType[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
-  referralCode   String?   @unique
-  referredById   String?
-  referredUsers  User[]    @relation("UserReferrals")
-  referredBy     User?     @relation("UserReferrals", fields: [referredById], references: [id])
+  referralCode  String? @unique
+  referredById  String?
+  referredUsers User[]  @relation("UserReferrals")
+  referredBy    User?   @relation("UserReferrals", fields: [referredById], references: [id])
 
-  addresses      Address[]
-  cart           Cart?
-  orders         Order[]
+  addresses Address[]
+  cart      Cart?
+  orders    Order[]
 
-  managedStore   Store?    @relation("StoreToAdmin") // Potentially for admin management
-  storeId        String?
-  store          Store?    @relation(fields: [storeId], references: [id]) // User belongs to this store
-  Session        Session[]
-  Account        Account[]
-  // Remove the `Store[]` relation here as a user should belong to one store via `storeId`
+  managedStore Store?    @relation("StoreToAdmin")
+  storeId      String?
+  sessions     Session[]
+  accounts     Account[]
+  stores       Store[]
 }
 
 model Session {
@@ -83,26 +85,27 @@ model Verification {
 
 model Address {
   id         String   @id @default(uuid())
-  userId     String
+  isDefault  Boolean? @unique
   label      String
-  recipient  String
-  phone      String
   address    String
   city       String
   province   String
   postalCode String
+  recipient  String
+  phone      String
   latitude   Float?
   longitude  Float?
-  isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
   orders Order[]
 }
 
 model Store {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
   address     String
   city        String
@@ -110,18 +113,18 @@ model Store {
   postalCode  String
   latitude    Float
   longitude   Float
-  maxDistance Float     @default(10)
-  isActive    Boolean   @default(true)
-  isMain      Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  maxDistance Float    @default(10)
+  isActive    Boolean  @default(true)
+  isMain      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  adminId     String?   @unique
-  admin       User?     @relation("StoreToAdmin", fields: [adminId], references: [id])
-  inventory   Inventory[]
-  orders      Order[]
-  discounts   Discount[]
-  users       User[]    // A store can have multiple users (e.g., employees)
+  adminId   String?     @unique
+  admin     User?       @relation("StoreToAdmin", fields: [adminId], references: [id])
+  inventory Inventory[]
+  orders    Order[]
+  discounts Discount[]
+  users     User[] // A store can have multiple users (e.g., employees)
   // Remove the redundant `User?` and `userId?` fields that create ambiguity
 }
 
@@ -306,17 +309,19 @@ model Discount {
   name        String
   description String?
   type        DiscountType
-  value       Decimal      @db.Decimal(10, 2)
-  minPurchase Decimal?     @db.Decimal(10, 2)
-  maxDiscount Decimal?     @db.Decimal(10, 2)
-  startDate   DateTime
-  endDate     DateTime
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
 
-  buyQuantity Int?
-  getQuantity Int?
+  isPercentage Boolean? // NO_RULES_DISCOUNT / WITH_MAX_PRICE
+  value        Decimal? @db.Decimal(10, 2) // NO_RULES_DISCOUNT / WITH_MAX_PRICE
+  maxDiscount  Decimal? @db.Decimal(10, 2) // Required jika isPercentage = true;
+  minPurchase  Decimal? @db.Decimal(10, 2) // WITH_MAX_PRICE
+  buyQuantity  Int? // BUY_X_GET_Y
+  getQuantity  Int? // BUY_X_GET_Y
+
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   store    Store     @relation(fields: [storeId], references: [id])
   products Product[] @relation("ProductDiscount")
@@ -405,8 +410,8 @@ enum StockJournalType {
 }
 
 enum DiscountType {
-  PERCENTAGE
-  FIXED_AMOUNT
+  NO_RULES_DISCOUNT
+  WITH_MAX_PRICE
   BUY_X_GET_Y
 }
 
@@ -420,4 +425,9 @@ enum VoucherType {
 enum ValueType {
   PERCENTAGE
   FIXED_AMOUNT
+}
+
+enum Gender {
+  MALE
+  FEMALE
 }

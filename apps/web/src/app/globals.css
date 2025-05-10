@@ -81,3 +81,40 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .bg-gradient-primary {
+    @apply bg-gradient-to-b from-gray-800 to-gray-700;
+  }
+  .bg-gradient-darker {
+    @apply bg-gradient-to-b from-neutral-900 to-neutral-800;
+  }
+}
+
+/* --------------------- Swiper related thing -------------------- */
+.swiper-scrollbar-drag {
+  @apply !bg-neutral-400/50;
+}
+
+.swiper-button-next::after {
+  @apply text-neutral-700 hover:bg-neutral-500/40 p-3 rounded-lg;
+}
+
+.swiper-button-prev::after {
+  @apply text-neutral-700 hover:bg-neutral-500/40 p-3 rounded-lg;
+}
+/* --------------------- leaflet related thing -------------------- */
+.leaflet-container {
+  @apply aspect-video;
+}
+
+.marker-icon {
+  @apply size-full bg-cover transition-all duration-0 ease-in-out relative;
+  background-image: url('/images/map-marker.svg');
+}
+
+.marker-shadow {
+  @apply absolute bottom-0 left-1/2 w-6 h-2 bg-black/50 rounded-full pointer-events-none;
+  transform: translateX(-50%) translateY(4px);
+  filter: blur(4px);
+}

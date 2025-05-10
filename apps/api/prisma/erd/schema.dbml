@@ -4,12 +4,15 @@
 
 Table User {
   id String [pk]
-  role UserRole [not null, default: 'USER']
+  role UserRole [not null]
   name String [not null]
   email String [unique, not null]
-  emailVerified Boolean [not null, default: false]
-  password String
+  emailVerified Boolean [not null]
   image String
+  phone String
+  gender Gender
+  dateOfBirth DateTime
+  signupMethod SignupMethodType[] [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   referralCode String [unique]
@@ -21,9 +24,9 @@ Table User {
   orders Order [not null]
   managedStore Store
   storeId String
-  Session Session [not null]
-  Account Account [not null]
-  Store Store [not null]
+  sessions Session [not null]
+  accounts Account [not null]
+  stores Store [not null]
 }
 
 Table Session {
@@ -67,20 +70,20 @@ Table Verification {
 
 Table Address {
   id String [pk]
-  userId String [not null]
+  isDefault Boolean [unique]
   label String [not null]
-  recipient String [not null]
-  phone String [not null]
   address String [not null]
   city String [not null]
   province String [not null]
   postalCode String [not null]
+  recipient String [not null]
+  phone String [not null]
   latitude Float
   longitude Float
-  isDefault Boolean [not null, default: false]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   user User [not null]
+  userId String [not null]
   orders Order [not null]
 }
 
@@ -103,8 +106,7 @@ Table Store {
   inventory Inventory [not null]
   orders Order [not null]
   discounts Discount [not null]
-  User User
-  userId String
+  users User [not null]
 }
 
 Table Category {
@@ -276,16 +278,17 @@ Table Discount {
   name String [not null]
   description String
   type DiscountType [not null]
-  value Decimal [not null]
-  minPurchase Decimal
+  isPercentage Boolean
+  value Decimal
   maxDiscount Decimal
+  minPurchase Decimal
+  buyQuantity Int
+  getQuantity Int
   startDate DateTime [not null]
   endDate DateTime [not null]
   isActive Boolean [not null, default: true]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-  buyQuantity Int
-  getQuantity Int
   store Store [not null]
   products Product [not null]
 }
@@ -323,6 +326,11 @@ Table OrderVoucher {
   indexes {
     (orderId, voucherId) [unique]
   }
+}
+
+Table StoreToUser {
+  storesId String [ref: > Store.id]
+  usersId String [ref: > User.id]
 }
 
 Table ProductDiscount {
@@ -383,8 +391,8 @@ Enum StockJournalType {
 }
 
 Enum DiscountType {
-  PERCENTAGE
-  FIXED_AMOUNT
+  NO_RULES_DISCOUNT
+  WITH_MAX_PRICE
   BUY_X_GET_Y
 }
 
@@ -400,6 +408,11 @@ Enum ValueType {
   FIXED_AMOUNT
 }
 
+Enum Gender {
+  MALE
+  FEMALE
+}
+
 Ref: User.referredById > User.id
 
 Ref: Session.userId > User.id [delete: Cascade]
@@ -409,8 +422,6 @@ Ref: Account.userId > User.id [delete: Cascade]
 Ref: Address.userId > User.id [delete: Cascade]
 
 Ref: Store.adminId - User.id
-
-Ref: Store.userId - User.id
 
 Ref: Product.categoryId > Category.id
 
