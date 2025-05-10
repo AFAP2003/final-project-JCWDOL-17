@@ -21,9 +21,7 @@ import {
 import { MyFormValues } from '@/validations/user.validation';
 import {  Plus } from 'lucide-react';
 import { FormikProps } from 'formik';
-import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import UseProductManagement from '@/hooks/useProductManagement';
 import UploadImageLoadingOverlay from '@/components/dashboard/uploadImageLoadingOverlay';
 
 interface ProductManagementFormProps {
@@ -101,12 +99,16 @@ export default function ProductManagementForm({
      // when opening in “add” mode, reset the form
     if (open && !isEditMode) {
       formik.resetForm();
+      setPreviews([]);
+      setMainIndex(0);
     }
 
     // when closing, clear edit state
     if (!open) {
       setIsEditMode(false);
        setEditingProductId(null);
+       setPreviews([]);
+       setMainIndex(0);
      }
 
     setDialogOpen(open);

@@ -130,12 +130,19 @@ const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
       {
         accessorKey: 'category',
         header: 'Kategori',
-        accessorFn: (row) => row.category?.name ?? 'N/A',
+        accessorFn: (row) => row.category?.name ?? '-',
         cell: ({ row }) => {
-          return row.original.category?.name ?? 'N/A';
+          return row.original.category?.name ?? '-';
         },
       },
-      { accessorKey: 'price', header: 'Harga' },
+      { accessorKey: 'price', header: 'Harga',
+        cell:({row})=>{
+          const {price} = row.original
+          const num = Number(price)
+          return `Rp ${num.toLocaleString()}`
+          
+        }
+       },
       { accessorKey: 'sku', header: 'SKU' },
       { accessorKey: 'weight', header: 'Berat (kg)' },
       {

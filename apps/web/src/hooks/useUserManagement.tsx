@@ -34,7 +34,9 @@ export function useUserManagement() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [pageCount,setPageCount] = useState(1)
-
+  const [previews, setPreviews] = useState<string[]>([]); 
+  const [mainIndex, setMainIndex] = useState<number>(0);  
+  
   const {
     users,
     isLoading,
@@ -108,7 +110,7 @@ export function useUserManagement() {
     {  header: 'Alamat (Utama)' ,
 
       accessorFn: (row: any) => {
-        return row.addresses?.length > 0 ? row.addresses[0].address : 'NA';
+        return row.addresses?.length > 0 ? row.addresses[0].address : '-';
       }
     },
     { accessorKey: 'role', header: 'Role' },
@@ -117,33 +119,27 @@ export function useUserManagement() {
       header: 'Jenis Kelamin',
       cell: ({ getValue }) => {
         const gender = getValue();
-        return gender === 'MALE' ? 'Laki-laki' : gender === 'FEMALE' ? 'Perempuan' : 'NA';
+        return gender === 'MALE' ? 'Laki-laki' : gender === 'FEMALE' ? 'Perempuan' : '-';
       },
     },
     {
       accessorKey: 'phone',
       header: 'Telepon',
-      cell: ({ getValue }) => getValue() || 'NA',
+      cell: ({ getValue }) => {
+        const phone = getValue()
+        return phone ?`+${getValue()}` : '-'
+      }
     },
     {
       accessorKey: 'dateOfBirth',
       header: 'Tanggal Lahir',
-      cell: ({ getValue }) => {
-        const value = getValue();
-        if (!value) return 'NA';
-    
-        const date = new Date(value);
-        return date.toLocaleDateString('id-ID', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        });
-      },
+      cell: ({ getValue }) =>
+        new Date(getValue<string>()).toLocaleDateString('id-ID')
     },
     {
       header: 'Toko',
       accessorFn: (row: any) =>
-        row.store?.name ?? 'NA',    },
+        row.store?.name ?? '-',    },
     { accessorKey: 'referralCode', header: 'Kode Rujukan' },
     {id: 'verifikasi',
       header: 'Verifikasi',
@@ -185,6 +181,7 @@ export function useUserManagement() {
                     role: user.role || '',
                     verifikasi: !!user.emailVerified,
                   });
+                  setPreviews(user.image ? [user.image] : []);
                 }}
               >
                 Edit
@@ -293,6 +290,10 @@ export function useUserManagement() {
     fetchStores,
     handleRoleFilter,
     formik,
-    columns
+    columns,
+    previews,
+    setPreviews,
+    mainIndex,
+    setMainIndex
   };
 }

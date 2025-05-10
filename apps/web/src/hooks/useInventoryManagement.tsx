@@ -1,5 +1,4 @@
 import { inventoryManagementAPI } from '@/lib/apis/dashboard/inventoryManagement.api';
-import * as Yup from 'yup';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -11,7 +10,7 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
-import { MoreHorizontal } from 'lucide-react';
+import { ImageOff, MoreHorizontal } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   DropdownMenu,
@@ -25,6 +24,7 @@ import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.a
 import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 import productManagementAPI from '@/lib/apis/dashboard/productManagement.api';
 import { getValidationSchema } from '@/validations/inventory.validation';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function UseInventoryManagement() {
   const {
@@ -55,49 +55,49 @@ export default function UseInventoryManagement() {
         accessorKey: 'gambar',
         header: 'Gambar',
         cell: ({ row }) => {
-          const imageUrl = row.original.product?.imageUrl; // adjust field if needed
-          return (
-            <div className="avatar">
-              <div className="w-[150px] h-[100px] rounded-md">
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt="Product"
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-gray-200 rounded-md text-sm text-gray-500">
-                    NA
-                  </div>
-                )}
-              </div>
-            </div>
+          const mainImg = row.original.product.images.find(img => img.isMain);
+          const imageUrl = mainImg?.imageUrl;         
+           return (
+            
+            <div >
+              {imageUrl
+                ?   <Avatar className='h-32 w-32 overflow-hidden rounded-md'>
+                <AvatarImage src={imageUrl} alt="main product image"  />
+              </Avatar>
+                : 
+                <Avatar className='h-32 w-32 overflow-hidden rounded-sm flex justify-center items-center'>
+                <ImageOff className="w-32 h-32 text-gray-400" />
+                </Avatar>
+              }
+          </div>
           );
         },
       },
       {
         header: 'Produk',
-        cell: ({ row }) => row.original.product?.name ?? 'NA',
+        cell: ({ row }) => row.original.product?.name ?? '-',
       },
       {
         id: 'category',
         header: 'Kategori',
         accessorFn: (row) => row.product?.category?.name ?? '',
-        cell: ({ row }) => row.original.product?.category?.name ?? 'NA',
+        cell: ({ row }) => row.original.product?.category?.name ?? '-',
       },
       {
         id: 'store',
         header: 'Toko',
         accessorFn: (row) => row.store?.name ?? '',
-        cell: ({ row }) => row.original.store?.name ?? 'NA',
+        cell: ({ row }) => row.original.store?.name ?? '-',
       },
 
       {
         header: 'Harga',
-        cell: ({ row }) =>
-          row.original.product?.price
-            ? `Rp ${row.original.product.price}`
-            : 'NA',
+        cell: ({ row }) =>{
+            const {  price } = row.original.product;
+            const num = Number(price);
+            return `Rp ${num.toLocaleString()}`
+              
+        }
       },
       {
         header: 'Stok',

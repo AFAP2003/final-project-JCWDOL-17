@@ -25,6 +25,7 @@ import { genRandomString } from '@/lib/utils';
 import { useState } from 'react';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
 import UploadImageLoadingOverlay from '@/components/dashboard/uploadImageLoadingOverlay';
+import { Badge } from '@/components/ui/badge';
 
 interface UserManagementFormProps {
   dialogOpen: boolean;
@@ -34,6 +35,10 @@ interface UserManagementFormProps {
   stores: Store[];
   setIsEditMode: (edit: boolean) => void;
   setEditingUserId: (id: string | null) => void;
+  previews: string[];
+  setPreviews: (any: any) => any[];
+  mainIndex: number;
+  setMainIndex: (index: number) => void;
 }
 
 export default function UserManagementForm({
@@ -44,7 +49,29 @@ export default function UserManagementForm({
   stores,
   setIsEditMode,
   setEditingUserId,
+  previews,
+  setPreviews,
+  mainIndex,
+  setMainIndex
 }: UserManagementFormProps) {
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.currentTarget.files?.[0];
+    if (!file) return;
+    formik.setFieldValue('image', [file]);
+
+    const previewUrl = URL.createObjectURL(file);
+    setPreviews([previewUrl]);
+    setMainIndex(0);
+  };
+
+  const handleRemove = (index: number) => {
+    setPreviews([]);
+    formik.setFieldValue('image', []);
+    formik.setFieldValue('keptImages', []);
+    setMainIndex(0);
+  };
+  
   const [showPassword, setShowPassword] = useState(false);
   const handleGeneratePassword = () => {
     const pwd = genRandomString().slice(0, 12);
@@ -61,11 +88,15 @@ export default function UserManagementForm({
 
         if (open && !isEditMode) {
           formik.resetForm();
+          setPreviews([]);
+          setMainIndex(0);
         }
 
         if (!open) {
           setIsEditMode(false);
           setEditingUserId(null);
+          setPreviews([]);
+          setMainIndex(0);
         }
       }}
     >
@@ -95,9 +126,7 @@ export default function UserManagementForm({
               name="image"
               type="file"
               accept=".jpg,.jpeg,.png,.gif"
-              onChange={(e) =>
-                formik.setFieldValue('image', e.currentTarget.files)
-              }
+             onChange={handleFileChange}
             />
             {formik.touched.foto && formik.errors.foto && (
               <p className="text-xs text-red-600">{formik.errors.foto}</p>
@@ -105,6 +134,26 @@ export default function UserManagementForm({
             <p className="text-xs text-gray-500 mt-1">
               Format yang didukung: JPG, JPEG, PNG, GIF. Ukuran maks.: 1MB.
             </p>
+
+             <div className="flex gap-4 mt-4 flex-wrap">
+                  {previews.map((src, index) => (
+              <div
+                key={index}
+                className="relative w-[100px] h-[100px] border rounded overflow-hidden"
+              >
+                <img
+                  src={src}
+                  alt={`preview-${index}`}
+                  className="w-full h-full object-cover"
+                />
+            
+                
+            
+               
+              </div>
+            ))}
+            
+                  </div>
           </div>
 
           {/* toko */}

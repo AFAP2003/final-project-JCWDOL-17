@@ -25,6 +25,10 @@
       stores,
       handleRoleFilter,
       columns,
+      previews,
+      setPreviews,
+      mainIndex,
+      setMainIndex
     } = useUserManagement();
 
     if (isLoading) {
@@ -43,6 +47,10 @@
             stores={stores}
             setEditingUserId={setEditingUserId}
             setIsEditMode={setIsEditMode}
+            previews={previews}
+            setPreviews={setPreviews}
+            mainIndex={mainIndex}
+            setMainIndex={setMainIndex}
           />
         </div>
 

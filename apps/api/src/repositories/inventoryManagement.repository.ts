@@ -11,6 +11,7 @@ class InventoryManagementRepository {
                 product: {
                   include: {
                     category: true,
+                    images:true
                   },
                 },
                 store: true,
