@@ -64,7 +64,7 @@ export function useUserManagement() {
     },[])
   const formik = useFormik({
     initialValues: {
-      gambar: '',
+      image: null as FileList | null,
       nama: '',
       email: '',
       password: '',
@@ -92,17 +92,13 @@ export function useUserManagement() {
   });
   const columns = [
     {
-      accessorKey: 'gambar',
+      accessorKey: 'image',
       header: 'Gambar',
       cell: ({ getValue }) => {
-        const imageUrl = getValue<string>();
+        const url = getValue<string>();
         return (
           <Avatar>
-            {imageUrl ? (
-              <AvatarImage src={imageUrl} alt="Avatar" />
-            ) : (
-              <AvatarFallback>NA</AvatarFallback>
-            )}
+            {url ? <AvatarImage src={url} alt="avatar" /> : <AvatarFallback>NA</AvatarFallback>}
           </Avatar>
         );
       },
@@ -116,6 +112,34 @@ export function useUserManagement() {
       }
     },
     { accessorKey: 'role', header: 'Role' },
+    {
+      accessorKey: 'gender',
+      header: 'Jenis Kelamin',
+      cell: ({ getValue }) => {
+        const gender = getValue();
+        return gender === 'MALE' ? 'Laki-laki' : gender === 'FEMALE' ? 'Perempuan' : 'NA';
+      },
+    },
+    {
+      accessorKey: 'phone',
+      header: 'Telepon',
+      cell: ({ getValue }) => getValue() || 'NA',
+    },
+    {
+      accessorKey: 'dateOfBirth',
+      header: 'Tanggal Lahir',
+      cell: ({ getValue }) => {
+        const value = getValue();
+        if (!value) return 'NA';
+    
+        const date = new Date(value);
+        return date.toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+      },
+    },
     {
       header: 'Toko',
       accessorFn: (row: any) =>
@@ -165,9 +189,9 @@ export function useUserManagement() {
               >
                 Edit
               </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem onCheckedChange={() => {}}>
+              {/* <DropdownMenuCheckboxItem onCheckedChange={() => {}}>
                 Lihat Detail
-              </DropdownMenuCheckboxItem>
+              </DropdownMenuCheckboxItem> */}
               <DropdownMenuCheckboxItem
                 className="text-red-600"
                 onCheckedChange={() => {

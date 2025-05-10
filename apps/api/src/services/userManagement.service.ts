@@ -7,6 +7,10 @@ class UserManagementService{
         return await userManagementRepository.getUsers(page,take)
     }
 
+    async listUserById(id:string){
+        return await userManagementRepository.getUserById(id)
+    }
+
     async createNewUser(userData:User){
         return await userManagementRepository.createUser(userData)
 

@@ -22,9 +22,10 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal,ImageOff } from 'lucide-react';
 import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
 import { getValidationSchema } from '@/validations/product.validation';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 export default function UseProductManagement() {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -35,6 +36,9 @@ export default function UseProductManagement() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
+const [previews, setPreviews] = useState<string[]>([]); // ✅ typed
+const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
+
   const {
     products,
     isLoading,
@@ -69,11 +73,14 @@ export default function UseProductManagement() {
     initialValues: {
       nama: '',
       deskripsi: '',
-      harga: '0',
-      berat: '1',
-      sku: Math.random().toString(36).substring(2),
+      harga: '',
+      berat: '',
+      sku: '',
       kategoriId: '',
       isActive: true,
+      image:[],
+      keptImages: [],        // ✅ Add this
+    mainIndex: 0  
     },
     validationSchema: getValidationSchema(),
     onSubmit: async (values, { resetForm }) => {
@@ -98,30 +105,28 @@ export default function UseProductManagement() {
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
       {
-        accessorKey: 'gambar',
+        id: 'mainImage',
         header: 'Gambar',
+        // accessorFn now returns only the main image object (or undefined)
+        accessorFn: row => row.images.find(img => img.isMain),
         cell: ({ getValue }) => {
-          const imageUrl = getValue<string>();
+          const img = getValue() 
+          if (!img) {
+            return (
+              <Avatar className='h-32 w-32 overflow-hidden rounded-sm flex justify-center items-center'>
+  <ImageOff className="w-32 h-32 text-gray-400" />
+  </Avatar>
+            );
+          }
           return (
-            <div className="avatar">
-              <div className="w-[150px] h-[100px] rounded-md">
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt="Product Image"
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-gray-200 rounded-md text-sm text-gray-500">
-                    NA
-                  </div>
-                )}
-              </div>
-            </div>
+            <Avatar className='h-32 w-32 overflow-hidden rounded-md'>
+              <AvatarImage src={img.imageUrl} alt="main product image"  />
+            </Avatar>
           );
         },
       },
       { accessorKey: 'name', header: 'Produk' },
+      { accessorKey: 'description', header: 'Deskripsi' },
       {
         accessorKey: 'category',
         header: 'Kategori',
@@ -131,6 +136,8 @@ export default function UseProductManagement() {
         },
       },
       { accessorKey: 'price', header: 'Harga' },
+      { accessorKey: 'sku', header: 'SKU' },
+      { accessorKey: 'weight', header: 'Berat (kg)' },
       {
         accessorKey: 'inventory',
         header: 'Stok',
@@ -157,7 +164,7 @@ export default function UseProductManagement() {
 
           if (total === 0) return 'Stok Habis';
           if (total < minStock) return 'Stok Rendah';
-          return 'Tersedia';
+          return 'Stok Tersedia';
         },
         cell: ({ getValue }) => {
           const status = getValue<string>();
@@ -201,7 +208,15 @@ export default function UseProductManagement() {
                       isActive: product.isActive || '',
                       sku: product.sku || '',
                       kategoriId: product.categoryId || '',
+                      image: [],
+                      keptImages: product.images.map((img: any) => img.imageUrl), // ✅ include this
+                      mainIndex: product.images.findIndex((img: any) => img.isMain) || 0, // ✅ optional
+                    
                     });
+
+                    setPreviews(product.images.map((img: any) => img.imageUrl));
+    const mainIdx = product.images.findIndex((img: any) => img.isMain);
+    setMainIndex(mainIdx >= 0 ? mainIdx : 0);
                   }}
                 >
                   Edit
@@ -338,6 +353,10 @@ export default function UseProductManagement() {
     fetchCategories,
     handleCategoryFilter,
     setIsEditMode,
-    setEditingProductId
+    setEditingProductId,
+    previews,
+    setPreviews,
+    mainIndex,
+    setMainIndex
   };
 }

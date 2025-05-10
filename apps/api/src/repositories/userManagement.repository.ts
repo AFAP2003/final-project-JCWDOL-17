@@ -19,6 +19,17 @@ class UserManagementRepository {
     return { total, data };
   }
 
+  async getUserById(id:string){
+    return await prismaclient.user.findUnique({
+      where:{
+        id
+      },
+      select:{
+        image:true
+      }
+    })
+  }
+
   async createUser(userData: User) {
     const existingUser = await prismaclient.user.findUnique({
       where: {
@@ -39,7 +50,7 @@ class UserManagementRepository {
     }
 
     const ctx = await auth.$context;
-    const { password, ...data } = userData;
+    const { password, image,...data } = userData;
 
     const user = await prismaclient.user.create({
       data: {
@@ -47,6 +58,7 @@ class UserManagementRepository {
         emailVerified: true,
         name: data.name,
         role: 'ADMIN',
+        image,
         signupMethod: {
           set: ['CREDENTIAL'],
         },
@@ -73,10 +85,11 @@ class UserManagementRepository {
 
     const user = await prismaclient.user.update({
       where: {
-        id,
+        id
       },
       data: {
         ...data,
+        emailVerified:true
       },
     });
 

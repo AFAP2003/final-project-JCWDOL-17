@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { FormikProps } from 'formik';
-import {  Eye, EyeOff, Plus, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Plus, RefreshCw, } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,7 @@ import { MyFormValues } from '@/validations/user.validation';
 import { genRandomString } from '@/lib/utils';
 import { useState } from 'react';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
+import UploadImageLoadingOverlay from '@/components/dashboard/uploadImageLoadingOverlay';
 
 interface UserManagementFormProps {
   dialogOpen: boolean;
@@ -50,8 +51,7 @@ export default function UserManagementForm({
     formik.setFieldValue('password', pwd, true);
     try {
       navigator.clipboard.writeText(pwd);
-    } catch (_) {
-    }
+    } catch (_) {}
   };
   return (
     <Dialog
@@ -87,6 +87,27 @@ export default function UserManagementForm({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={formik.handleSubmit} className="grid gap-4 py-4">
+          {/* foto */}
+          <div className="space-y-2">
+            <label className="mb-1 block text-sm font-medium">Foto</label>
+            <Input
+              id="image"
+              name="image"
+              type="file"
+              accept=".jpg,.jpeg,.png,.gif"
+              onChange={(e) =>
+                formik.setFieldValue('image', e.currentTarget.files)
+              }
+            />
+            {formik.touched.foto && formik.errors.foto && (
+              <p className="text-xs text-red-600">{formik.errors.foto}</p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Format yang didukung: JPG, JPEG, PNG, GIF. Ukuran maks.: 1MB.
+            </p>
+          </div>
+
+          {/* toko */}
           <div className="space-y-2">
             <label htmlFor="nama" className="text-sm font-medium text-gray-700">
               Nama
@@ -135,8 +156,8 @@ export default function UserManagementForm({
               </label>
               <Button
                 type="button"
-                size="sm" 
-                variant="secondary" 
+                size="sm"
+                variant="secondary"
                 className="  h-7 px-2 "
                 onClick={handleGeneratePassword}
                 title="Generate & copy password"
@@ -260,7 +281,8 @@ export default function UserManagementForm({
             >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={formik.isSubmitting}>
+
               {isEditMode ? 'Simpan Perubahan' : 'Tambah User'}
             </Button>
           </DialogFooter>

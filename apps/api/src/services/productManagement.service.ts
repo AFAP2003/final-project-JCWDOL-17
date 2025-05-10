@@ -1,4 +1,4 @@
-import { Product } from '@/interfaces/productManagement.interface';
+import { CreateProductDTO, Product } from '@/interfaces/productManagement.interface';
 import { prismaclient } from '@/prisma';
 import productManagementRepository from '@/repositories/productManagement.repository';
 
@@ -11,13 +11,13 @@ class ProductManagementService{
         return await productManagementRepository.getProductById(id)
     }
 
-    async createNewProduct(productData:Product){
+    async createNewProduct(productData:CreateProductDTO){
         return await productManagementRepository.createProduct(productData)
 
     }
 
-    async updateProductById(id:string,categoryData:Product){
-        return await productManagementRepository.updateProduct(id,categoryData)
+    async updateProductById(id:string,payload:any){
+        return await productManagementRepository.updateProduct(id,payload)
     }
 
     async deleteProductById(id:string){

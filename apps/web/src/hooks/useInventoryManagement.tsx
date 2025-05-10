@@ -128,7 +128,7 @@ export default function UseInventoryManagement() {
           return (
             <Badge
               variant={
-                status === 'Tersedia'
+                status === 'Stok Tersedia'
                   ? 'default'
                   : status === 'Stok Rendah'
                     ? 'secondary'

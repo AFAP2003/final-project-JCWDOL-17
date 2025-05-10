@@ -61,7 +61,7 @@ export function useCategoryManagement() {
     initialValues: {
       nama: '',
       deskripsi: '',
-      gambar: 'agraegae',
+      gambar: 'random',
       isActive: true,
     },
     validationSchema: getValidationSchema(),
@@ -112,9 +112,9 @@ export function useCategoryManagement() {
                 >
                   Edit
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem onCheckedChange={() => {}}>
+                {/* <DropdownMenuCheckboxItem onCheckedChange={() => {}}>
                   Lihat Detail
-                </DropdownMenuCheckboxItem>
+                </DropdownMenuCheckboxItem> */}
                 <DropdownMenuCheckboxItem
                   className="text-red-600"
                   onCheckedChange={() => {

@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { User, ShoppingCart, Boxes, Package, Tag, BarChart3,Store } from 'lucide-react'
-
+import Image from 'next/image'
 type SidebarProps = {
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
@@ -64,7 +64,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
           sm:static sm:translate-x-0 sm:block
         `}
       >
-        <h1 className="text-black">Gogrocery</h1>
+        <Image src='/images/app-logo-black.png' className='' height={200} width={200} alt='app logo'/>
         <div className="flex flex-col sm:gap-14 gap-6 mt-10">
           {sidebarItem.map((item) => (
             <Link

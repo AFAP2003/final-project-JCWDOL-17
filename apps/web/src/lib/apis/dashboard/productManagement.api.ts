@@ -37,20 +37,25 @@ export default function productManagementAPI() {
 
   const handleCreateProduct = async (values) => {
     try {
-      const productRes = await fetch(`${API_BASE_URL}/dashboard/products`, {
+      const formData = new FormData()
+
+  Array.from(values.image).forEach((file) => {
+    formData.append('image', file);
+  });
+
+  formData.append('name',        values.nama || '');
+  formData.append('description', values.deskripsi || '');
+  formData.append('price',       String(values.harga  || 0));
+  formData.append('weight',      String(values.berat || 0) );
+  formData.append('sku',         values.sku|| '') ;
+  formData.append('categoryId',  values.kategoriId || '');
+  formData.append('isActive',    String(values.isActive || true) );
+
+  
+        const productRes = await fetch(`${API_BASE_URL}/dashboard/products`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: values.nama,
-          description: values.deskripsi,
-          price: values.harga || '10000',
-          weight: parseFloat(values.berat) || '1',
-          isActive: values.isActive || true,
-          sku: values.sku,
-          categoryId: values.kategoriId,
-        }),
+       
+        body:formData
       });
 
       const productData = await productRes.json();
@@ -94,25 +99,39 @@ export default function productManagementAPI() {
 
   const handleUpdateProduct = async (id: string, values) => {
     try {
+      const formData = new FormData();
+
+      // Append new image files
+      Array.from(values.image).forEach((file) => {
+        formData.append('image', file);
+      });
+  
+      // Append the fields
+      formData.append('name', values.nama || '');
+      formData.append('description', values.deskripsi || '');
+      formData.append('price', String(values.harga || 0));
+      formData.append('weight', String(values.berat || 0));
+      formData.append('sku', values.sku || '');
+      formData.append('categoryId', values.kategoriId || '');
+      formData.append('isActive', String(values.isActive));
+  
+      // Pass main image index
+      formData.append('mainIndex', String(values.mainIndex || 0));
+  
+      // Append keptImages (only if editing)
+      if (values.keptImages && Array.isArray(values.keptImages)) {
+        values.keptImages.forEach((url) => {
+          formData.append('keptImages', url);
+        });
+      }
       const productRes = await fetch(
         `${API_BASE_URL}/dashboard/products/${id}`,
         {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: values.nama,
-            description: values.deskripsi,
-            price: Number(values.harga) || 10000,
-            weight: Number(values.berat) || 1,
-            isActive: values.isActive || true,
-            sku: values.sku || 'agraega',
-            categoryId: values.kategoriId || '2',
-          }),
+          body: formData
         },
       );
-
+      
       const productData = await productRes.json();
 
       if (productRes.ok) {

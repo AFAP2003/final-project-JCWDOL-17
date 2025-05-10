@@ -19,8 +19,12 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { MyFormValues } from '@/validations/user.validation';
-import { Plus } from 'lucide-react';
+import {  Plus } from 'lucide-react';
 import { FormikProps } from 'formik';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import UseProductManagement from '@/hooks/useProductManagement';
+import UploadImageLoadingOverlay from '@/components/dashboard/uploadImageLoadingOverlay';
 
 interface ProductManagementFormProps {
   dialogOpen: boolean;
@@ -30,7 +34,10 @@ interface ProductManagementFormProps {
   categories: any[];
   setIsEditMode:(value:boolean)=>void
   setEditingProductId:(id: string | null) => void;
-  
+  previews: string[];
+  setPreviews: (any: any) => any[];
+  mainIndex: number;
+  setMainIndex: (index: number) => void;
 }
 export default function ProductManagementForm({
   formik,
@@ -39,8 +46,54 @@ export default function ProductManagementForm({
   isEditMode,
   categories,
   setIsEditMode,
-  setEditingProductId
+  setEditingProductId,
+  previews,
+  setPreviews,
+  mainIndex,
+  setMainIndex
 }: ProductManagementFormProps) {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFiles = Array.from(e.currentTarget.files || []);
+      const existingFiles = Array.from(formik.values.image || []);
+      const combinedFiles = [...existingFiles, ...selectedFiles];
+
+      formik.setFieldValue('image', combinedFiles);
+  
+      const newPreviews = selectedFiles.map((file) =>
+        URL.createObjectURL(file)
+      );
+      setPreviews((prev) => [...prev, ...newPreviews]);
+    };
+  
+    const handleRemove = (index: number) => {
+      const updatedPreviews = [...previews];
+      const removedPreview = updatedPreviews.splice(index, 1)[0]; // get the removed one
+      setPreviews(updatedPreviews);
+    
+      const updatedFiles = [...formik.values.image];
+      const numPreviews = previews.length;
+      const numUploaded = formik.values.image.length;
+    
+      const imageIndex = index - (numPreviews - numUploaded);
+    
+      if (imageIndex >= 0) {
+        // This is a new uploaded file, remove from Formik image field
+        updatedFiles.splice(imageIndex, 1);
+        formik.setFieldValue('image', updatedFiles);
+      } else {
+        // This is a previously uploaded image (keptImages)
+        const updatedKeptImages = formik.values.keptImages.filter(
+          (url: string, i: number) => i !== index
+        );
+        formik.setFieldValue('keptImages', updatedKeptImages);
+      }
+    
+      // Adjust main image index
+      if (index === mainIndex) setMainIndex(0);
+      else if (index < mainIndex) setMainIndex((prev) => prev - 1);
+    };
+    
+    
   return (
      <Dialog
    open={dialogOpen}
@@ -77,6 +130,71 @@ export default function ProductManagementForm({
         </DialogHeader>
 
         <form onSubmit={formik.handleSubmit} className="grid gap-4 py-4">
+            {/* foto */}
+            <div className="space-y-2">
+      <label className="mb-1 block text-sm font-medium">Foto</label>
+      <Input
+        id="image"
+        name="image"
+        type="file"
+        multiple
+        accept=".jpg,.jpeg,.png,.gif"
+        onChange={handleFileChange}
+      />
+
+      {formik.touched.image && formik.errors.image && (
+        <p className="text-xs text-red-600">{formik.errors.image}</p>
+      )}
+
+      <p className="text-xs text-gray-500 mt-1">
+        Format yang didukung: JPG, JPEG, PNG, GIF. Ukuran maks.: 1MB.
+      </p>
+
+      {/* Image Preview Grid */}
+      <div className="flex gap-4 mt-4 flex-wrap">
+      {previews.map((src, index) => (
+  <div
+    key={index}
+    className="relative w-[100px] h-[100px] border rounded overflow-hidden"
+  >
+    <img
+      src={src}
+      alt={`preview-${index}`}
+      className="w-full h-full object-cover"
+    />
+
+    {index === mainIndex && (
+      <Badge className="absolute top-1 left-1 z-10">Main</Badge>
+    )}
+
+    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 flex flex-col justify-center items-center space-y-2 transition">
+      {index !== mainIndex && (
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+              // update both your local preview state...
+              setMainIndex(index);
+              // ...and Formik’s value so it gets sent in the formData
+             formik.setFieldValue('mainIndex', index);
+             }}        >
+          Set as Main
+        </Button>
+      )}
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={() => handleRemove(index)}
+      >
+        Remove
+      </Button>
+    </div>
+  </div>
+))}
+
+      </div>
+    </div>
+
           <div>
             <label className="mb-1 block text-sm font-medium">
               Nama Produk
@@ -136,6 +254,40 @@ export default function ProductManagementForm({
           </div>
 
           <div>
+            <label className="mb-1 block text-sm font-medium">
+              SKU
+            </label>
+            <Input
+              id="sku"
+              name="sku"
+              placeholder="Masukkan nama produk"
+              value={formik.values.sku}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            />
+            {formik.touched.sku && formik.errors.sku && (
+              <p className="text-xs text-red-600">{formik.errors.sku}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Berat</label>
+            <Input
+              id="berat"
+              name="berat"
+              type="number"
+              placeholder="0.00"
+              value={formik.values.berat}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            />
+            {formik.touched.berat && formik.errors.berat && (
+              <p className="text-xs text-red-600">{formik.errors.berat}</p>
+            )}
+          </div>
+
+
+          <div>
             <label className="mb-1 block text-sm font-medium">Deskripsi</label>
             <textarea
               id="deskripsi"
@@ -152,27 +304,7 @@ export default function ProductManagementForm({
             )}
           </div>
 
-          {/* foto */}
-          {/* <div>
-              <label className="mb-1 block text-sm font-medium">Foto</label>
-              <Input
-                id="images"
-                name="images"
-                type="file"
-                multiple
-                accept=".jpg,.jpeg,.png,.gif"
-                onChange={e =>
-                  formik.setFieldValue('images', e.currentTarget.files)
-                }
-              />
-              {formik.touched.images && formik.errors.images && (
-                <p className="text-xs text-red-600">{formik.errors.images}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-1">
-                Supported formats: JPG, JPEG, PNG, GIF. Max size: 1MB.
-              </p>
-            </div> */}
-
+        
           {/* toko */}
           {/* <div>
               <label className="mb-1 block text-sm font-medium">Toko</label>
@@ -207,7 +339,9 @@ export default function ProductManagementForm({
             >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={formik.isSubmitting}>
+              {formik.isSubmitting && <UploadImageLoadingOverlay />}
+              
               {isEditMode ? 'Simpan Perubahan' : 'Tambah Produk'}
             </Button>
           </DialogFooter>

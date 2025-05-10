@@ -24,7 +24,11 @@ export default function Products() {
     categories,
     handleCategoryFilter,
     setIsEditMode,
-    setEditingProductId
+    setEditingProductId,
+    previews,
+    setPreviews,
+    mainIndex,
+    setMainIndex
   } = UseProductManagement();
 
   if (isLoading) {
@@ -50,8 +54,11 @@ export default function Products() {
           isEditMode={isEditMode}
           setIsEditMode={setIsEditMode}
           setEditingProductId={setEditingProductId}
-          
-        />
+          previews={previews}
+          setPreviews={setPreviews}
+          mainIndex={mainIndex}
+          setMainIndex={setMainIndex}
+        />  
       </div>
 
       {/* filter row */}

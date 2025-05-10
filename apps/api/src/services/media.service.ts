@@ -1,6 +1,7 @@
 import { cloudinaryclient } from '@/cloudinary';
 import { cloudinaryPublicIdFromURL } from '@/helpers/cloudinary-public-id-from-url';
 import { UploadApiOptions } from 'cloudinary';
+import { unescape } from 'querystring';
 import { Readable } from 'stream';
 
 export class MediaService {
@@ -34,6 +35,42 @@ export class MediaService {
   removeImage = async (url: string) => {
     const publicId = cloudinaryPublicIdFromURL(url);
     if (!publicId) return null;
-    return await cloudinaryclient.uploader.destroy(publicId);
+    const result = cloudinaryclient.uploader.destroy(publicId);
+    console.log('Cloudinary delete result:', result);
+
+    return result    
+
   };
+  
+  uploadImages = async (params: {
+    files: Buffer[];
+    options?: UploadApiOptions;
+  }): Promise<string[]> => {
+    const results: string[] = [];
+
+    for (const file of params.files) {
+      const url = await new Promise<string>((resolve, reject) => {
+        const uploadStream = cloudinaryclient.uploader.upload_stream(
+          {
+            ...params.options,
+            folder: 'finpro-go-grocery',
+            allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            if (!result?.secure_url) return reject(new Error('No URL returned'));
+            resolve(result.secure_url);
+          },
+        );
+
+        const readableStream = new Readable();
+        readableStream.push(file);
+        readableStream.push(null);
+        readableStream.pipe(uploadStream);
+      });
+
+      results.push(url)
+    }
+    return results
+  }
 }

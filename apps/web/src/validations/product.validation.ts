@@ -16,8 +16,8 @@ export const getValidationSchema = ()=>
         .typeError('Harga harus diisi angka')
           .positive('Harga harus lebih dari 0')
           .required('Harga wajib diisi'),
-        berat: Yup.number().required().positive(),
-        sku: Yup.string().required(),
+        berat: Yup.number().required('Berat wajib diisi').positive('Berat harus angka positif'),
+        sku: Yup.string().required('SKU wajib diisi').max(50,'Nama produk maksimal harus 100 karakter' ),
         isActive: Yup.boolean(),
         kategoriId: Yup.string().required('Kategori wajib dipilih'),
     })
