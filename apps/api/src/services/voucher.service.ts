@@ -1,12 +1,9 @@
-import { VoucherApplicableShippingDTO } from '@/dtos/voucher-applicable-shipping.dto';
-import { VoucherApplicableShoppingDTO } from '@/dtos/voucher-applicable-shopping.dto';
 import { VoucherGetAllMeDTO } from '@/dtos/voucher-get-all-me.dto';
 import { InternalSeverError } from '@/errors';
 import { currentDate } from '@/helpers/datetime';
 import { calculateMetadataPagination } from '@/helpers/pagination';
 import { prismaclient } from '@/prisma';
 import { Prisma, User, Voucher } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 
 export class VoucherService {
@@ -198,129 +195,5 @@ export class VoucherService {
       vouchers: Array.from(voucherMap.values()),
       metadata: metadata,
     };
-  };
-
-  // TODO: this is not consider maxUsage field
-  applicableShoppingVouchers = async (
-    dto: z.infer<typeof VoucherApplicableShoppingDTO>,
-    user: User,
-  ) => {
-    const vouchers = await prismaclient.voucher.findMany({
-      where: {
-        isActive: true,
-        endDate: {
-          gt: currentDate(),
-        },
-        users: {
-          some: {
-            id: user.id,
-          },
-        },
-        isForShipping: false,
-        type: {
-          in: ['REFERRAL', 'PRODUCT_SPECIFIC'],
-        },
-      },
-      include: {
-        products: { select: { id: true } },
-        users: { select: { id: true } },
-      },
-    });
-
-    const applicableVouchers = new Set<
-      Voucher & { products: { id: string }[]; users: { id: string }[] }
-    >();
-
-    let shoppingVouchers = [...vouchers];
-
-    for (const cartItem of dto.cartItems) {
-      if (!shoppingVouchers.length) break;
-
-      for (const voucher of shoppingVouchers) {
-        let isProductOK = true;
-        let isMinPurchaseOK = true;
-
-        if (voucher.products.length) {
-          isProductOK = voucher.products.some(
-            (p) => p.id === cartItem.productId,
-          );
-        }
-
-        switch (voucher.type) {
-          case 'PRODUCT_SPECIFIC':
-            if (voucher.minPurchase) {
-              const subtotal = new Decimal(
-                cartItem.subtotalPrice - cartItem.discountPrice,
-              );
-              isMinPurchaseOK = subtotal.gt(voucher.minPurchase);
-            }
-            break;
-
-          case 'REFERRAL':
-            if (voucher.minPurchase) {
-              const subtotal = new Decimal(
-                dto.subtotalShoppingPrice - dto.subtotalShoppingDiscountPrice,
-              );
-              isMinPurchaseOK = subtotal.gt(voucher.minPurchase);
-            }
-        }
-
-        if (isProductOK && isMinPurchaseOK) {
-          applicableVouchers.add(voucher);
-          shoppingVouchers = shoppingVouchers.filter(
-            (v) => v.id !== voucher.id,
-          );
-        }
-      }
-    }
-
-    return Array.from(applicableVouchers);
-  };
-
-  applicableShippingVouchers = async (
-    dto: z.infer<typeof VoucherApplicableShippingDTO>,
-    user: User,
-  ) => {
-    const vouchers = await prismaclient.voucher.findMany({
-      where: {
-        isActive: true,
-        endDate: {
-          gt: currentDate(),
-        },
-        users: {
-          some: {
-            id: user.id,
-          },
-        },
-        isForShipping: true,
-        type: 'SHIPPING',
-      },
-      include: {
-        products: { select: { id: true } },
-        users: { select: { id: true } },
-      },
-    });
-
-    const applicableVouchers = new Set<
-      Voucher & { products: { id: string }[]; users: { id: string }[] }
-    >();
-
-    let shippingVoucher = [...vouchers];
-    for (const voucher of shippingVoucher) {
-      let isMinPurchaseOK = true;
-
-      if (voucher.minPurchase) {
-        const subtotal = new Decimal(
-          dto.subtotalShoppingPrice - dto.subtotalShoppingDiscountPrice,
-        );
-        isMinPurchaseOK = subtotal.gt(voucher.minPurchase);
-      }
-
-      if (isMinPurchaseOK) {
-        applicableVouchers.add(voucher);
-      }
-    }
-
-    return Array.from(applicableVouchers);
   };
 }
