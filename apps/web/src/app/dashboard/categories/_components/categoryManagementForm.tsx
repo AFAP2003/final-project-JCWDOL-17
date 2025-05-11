@@ -80,23 +80,26 @@ export default function CategoryManagementForm({
             )}
           </div>
           <div className="space-y-2">
-            <label
-              htmlFor="deskripsi"
-              className="text-sm font-medium text-gray-700"
-            >
-              Deskripsi
-            </label>
-            <Input
-              id="deskripsi"
-              name="deskripsi"
-              placeholder="Masukkan deskripsi"
-              value={formik.values.deskripsi}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            />
-            {formik.touched.deskripsi && formik.errors.deskripsi && (
-              <p className="text-xs text-red-600">{formik.errors.deskripsi}</p>
-            )}
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Deskripsi
+              </label>
+              <textarea
+                id="deskripsi"
+                name="deskripsi"
+                rows={3}
+                value={formik.values.deskripsi}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                placeholder="Masukkan deskripsi diskon"
+                className="w-full bg-white rounded-md border  px-3 py-2 text-sm focus:outline-none "
+              />
+              {formik.touched.deskripsi && formik.errors.deskripsi && (
+                <p className="text-xs text-red-600">
+                  {formik.errors.deskripsi}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* <div className="space-y-2">

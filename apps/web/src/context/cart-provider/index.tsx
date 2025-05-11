@@ -1,10 +1,9 @@
 'use client';
-
 import { toast } from '@/hooks/use-toast';
 import { apiclient } from '@/lib/apiclient';
 import { useSession } from '@/lib/auth/client';
 import { GetCartResponse } from '@/lib/types/get-cart-response';
-import { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export type CartItem = GetCartResponse['items'][number];
 

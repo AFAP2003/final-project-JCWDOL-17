@@ -1,7 +1,6 @@
 import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import { MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
@@ -22,6 +21,7 @@ import {
   VisibilityState,
 } from '@tanstack/react-table';
 import { getValidationSchema } from '@/validations/category.validation';
+import { toast } from '@/hooks/use-toast';
 export function useCategoryManagement() {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -34,14 +34,13 @@ export function useCategoryManagement() {
   );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
-
   const {
     categories,
     isLoading,
     fetchCategories: apiFetchCategories,
     handleCreateCategory,
     handleUpdateCategory,
-    handleDeleteCategory,
+    handleDeleteCategory: apiDeleteCategory,
   } = categoryManagementAPI();
 
   const fetchCategories = useCallback(
@@ -78,6 +77,7 @@ export function useCategoryManagement() {
       if (success) {
         resetForm();
         setDialogOpen(false);
+        fetchCategories(pagination.pageIndex, pagination.pageSize);
       }
     },
   });
@@ -120,10 +120,6 @@ export function useCategoryManagement() {
                   className="text-red-600"
                   onCheckedChange={() => {
                     handleDeleteCategory(category.id);
-                    // toast({
-                    //   variant: 'destructive',
-                    //   description: 'Category deleted Successfully !',
-                    // });
                   }}
                 >
                   Delete
@@ -171,6 +167,14 @@ export function useCategoryManagement() {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGlobalFilter(e.target.value);
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    const ok = await apiDeleteCategory(id);
+    if (ok) {
+      await fetchCategories(pagination.pageIndex, pagination.pageSize);
+    }
+    return ok;
   };
 
   return {

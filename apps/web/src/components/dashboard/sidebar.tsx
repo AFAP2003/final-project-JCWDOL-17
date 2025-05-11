@@ -1,13 +1,21 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react'
-import Link from 'next/link'
-import { User, ShoppingCart, Boxes, Package, Tag, BarChart3,Store } from 'lucide-react'
+import { useEffect } from 'react';
+import Link from 'next/link';
+import {
+  User,
+  ShoppingCart,
+  Boxes,
+  Package,
+  Tag,
+  BarChart3,
+  Store,
+} from 'lucide-react';
 
 type SidebarProps = {
-  sidebarOpen: boolean
-  setSidebarOpen: (open: boolean) => void
-}
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+};
 
 // The sidebar items
 const sidebarItem = [
@@ -29,7 +37,7 @@ const sidebarItem = [
   {
     icon: ShoppingCart,
     title: 'Orders',
-    href: '/dashboard/shoppingcart',
+    href: '/dashboard/orders',
   },
   {
     icon: Tag,
@@ -46,7 +54,7 @@ const sidebarItem = [
     title: 'Laporan',
     href: '/dashboard/reports',
   },
-]
+];
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   // Optional: close sidebar if we click outside or ESC, etc.
@@ -88,5 +96,5 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         />
       )}
     </>
-  )
+  );
 }

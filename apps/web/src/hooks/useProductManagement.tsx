@@ -1,4 +1,5 @@
 import productManagementAPI from '@/lib/apis/dashboard/productManagement.api';
+import { genRandomString } from '@/lib/utils';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -40,7 +41,7 @@ export default function UseProductManagement() {
     fetchProducts: apiFetchProducts,
     handleCreateProduct,
     handleUpdateProduct,
-    handleDeleteProduct,
+    handleDeleteProduct: apiDeleteProduct,
   } = productManagementAPI();
 
   const { categories, fetchCategories } = categoryManagementAPI();
@@ -61,9 +62,9 @@ export default function UseProductManagement() {
     fetchProducts(pagination.pageIndex, pagination.pageSize);
   }, [pagination.pageIndex, pagination.pageSize]);
 
-  useEffect(()=>{
-    fetchCategories(0,50)
-  },[])
+  useEffect(() => {
+    fetchCategories(0, 50);
+  }, []);
   const formik = useFormik({
     initialValues: {
       nama: '',
@@ -84,8 +85,10 @@ export default function UseProductManagement() {
       }
       if (success) {
         resetForm();
+        const newSku = genRandomString().slice(0, 8);
+        formik.setFieldValue('sku', newSku, false);
         setDialogOpen(false);
-
+        fetchProducts(pagination.pageIndex, pagination.pageSize);
       }
     },
   });
@@ -132,9 +135,9 @@ export default function UseProductManagement() {
         cell: ({ row }) => {
           const inventoryArray = row.original.inventory;
 
-          const quantity = inventoryArray?.[0]?.quantity ?? 0; 
+          const quantity = inventoryArray?.[0]?.quantity ?? 0;
 
-          return quantity; 
+          return quantity;
         },
       },
       {
@@ -186,8 +189,8 @@ export default function UseProductManagement() {
                 <DropdownMenuCheckboxItem
                   onCheckedChange={() => {
                     setDialogOpen(true);
-                    setIsEditMode(true);
                     setEditingProductId(product.id);
+                    setIsEditMode(true);
                     formik.setValues({
                       nama: product.name || '',
                       deskripsi: product.description || '',
@@ -300,6 +303,14 @@ export default function UseProductManagement() {
       table.getColumn('category')?.setFilterValue(value);
     }
   };
+
+  const handleDeleteProduct = async (id: string) => {
+    const ok = await apiDeleteProduct(id);
+    if (ok) {
+      await fetchProducts(pagination.pageIndex, pagination.pageSize);
+    }
+    return ok;
+  };
   return {
     formik,
     columns,
@@ -323,5 +334,7 @@ export default function UseProductManagement() {
     categories,
     fetchCategories,
     handleCategoryFilter,
+    setIsEditMode,
+    setEditingProductId,
   };
 }

@@ -126,4 +126,17 @@ export class CartService {
       where: { cartId: cart.id },
     });
   };
+
+  getCartTotalQuantity = async (userId: string): Promise<number> => {
+    const cart = await prismaclient.cart.findUnique({
+      where: { userId },
+      include: {
+        items: true,
+      },
+    });
+
+    if (!cart) return 0;
+
+    return cart.items.reduce((total, item) => total + item.quantity, 0);
+  };
 }

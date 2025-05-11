@@ -50,6 +50,7 @@ class UserManagementRepository {
         signupMethod: {
           set: ['CREDENTIAL'],
         },
+        storeId: data.storeId,
       },
     });
 

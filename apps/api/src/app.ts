@@ -10,13 +10,15 @@ import { CartRouter } from './routers/cart.router';
 import apiRouter from './routers/dashboardApi.router';
 import { HealthRouter } from './routers/health.router';
 import { LocationRouter } from './routers/location.router';
+import { OrderRouter } from './routers/order.router';
+import { PaymentRouter } from './routers/payment.router';
 import { ProductCategoryRouter } from './routers/product-category.router';
 import { ProductRouter } from './routers/product.router';
-import { ShippingRouter } from './routers/shipping.router';
-import { StoreRouter } from './routers/store.router';
+import { ShippingMethodRouter } from './routers/shipping-method.router';
 import { TokenRouter } from './routers/token.router';
 import { UserRouter } from './routers/user.router';
 import { VoucherRouter } from './routers/voucher.router';
+import { WebhookRouter } from './routers/webhook.router';
 
 export default class App {
   static VERSION = '1.0.0';
@@ -56,9 +58,11 @@ export default class App {
     const productCategoryRouter = new ProductCategoryRouter();
     const productRouter = new ProductRouter();
     const cartRouter = new CartRouter();
-    const storeRouter = new StoreRouter();
-    const shippingRouter = new ShippingRouter();
     const voucherRouter = new VoucherRouter();
+    const shippingMethodRouter = new ShippingMethodRouter();
+    const orderRouter = new OrderRouter();
+    const paymentRouter = new PaymentRouter();
+    const webhookRouter = new WebhookRouter();
 
     this.app.use('/api', healthRouter.getRouter());
     this.app.use('/api/auth', authRouter.getRouter());
@@ -69,9 +73,11 @@ export default class App {
     this.app.use('/api/product', productRouter.getRouter());
     this.app.use('/api/dashboard', apiRouter);
     this.app.use('/api/cart', cartRouter.getRouter());
-    this.app.use('/api/store', storeRouter.getRouter());
-    this.app.use('/api/shipping', shippingRouter.getRouter());
     this.app.use('/api/voucher', voucherRouter.getRouter());
+    this.app.use('/api/shipping-methods', shippingMethodRouter.getRouter());
+    this.app.use('/api/orders', orderRouter.getRouter());
+    this.app.use('/api/payment', paymentRouter.getRouter());
+    this.app.use('/api/webhooks', webhookRouter.getRouter());
   }
 
   public start(): void {

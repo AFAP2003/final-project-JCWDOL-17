@@ -13,15 +13,15 @@ import { useFormik } from 'formik';
 import { userManagementAPI } from '@/lib/apis/dashboard/userManagement.api';
 import { getValidationSchema } from '@/validations/user.validation';
 import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuCheckboxItem,
-  } from '@/components/ui/dropdown-menu';
-  import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-  import { MoreHorizontal } from 'lucide-react';
-  import { Badge } from '@/components/ui/badge';
-  import { toast } from '@/hooks/use-toast';
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { MoreHorizontal } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 
 export function useUserManagement() {
@@ -33,35 +33,37 @@ export function useUserManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [pageCount,setPageCount] = useState(1)
+  const [pageCount, setPageCount] = useState(1);
 
   const {
     users,
     isLoading,
-    fetchUsers:apiFetchUsers,
+    fetchUsers: apiFetchUsers,
     handleCreateUser,
     handleUpdateUser,
-    handleDeleteUser,
+    handleDeleteUser: apiDeleteUser,
   } = userManagementAPI();
-  const{stores,fetchStores}=storeManagementAPI()
+  const { stores, fetchStores } = storeManagementAPI();
 
-
-   const fetchUsers = useCallback((pageIndex:number, pageSize:number) => {
-      return apiFetchUsers(pageIndex, pageSize).then(json => {
+  const fetchUsers = useCallback(
+    (pageIndex: number, pageSize: number) => {
+      return apiFetchUsers(pageIndex, pageSize).then((json) => {
         if (json?.pagination) {
           setPageCount(json.pagination.totalPages);
         }
         return json;
       });
-    }, [apiFetchUsers]);
-  
-    useEffect(() => {
-      fetchUsers(pagination.pageIndex , pagination.pageSize);
-    }, [pagination.pageIndex, pagination.pageSize]);
+    },
+    [apiFetchUsers],
+  );
 
-    useEffect(()=>{
-      fetchStores()
-    },[])
+  useEffect(() => {
+    fetchUsers(pagination.pageIndex, pagination.pageSize);
+  }, [pagination.pageIndex, pagination.pageSize]);
+
+  useEffect(() => {
+    fetchStores();
+  }, []);
   const formik = useFormik({
     initialValues: {
       gambar: '',
@@ -74,7 +76,7 @@ export function useUserManagement() {
       role: 'ADMIN',
       verifikasi: false,
     },
-    validationSchema:getValidationSchema(isEditMode), 
+    validationSchema: getValidationSchema(isEditMode),
     onSubmit: async (values, { resetForm }) => {
       let success = false;
       if (isEditMode && editingUserId) {
@@ -85,6 +87,7 @@ export function useUserManagement() {
       if (success) {
         resetForm();
         setDialogOpen(false);
+        fetchUsers(pagination.pageIndex, pagination.pageSize);
       }
     },
   });
@@ -107,21 +110,23 @@ export function useUserManagement() {
     },
     { accessorKey: 'name', header: 'Nama' },
     { accessorKey: 'email', header: 'Email' },
-    {  header: 'Alamat (Utama)' ,
+    {
+      header: 'Alamat (Utama)',
 
       accessorFn: (row: any) => {
         return row.addresses?.length > 0 ? row.addresses[0].address : 'NA';
-      }
+      },
     },
     { accessorKey: 'role', header: 'Role' },
     {
       header: 'Toko',
-      accessorFn: (row: any) =>
-        row.store?.name ?? 'NA',    },
+      accessorFn: (row: any) => row.store?.name ?? 'NA',
+    },
     { accessorKey: 'referralCode', header: 'Kode Rujukan' },
-    {id: 'verifikasi',
+    {
+      id: 'verifikasi',
       header: 'Verifikasi',
-      accessorFn: (row:any) => row.emailVerified,
+      accessorFn: (row: any) => row.emailVerified,
       cell: ({ getValue }) => {
         const verified = getValue<boolean>();
         return (
@@ -170,10 +175,6 @@ export function useUserManagement() {
                 className="text-red-600"
                 onCheckedChange={() => {
                   handleDeleteUser(user.id);
-                  toast({
-                    variant: 'destructive',
-                    description: 'User deleted Successfully !',
-                  });
                 }}
               >
                 Delete
@@ -185,48 +186,46 @@ export function useUserManagement() {
     },
   ];
   // Table creation function
-  const table =  
-    useReactTable({
-      data: users,
-      manualPagination:true,
-      pageCount,
-      columns,
-      state: {
-        sorting,
-        pagination,
-        columnFilters,
-        columnVisibility,
-        globalFilter,
-      },
-      onSortingChange: setSorting,
-      onPaginationChange: setPagination,
-      onColumnFiltersChange: setColumnFilters,
-      onColumnVisibilityChange: setColumnVisibility,
-      onGlobalFilterChange: setGlobalFilter,
-      globalFilterFn: (row, _columnId, filterValue) => {
-        const searchText = String(filterValue).toLowerCase();
-        const cellValues = [
-          String(row.getValue('nama') ?? ''),
-          String(row.getValue('email') ?? ''),
-          String(row.getValue('role') ?? ''),
-          String(row.getValue('referralCode') ?? ''),
-        ];
-        return cellValues.some((value) =>
-          value.toLowerCase().includes(searchText),
-        );
-      },
-      getCoreRowModel: getCoreRowModel(),
-      getSortedRowModel: getSortedRowModel(),
-      getFilteredRowModel: getFilteredRowModel(),
-      getPaginationRowModel: getPaginationRowModel(),
-    });
-  
-  
+  const table = useReactTable({
+    data: users,
+    manualPagination: true,
+    pageCount,
+    columns,
+    state: {
+      sorting,
+      pagination,
+      columnFilters,
+      columnVisibility,
+      globalFilter,
+    },
+    onSortingChange: setSorting,
+    onPaginationChange: setPagination,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const searchText = String(filterValue).toLowerCase();
+      const cellValues = [
+        String(row.getValue('nama') ?? ''),
+        String(row.getValue('email') ?? ''),
+        String(row.getValue('role') ?? ''),
+        String(row.getValue('referralCode') ?? ''),
+      ];
+      return cellValues.some((value) =>
+        value.toLowerCase().includes(searchText),
+      );
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGlobalFilter(e.target.value);
   };
 
-  const handleVerificationFilter = ( value: string) => {
+  const handleVerificationFilter = (value: string) => {
     if (value === 'all') {
       table.getColumn('verifikasi')?.setFilterValue(undefined);
     } else if (value === 'true') {
@@ -238,7 +237,15 @@ export function useUserManagement() {
 
   const handleRoleFilter = (val: string) => {
     if (val === 'all') table.getColumn('role')?.setFilterValue(undefined);
-    else table.getColumn('role')?.setFilterValue(val);  // ⬅︎ new
+    else table.getColumn('role')?.setFilterValue(val); // ⬅︎ new
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    const ok = await apiDeleteUser(id);
+    if (ok) {
+      await fetchUsers(pagination.pageIndex, pagination.pageSize);
+    }
+    return ok;
   };
 
   return {
@@ -262,6 +269,6 @@ export function useUserManagement() {
     fetchStores,
     handleRoleFilter,
     formik,
-    columns
+    columns,
   };
 }

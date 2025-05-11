@@ -1,0 +1,184 @@
+import {
+  ApiError,
+  BadRequestError,
+  InternalSeverError,
+  NotFoundError,
+  UnprocessableEntityError,
+} from '@/errors';
+import { formatZodError } from '@/helpers/format-zod-error';
+import { getSessionUser } from '@/helpers/session-helper';
+import { prismaclient } from '@/prisma';
+import { Request, Response } from 'express';
+import { z } from 'zod';
+
+// Define DTOs
+const ShippingMethodCreateUpdateDTO = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters'),
+  description: z.string().optional(),
+  baseCost: z.number().min(0, 'Base cost must be a positive number'),
+  isActive: z.boolean().default(true),
+});
+
+export class ShippingMethodController {
+  // Get all shipping methods
+  getAll = async (req: Request, res: Response) => {
+    try {
+      const shippingMethods = await prismaclient.shippingMethod.findMany({
+        where: {
+          isActive: true,
+        },
+        orderBy: {
+          baseCost: 'asc',
+        },
+      });
+
+      res.json(shippingMethods);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  // Get shipping method by ID
+  getById = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const shippingMethod = await prismaclient.shippingMethod.findUnique({
+        where: { id },
+      });
+
+      if (!shippingMethod) {
+        throw new NotFoundError('Shipping method not found');
+      }
+
+      res.json(shippingMethod);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  // Create shipping method (Admin only)
+  create = async (req: Request, res: Response) => {
+    try {
+      const { data: dto, error } = ShippingMethodCreateUpdateDTO.safeParse(
+        req.body,
+      );
+      if (error) {
+        throw new UnprocessableEntityError(formatZodError(error));
+      }
+
+      // Admin check
+      const { user } = getSessionUser(req);
+      if (user.role !== 'ADMIN' && user.role !== 'SUPER') {
+        throw new BadRequestError('Only admins can create shipping methods');
+      }
+
+      const shippingMethod = await prismaclient.shippingMethod.create({
+        data: {
+          name: dto.name,
+          description: dto.description || '',
+          baseCost: dto.baseCost,
+          isActive: dto.isActive,
+        },
+      });
+
+      res.status(201).json(shippingMethod);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  // Update shipping method (Admin only)
+  update = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { data: dto, error } = ShippingMethodCreateUpdateDTO.safeParse(
+        req.body,
+      );
+      if (error) {
+        throw new UnprocessableEntityError(formatZodError(error));
+      }
+
+      // Admin check
+      const { user } = getSessionUser(req);
+      if (user.role !== 'ADMIN' && user.role !== 'SUPER') {
+        throw new BadRequestError('Only admins can update shipping methods');
+      }
+
+      // Check if exists
+      const existingMethod = await prismaclient.shippingMethod.findUnique({
+        where: { id },
+      });
+
+      if (!existingMethod) {
+        throw new NotFoundError('Shipping method not found');
+      }
+
+      const updatedMethod = await prismaclient.shippingMethod.update({
+        where: { id },
+        data: {
+          name: dto.name,
+          description: dto.description || existingMethod.description,
+          baseCost: dto.baseCost,
+          isActive: dto.isActive,
+        },
+      });
+
+      res.json(updatedMethod);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  // Delete shipping method (Admin only)
+  delete = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      // Admin check
+      const { user } = getSessionUser(req);
+      if (user.role !== 'ADMIN' && user.role !== 'SUPER') {
+        throw new BadRequestError('Only admins can delete shipping methods');
+      }
+
+      // Check if exists
+      const existingMethod = await prismaclient.shippingMethod.findUnique({
+        where: { id },
+      });
+
+      if (!existingMethod) {
+        throw new NotFoundError('Shipping method not found');
+      }
+
+      // Soft delete by marking as inactive
+      await prismaclient.shippingMethod.update({
+        where: { id },
+        data: { isActive: false },
+      });
+
+      res.json({ message: 'Shipping method deleted successfully' });
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+}

@@ -23,6 +23,8 @@ export default function Products() {
     handleStatusFilter,
     categories,
     handleCategoryFilter,
+    setIsEditMode,
+    setEditingProductId,
   } = UseProductManagement();
 
   if (isLoading) {
@@ -46,6 +48,8 @@ export default function Products() {
           dialogOpen={dialogOpen}
           setDialogOpen={setDialogOpen}
           isEditMode={isEditMode}
+          setIsEditMode={setIsEditMode}
+          setEditingProductId={setEditingProductId}
         />
       </div>
 
@@ -60,7 +64,15 @@ export default function Products() {
         handleCategoryFilter={handleCategoryFilter}
       />
       {/* table */}
-      <ProductManagementTable table={table} columns={columns} />
+      <ProductManagementTable
+        table={table}
+        columns={columns}
+        onStartEdit={(user) => {
+          setIsEditMode(true);
+          setEditingProductId(user.id);
+          setDialogOpen(true);
+        }}
+      />
 
       {/* pagination */}
       <ProductManagementPagination table={table} />

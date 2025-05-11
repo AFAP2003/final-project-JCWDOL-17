@@ -56,7 +56,6 @@ export default function productManagementAPI() {
       const productData = await productRes.json();
 
       if (productRes.ok) {
-        fetchProducts(1, 10);
         console.log('product Created Successfully: ', productData);
         toast({
           description: 'Product Created Successfully !',
@@ -117,7 +116,6 @@ export default function productManagementAPI() {
       const productData = await productRes.json();
 
       if (productRes.ok) {
-        fetchProducts(1, 10);
         toast({
           description: 'Product Updated Successfully !',
         });
@@ -156,11 +154,11 @@ export default function productManagementAPI() {
       const productData = await productRes.json();
 
       if (productRes.ok) {
-        fetchProducts(1, 10);
         toast({
           description: 'Product Deleted Successfully !',
         });
         console.log('Product deleted successfully:', productData);
+        return true;
       } else {
         toast({
           variant: 'destructive',
@@ -170,6 +168,7 @@ export default function productManagementAPI() {
           'Failed to delete product:',
           productData.message || 'Unknown error',
         );
+        return false;
       }
     } catch (error) {
       toast({
@@ -177,6 +176,7 @@ export default function productManagementAPI() {
         description: 'Error deleting product.',
       });
       console.error('Error deleting product:', error);
+      return false;
     }
   };
   return {

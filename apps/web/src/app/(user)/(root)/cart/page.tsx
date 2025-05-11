@@ -8,11 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/utils';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-
 import MaxWidthWrapper from '@/components/max-width-wrapper';
 import { CartSkeleton } from '@/components/skeleton/cart-skeleton';
 import { useCart } from '@/context/cart-provider';

@@ -1,13 +1,8 @@
-import { OrderController } from '@/controllers/order.controller';
-import { withAuthentication, withRole } from '@/middlewares/auth.middleware';
 import { Router } from 'express';
+import { OrderController } from '../controllers/order.controller';
+import { withAuthentication } from '../middlewares/auth.middleware';
 import asynchandler from 'express-async-handler';
-import multer from 'multer';
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 1 * 1024 * 1024 }, // 1MB limit
-});
+import { uploadFile } from '@/middlewares/upload-file.middleware';
 
 export class OrderRouter {
   private router: Router;
@@ -20,77 +15,97 @@ export class OrderRouter {
   }
 
   private initializeRoutes(): void {
-    // User routes
+    // Order creation and management
     this.router.post(
       '/',
       withAuthentication,
-      withRole(['USER']),
       asynchandler(this.controller.createOrder),
     );
 
-    this.router.get(
-      '/',
-      withAuthentication,
-      withRole(['USER']),
-      asynchandler(this.controller.getUserOrders),
-    );
-
-    this.router.get(
-      '/:orderId',
-      withAuthentication,
-      withRole(['USER']),
-      asynchandler(this.controller.getOrderById),
-    );
-
+    // Upload payment proof
     this.router.post(
-      '/payment-proof',
+      '/upload-payment',
       withAuthentication,
-      withRole(['USER']),
-      upload.single('file'),
+      uploadFile.single('file'),
       asynchandler(this.controller.uploadPaymentProof),
     );
 
+    // Get user orders
+    this.router.get(
+      '/',
+      withAuthentication,
+      asynchandler(this.controller.getUserOrders),
+    );
+
+    // Search orders
+    this.router.get(
+      '/search',
+      withAuthentication,
+      asynchandler(this.controller.searchOrders),
+    );
+
+    this.router.get(
+      '/:orderNumber',
+      withAuthentication,
+      asynchandler(this.controller.getUserOrderByNumber),
+    );
+
+    // Cancel order
+    this.router.post(
+      '/cancel/:orderId',
+      withAuthentication,
+      asynchandler(this.controller.cancelOrder),
+    );
+
+    // Confirm order
     this.router.post(
       '/confirm',
       withAuthentication,
-      withRole(['USER']),
       asynchandler(this.controller.confirmOrder),
     );
 
+    // Apply voucher
     this.router.post(
-      '/:orderId/cancel',
+      '/apply-voucher',
       withAuthentication,
-      withRole(['USER']),
-      asynchandler(this.controller.cancelOrder),
+      asynchandler(this.controller.applyVoucher),
     );
 
     // Admin routes
     this.router.get(
-      '/admin',
+      '/admin/orders',
       withAuthentication,
-      withRole(['ADMIN', 'SUPER']),
       asynchandler(this.controller.getAdminOrders),
+    );
+
+    this.router.get(
+      '/admin/check-stock/:orderId',
+      withAuthentication,
+      asynchandler(this.controller.checkOrderStock),
     );
 
     this.router.post(
       '/admin/process',
       withAuthentication,
-      withRole(['ADMIN', 'SUPER']),
       asynchandler(this.controller.processOrder),
     );
 
     this.router.post(
       '/admin/ship',
       withAuthentication,
-      withRole(['ADMIN', 'SUPER']),
       asynchandler(this.controller.shipOrder),
     );
 
     this.router.post(
-      '/admin/:orderId/cancel',
+      '/admin/cancel',
       withAuthentication,
-      withRole(['ADMIN', 'SUPER']),
       asynchandler(this.controller.adminCancelOrder),
+    );
+
+    this.router.post(
+      '/admin/verify-payment',
+      withAuthentication,
+      asynchandler(this.controller.verifyPaymentProof),
     );
   }
 
