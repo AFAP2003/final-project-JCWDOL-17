@@ -141,7 +141,7 @@ export class OrderService {
         status: PaymentProofStatus.PENDING,
       },
     });
-    
+
     // Update order status
     return await prismaclient.order.update({
       where: { id: order.id },
@@ -515,7 +515,7 @@ export class OrderService {
       voucherId: string;
       discount: number;
     }> = [];
-    
+
     if (voucherIds.length > 0) {
       for (const voucherId of voucherIds) {
         const voucher = await tx.voucher.findUnique({

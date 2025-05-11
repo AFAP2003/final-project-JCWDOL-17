@@ -2,21 +2,11 @@
 
 import { toast } from '@/hooks/use-toast';
 import { apiclient } from '@/lib/apiclient';
+import { GetCartResponse } from '@/lib/types/get-cart-response';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 // Pindahin
-export type CartItem = {
-  id: string;
-  productId: string;
-  quantity: number;
-  product: {
-    id: string;
-    name: string;
-    price: number;
-    description?: string;
-    images: { imageUrl: string; isMain: boolean };
-  };
-};
+export type CartItem = GetCartResponse['items'][number];
 
 type CartContextType = {
   items: CartItem[];
@@ -40,7 +30,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshCart = async () => {
     try {
       setIsLoading(true);
-      const { data } = await apiclient.get('/cart');
+      const { data } = await apiclient.get<GetCartResponse>('/cart');
       setItems(data.items || []);
       setError(null);
     } catch (err) {
@@ -58,9 +48,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       await apiclient.post('/cart/items', { productId, quantity });
-      toast({
-        description: 'Item added to cart',
-      });
       await refreshCart();
     } catch (err: any) {
       toast({
@@ -95,9 +82,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       await apiclient.delete(`/cart/items/${itemId}`);
-      toast({
-        description: 'Item removed from cart',
-      });
       await refreshCart();
     } catch (err: any) {
       console.error('Error removing from cart:', err);

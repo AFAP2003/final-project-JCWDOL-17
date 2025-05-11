@@ -1,6 +1,9 @@
 export type GeocodingResponse = {
-  name: string;
   address: string;
+  name?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
   latitude: number;
   longitude: number;
 }[];

@@ -12,10 +12,10 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 export default function HighestSoldProduct() {
   // TODO: handle highest sold logic, for now it just fetch based on createdAt product
   const { data, isPending, error } = useQuery({
-    queryKey: ['all:product'],
+    queryKey: ['all:product', 'highest:sold'],
     queryFn: async () => {
       const { data } = await apiclient.get(
-        '/product?orderBy=createdAt&pageSize=10',
+        '/product?orderBy=createdAt&pageSize=10&promo=no-rules,max-price,bogo',
       );
       return data as GetAllProductResponse;
     },
@@ -65,10 +65,11 @@ export default function HighestSoldProduct() {
           modules={[Navigation]}
           mousewheel={true}
           navigation={true}
+          autoHeight={true}
           // slidesPerView={6}
         >
           {data.products.map((product, idx) => (
-            <SwiperSlide key={idx} className="h-full grow">
+            <SwiperSlide key={idx} className="h-full grow mb-9">
               <ProductCard product={product} />
             </SwiperSlide>
           ))}

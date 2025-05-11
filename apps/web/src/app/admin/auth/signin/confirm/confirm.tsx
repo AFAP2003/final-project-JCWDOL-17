@@ -1,6 +1,6 @@
 'use client';
 
-import Logo from '@/components/logo';
+import AuthLogo from '@/components/auth-logo';
 import { Button } from '@/components/ui/button';
 import {
   CardContent,
@@ -79,9 +79,8 @@ export default function Confirm({ token }: Props) {
       <div className="w-full max-w-md relative overflow-hidden">
         {/* Header */}
         <CardHeader className="space-y-2 pb-6">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Logo showText={false} />
-          </div>
+          <AuthLogo />
+
           <CardTitle className="text-2xl font-bold">
             Confirm My Sign In
           </CardTitle>

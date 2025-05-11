@@ -9,6 +9,3 @@ async function main() {
 main()
   .then()
   .catch((err) => console.log({ err }));
-
-
-  

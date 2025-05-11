@@ -457,8 +457,8 @@ export default function TabContentAddress() {
 
           <div className="py-6">
             {addresses?.length === 0 && !dbSearch && (
-              <div className="w-full h-[120px]">
-                <div className="text-neutral-500 text-center text-base max-w-sm mx-auto">
+              <div className="w-full h-[370px] flex items-center">
+                <div className="text-neutral-400 text-center text-base max-w-sm mx-auto">
                   📭 No addresses have been added yet. Please add one to
                   simplify your delivery process.
                 </div>
@@ -466,16 +466,16 @@ export default function TabContentAddress() {
             )}
 
             {addresses?.length === 0 && dbSearch && (
-              <div className="w-full h-[120px] flex items-center">
-                <div className="text-neutral-500 text-center text-base max-w-sm mx-auto">
+              <div className="w-full h-[370px] flex items-center">
+                <div className="text-neutral-400 text-center text-base max-w-sm mx-auto">
                   🔍 No result found for current filter.
                 </div>
               </div>
             )}
 
             {getPending && (
-              <div className="w-full h-[120px] flex items-center justify-center">
-                <div className="flex flex-col items-center justify-center text-center text-neutral-500">
+              <div className="w-full h-[370px] flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center text-center text-neutral-400">
                   <Loader2 className="w-8 h-8 mb-2 animate-spin text-neutral-400" />
                   <span className="text-base">Searching for addresses...</span>
                 </div>

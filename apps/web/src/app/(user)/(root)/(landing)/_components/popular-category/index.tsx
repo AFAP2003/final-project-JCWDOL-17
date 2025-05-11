@@ -5,13 +5,15 @@ import { apiclient } from '@/lib/apiclient';
 import { GetAllProductCategoryResponse } from '@/lib/types/get-all-product-category-response';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import 'swiper/css/bundle';
-// import 'swiper/css/scrollbar';
 import { Mousewheel, Scrollbar } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
 export default function PopularCategory() {
+  const router = useRouter();
+
   // TODO: handle popular category logic, for now it just fetch based on count product
   const { data, isPending, error } = useQuery({
     queryKey: ['all:category'],
@@ -39,7 +41,8 @@ export default function PopularCategory() {
       </h2>
       {!isPending && !error && (
         <Swiper
-          className="mt-9 horizontal-scroll cursor-grab"
+          id="prevent-lenis"
+          className="mt-9 cursor-grab"
           breakpoints={{
             0: {
               slidesPerView: 1,
@@ -68,7 +71,14 @@ export default function PopularCategory() {
           {data.categories.map((category, idx) => (
             <SwiperSlide key={idx} className="mb-9">
               <div className="w-full flex items-center justify-center">
-                <div className="relative aspect-square size-32 flex items-center justify-center bg-neutral-200 rounded-full">
+                <div
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(`/search?category=${category.name}`);
+                  }}
+                  className="relative aspect-square size-32 flex items-center justify-center bg-neutral-200 rounded-full cursor-pointer"
+                >
                   <Image
                     src={category.image || '/product-categories/fallback.png'}
                     alt="Category Image"
@@ -76,7 +86,14 @@ export default function PopularCategory() {
                   />
                 </div>
               </div>
-              <div className="flex flex-col w-full items-center justify-center text-neutral-700 mt-1 gap-1">
+              <div
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(`/search?category=${category.name}`);
+                }}
+                className="flex flex-col w-full items-center justify-center text-neutral-700 mt-1 gap-1 cursor-pointer"
+              >
                 <p className="whitespace-nowrap line-clamp-1">
                   {category.name}
                 </p>

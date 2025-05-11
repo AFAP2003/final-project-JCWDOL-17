@@ -3,7 +3,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-// import { apiclient } from '@/lib/apiclient';
+import { toast } from '@/hooks/use-toast';
+import { apiclient } from '@/lib/apiclient';
 import { IDN_LATLONG_BOUND } from '@/lib/constants/indonesian-latlong-bounds';
 import { GeocodingResponse } from '@/lib/types/geocoding-response';
 import { useMutation } from '@tanstack/react-query';
@@ -15,7 +16,8 @@ import {
   Map as LeafletMap,
 } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Search } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
+import qs from 'query-string';
 import { useEffect, useState } from 'react';
 import {
   MapContainer,
@@ -34,6 +36,7 @@ type Props = {
     lng: number;
   };
   onLocationChange: (loc: GeocodingResponse[number] | null) => void;
+  onLocationChangePending: (pending: boolean) => void;
 };
 
 export default function Map(props: Props) {
@@ -43,8 +46,9 @@ export default function Map(props: Props) {
   const [dbMarkerPosition] = useDebounceValue(markerPosition, 1500);
 
   const [inputSearch, setInputSearch] = useState('');
-  const [dbInputSearch] = useDebounceValue(inputSearch, 500);
+  const [dbInputSearch] = useDebounceValue(inputSearch.trim(), 500);
   const [resultSearch, setResultSearch] = useState<GeocodingResponse>([]);
+  const [searchPending, setSearchPending] = useState(false);
 
   const [pinnedLocation, setPinnedLocation] = useState<
     GeocodingResponse[number] | null
@@ -53,30 +57,34 @@ export default function Map(props: Props) {
   const [isInitial, setIsInitial] = useState(true);
   const [isAfterSearch, setIsAfterSearch] = useState(false);
 
-  const { mutate: fetchLocation, isPending } = useMutation({
+  const { mutate: fetchLocation } = useMutation({
     mutationFn: async (param: {
       name?: string;
       lat?: number;
       lng?: number;
       resultSize: number;
     }) => {
-      // const query = qs.stringify(param, {
-      //   skipNull: true,
-      //   skipEmptyString: true,
-      // });
-      // const { data } = await apiclient.get(`/location/geocoding?${query}`);
-      // return data as GeocodingResponse;
-      return DummyFetch(param);
+      const query = qs.stringify(param, {
+        skipNull: true,
+        skipEmptyString: true,
+      });
+      const { data } = await apiclient.get(`/location/geocoding?${query}`);
+      return data as GeocodingResponse;
     },
 
     onError: (error: AxiosError) => {
-      // TODO:
+      toast({
+        description:
+          'Sorry we have problem in our server, please try again later',
+        variant: 'destructive',
+      });
     },
   });
 
   useEffect(() => {
     if (isAfterSearch) return;
 
+    props.onLocationChangePending(true);
     fetchLocation(
       {
         lat: markerPosition.lat,
@@ -89,6 +97,7 @@ export default function Map(props: Props) {
             setPinnedLocation(data[0]);
           }
           if (isInitial) setIsInitial(false);
+          props.onLocationChangePending(false);
         },
       },
     );
@@ -97,14 +106,16 @@ export default function Map(props: Props) {
   useEffect(() => {
     if (isInitial) return;
 
+    setSearchPending(true);
     fetchLocation(
       {
-        name: inputSearch,
+        name: inputSearch.trim(),
         resultSize: 5,
       },
       {
         onSuccess: (data) => {
           setResultSearch(data);
+          setSearchPending(false);
         },
       },
     );
@@ -152,58 +163,80 @@ export default function Map(props: Props) {
         className="absolute right-6 top-3 bg-neutral-50 w-full max-w-sm overflow-hidden border-[1.8px] rounded-lg shadow-sm group border-neutral-500"
         style={{ zIndex: 1000 }}
       >
-        <div className="relative flex items-center w-full px-2">
+        <div className="relative flex items-center w-full px-2 py-1">
           <Search className="text-neutral-500 shrink-0" />
           <Input
             value={inputSearch}
-            onChange={(e) => setInputSearch(e.target.value.trim())}
+            onChange={(e) => setInputSearch(e.target.value)}
             className="focus-visible:ring-0 shadow-none border-none text-neutral-700"
-            placeholder="Search for location"
+            placeholder="Cari alamat..."
           />
         </div>
 
-        {resultSearch.length > 0 && (
-          <>
-            <Separator className="my-2" />
-            <div className="px-2 my-2">
-              {resultSearch.map((loc, idx) => (
-                <div key={idx} className="w-full">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-
-                      setMarkerPosition({
-                        lat: loc.latitude,
-                        lng: loc.longitude,
-                      });
-                      setPinnedLocation(loc);
-                      if (map) {
-                        map.setView(
-                          [loc.latitude, loc.longitude],
-                          map.getZoom(),
-                          {
-                            animate: true,
-                          },
-                        );
-                      }
-                      setInputSearch('');
-                      setResultSearch([]);
-                      setIsAfterSearch(true);
-                    }}
-                    className="text-left text-xs pb-1 hover:bg-neutral-200 rounded-lg px-2"
-                  >
-                    <p className="font-medium text-neutral-700 text-sm">
-                      {loc.name}
-                    </p>
-                    <p className="text-neutral-500">{loc.address}</p>
-                  </button>
-                  <Separator />
-                </div>
-              ))}
+        {searchPending ? (
+          <div>
+            <Separator className="bg-neutral-300" />
+            <div className="flex justify-center items-center h-[70px] w-full">
+              <Loader2 className="size-8 animate-spin text-neutral-400" />
             </div>
-          </>
+          </div>
+        ) : (
+          <div>
+            {dbInputSearch && resultSearch.length > 0 && (
+              <>
+                <Separator className="my-2" />
+
+                <div className="px-2 my-2">
+                  {resultSearch.map((loc, idx) => (
+                    <div key={idx} className="w-full">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          setMarkerPosition({
+                            lat: loc.latitude,
+                            lng: loc.longitude,
+                          });
+                          setPinnedLocation(loc);
+                          if (map) {
+                            map.setView(
+                              [loc.latitude, loc.longitude],
+                              map.getZoom(),
+                              {
+                                animate: true,
+                              },
+                            );
+                          }
+                          setInputSearch('');
+                          setResultSearch([]);
+                          setIsAfterSearch(true);
+                        }}
+                        className="text-left text-xs pb-1 hover:bg-neutral-200 rounded-lg px-2"
+                      >
+                        <p className="font-medium text-neutral-700 text-sm">
+                          {loc.name}
+                        </p>
+                        <p className="text-neutral-500">{loc.address}</p>
+                      </button>
+                      <Separator />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            {dbInputSearch && resultSearch.length <= 0 && (
+              <div className="">
+                <Separator className="bg-neutral-300" />
+                <div className="flex justify-center items-center h-[70px] w-full">
+                  <p className="text-sm text-neutral-400 italic">
+                    No result found
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

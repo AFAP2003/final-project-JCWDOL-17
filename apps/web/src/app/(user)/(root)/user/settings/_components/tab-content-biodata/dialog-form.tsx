@@ -186,7 +186,7 @@ export default function DialogForm(props: Props) {
       </PopoverTrigger>
       <PopoverContent
         align="center"
-        className="rounded-lg border border-neutral-200 shadow-md bg-gradient-primary fixed top-[50%] -translate-y-[50%] sm:-translate-x-[105%] -translate-x-[95%] z-50"
+        className="rounded-lg border border-neutral-500 shadow-md bg-neutral-800 fixed top-[50%] -translate-y-[50%] sm:-translate-x-[105%] -translate-x-[95%] z-50"
         style={{
           position: 'fixed',
           margin: 0,

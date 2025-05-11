@@ -1,4 +1,5 @@
 'use client';
+'use client';
 
 import { toast } from '@/hooks/use-toast';
 import { API_BASE_URL } from '@/lib/constant';
@@ -6,6 +7,9 @@ import { Discount } from '@/lib/interfaces/discountManagement.interface';
 import { toISO } from '@/lib/utils';
 import { useState } from 'react';
 
+export function discountManagementAPI() {
+  const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 export function discountManagementAPI() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [isLoading, setIsLoading] = useState(true);

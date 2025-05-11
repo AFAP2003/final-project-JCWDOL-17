@@ -1,4 +1,5 @@
 'use client';
+'use client';
 
 import { toast } from '@/hooks/use-toast';
 import { API_BASE_URL } from '@/lib/constant';
@@ -8,7 +9,35 @@ import { useState } from 'react';
 export function userManagementAPI() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+export function userManagementAPI() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  const fetchUsers = async (pageIndex: number, pageSize: number) => {
+    setIsLoading(true);
+    try {
+      const page = pageIndex + 1;
+      const userRes = await fetch(
+        `${API_BASE_URL}/dashboard/users?page=${page}&take=${pageSize}`,
+      );
+      const userData = await userRes.json();
+
+      if (userRes.ok) {
+        setUsers(userData.data);
+        console.log('Users fetched successfully: ', userData);
+        return userData;
+      } else {
+        console.error(
+          'Failed to fetch users:',
+          userData.message || 'Unknown Error',
+        );
+      }
+    } catch (error) {
+      console.log('Error fetching data: ', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const fetchUsers = async (pageIndex: number, pageSize: number) => {
     setIsLoading(true);
     try {
@@ -178,3 +207,4 @@ formData.append('emailVerified', String(values.verifikasi));
     handleDeleteUser,
   };
 }
+

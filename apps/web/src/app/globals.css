@@ -97,6 +97,13 @@
   @apply !bg-neutral-400/50;
 }
 
+.swiper-button-next::after {
+  @apply text-neutral-700 hover:bg-neutral-500/40 p-3 rounded-lg;
+}
+
+.swiper-button-prev::after {
+  @apply text-neutral-700 hover:bg-neutral-500/40 p-3 rounded-lg;
+}
 /* --------------------- leaflet related thing -------------------- */
 .leaflet-container {
   @apply aspect-video;

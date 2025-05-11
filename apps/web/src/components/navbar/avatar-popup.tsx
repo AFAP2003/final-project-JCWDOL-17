@@ -6,21 +6,21 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
+import { useLocation } from '@/context/location-provider';
 import { signOut } from '@/lib/auth/client';
-import { Session } from '@/lib/types/session';
-import { LogOut, Settings } from 'lucide-react';
+import type { Session } from '@/lib/types/session';
+import { LogOut, Settings, Ticket } from 'lucide-react';
 import Link from 'next/link';
-// import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Separator } from '../ui/separator';
 
 type Props = {
   session: Session;
 };
 
 export default function AvatarPopup({ session: { session, user } }: Props) {
-  // const router = useRouter();
   const [openPopup, setOpenPopup] = useState<boolean>(false);
+  const { mutate: setLocation } = useLocation();
 
   return (
     <Popover
@@ -29,63 +29,87 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
         setOpenPopup(val);
       }}
     >
-      <PopoverTrigger>
-        <div className="flex gap-2 items-center">
-          <Avatar className="size-10">
-            <AvatarImage src={user.image} alt="User Image"></AvatarImage>
-            <AvatarFallback className="bg-neutral-200 text-neutral-800">{`${user.name.at(0)?.toUpperCase()}`}</AvatarFallback>
+      <PopoverTrigger asChild>
+        <button className="flex items-center gap-3 p-2 rounded-full transition-colors hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400">
+          <Avatar className="h-10 w-10 border-2 border-neutral-200  shadow-sm">
+            <AvatarImage
+              src={user.image || '/placeholder.svg'}
+              alt={`${user.name}'s profile`}
+            />
+            <AvatarFallback className="bg-neutral-100 text-neutral-700   font-medium">
+              {`${user.name.at(0)?.toUpperCase()}`}
+            </AvatarFallback>
           </Avatar>
-          {/* <div className="">{user.name.split(' ').at(0)}</div> */}
-        </div>
+          <span className="text-sm font-medium text-neutral-700  hidden sm:block">
+            {user.name.split(' ').at(0)}
+          </span>
+        </button>
       </PopoverTrigger>
-      <PopoverContent className="w-96">
-        <div className="flex flex-col font-medium">
-          {/* Header  */}
-          <div className="flex items-center rounded-sm gap-4">
-            <Avatar className="">
-              <AvatarImage src={user.image} alt="User Image"></AvatarImage>
-              <AvatarFallback className="bg-neutral-200 text-neutral-800">{`${user.name.at(0)?.toUpperCase()}`}</AvatarFallback>
-            </Avatar>
-            <div>{user.name}</div>
+      <PopoverContent className="w-72 p-0 bg-white  border border-neutral-200  shadow-lg rounded-lg overflow-hidden">
+        <div className="flex flex-col">
+          {/* Header */}
+          <div className="p-4 bg-neutral-50 /50">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-12 w-12 border-2 border-neutral-200  shadow-sm">
+                <AvatarImage
+                  src={user.image || '/placeholder.svg'}
+                  alt={`${user.name}'s profile`}
+                />
+                <AvatarFallback className="bg-neutral-100 text-neutral-700   font-medium">
+                  {`${user.name.at(0)?.toUpperCase()}`}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="font-medium text-neutral-900  line-clamp-1">
+                  {user.name}
+                </span>
+                <span className="text-xs text-neutral-500  line-clamp-1">
+                  {user.email}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <Separator className="my-4" />
+          <Separator className="bg-neutral-200 " />
 
           {/* Content */}
-          <div className="flex w-full text-sm text-muted-foreground h-40">
-            {/* Left Content */}
-            <div className="grow">[OTHER]</div>
-
-            <Separator orientation="vertical" className="mx-2" />
-
-            {/* Right Content */}
-            <div className="flex flex-col h-full justify-between min-w-32">
-              {/* Right Content Top */}
-              <div>
-                <Link
-                  href={'/user/settings'}
-                  onClick={() => setOpenPopup(false)}
-                  passHref
-                >
-                  <div className="flex items-center gap-2 hover:bg-gray-100 rounded-sm px-2 py-1 cursor-pointer">
-                    <Settings className="size-4" /> Settings
-                  </div>
-                </Link>
-              </div>
-
-              {/* Right Content Bottom */}
-              <button
-                onClick={async () => {
-                  await signOut();
-                  window.location.reload();
-                  // setOpenPopup(false);
-                  // router.refresh();
-                }}
-                className="flex gap-2 items-center cursor-pointer hover:bg-gray-100 rounded-sm px-2 py-1"
+          <div className="p-2">
+            <div className="flex flex-col gap-1">
+              <Link
+                href="/user/settings"
+                onClick={() => setOpenPopup(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-700  hover:bg-neutral-100 transition-colors"
               >
-                Logout <LogOut className="size-4" />
-              </button>
+                <Settings className="size-4 text-neutral-700 " />
+                <span className="text-sm font-medium">Pengaturan</span>
+              </Link>
+
+              <Link
+                href="/user/settings"
+                onClick={() => setOpenPopup(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-700  hover:bg-neutral-100 transition-colors"
+              >
+                <Ticket className="size-4 text-neutral-700 " />
+                <span className="text-sm font-medium">Voucher Saya</span>
+              </Link>
             </div>
+          </div>
+
+          <Separator className="bg-neutral-200  my-1" />
+
+          {/* Footer */}
+          <div className="p-2">
+            <button
+              onClick={async () => {
+                await signOut();
+                setLocation(null);
+                window.location.reload();
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-700  hover:bg-neutral-100 transition-colors"
+            >
+              <LogOut className="size-4 text-neutral-700 " />
+              <span className="text-sm font-medium">Logout</span>
+            </button>
           </div>
         </div>
       </PopoverContent>

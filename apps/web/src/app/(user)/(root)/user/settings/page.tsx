@@ -26,7 +26,7 @@ export default function SettingsPage() {
       <Separator className="my-6 bg-neutral-800" />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full bg-gradient-to-b from-neutral-800 to-neutral-700 py-6 px-3 my-3">
+        <TabsList className="w-full bg-neutral-100 py-6 px-3 my-3">
           {tabs.map((tab, idx) => {
             const Icon = tab.icon;
             const active = activeTab === tab.name.toLowerCase();
@@ -34,8 +34,8 @@ export default function SettingsPage() {
             return (
               <TabsTrigger
                 className={cn(
-                  'text-base hover:text-neutral-300 text-neutral-200 w-full',
-                  'data-[state=active]:bg-neutral-600 data-[state=active]:text-neutral-200',
+                  'text-base hover:text-neutral-600 text-neutral-600 w-full',
+                  'data-[state=active]:bg-neutral-700 data-[state=active]:text-neutral-200',
                 )}
                 key={idx}
                 value={tab.name.toLowerCase()}

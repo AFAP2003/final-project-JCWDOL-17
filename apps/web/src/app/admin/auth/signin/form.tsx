@@ -1,6 +1,6 @@
 'use client';
 
-import Logo from '@/components/logo';
+import AuthLogo from '@/components/auth-logo';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -161,7 +161,8 @@ export function Signin({
       <div className="w-full max-w-md overflow-hidden">
         {/* Header */}
         <CardHeader className="space-y-2 pb-6">
-          <Logo showText={true} />
+          <AuthLogo />
+
           <CardDescription className="">
             Sign in as {loginRole === 'ADMIN' ? 'super admin' : 'admin store'}?{' '}
             <button

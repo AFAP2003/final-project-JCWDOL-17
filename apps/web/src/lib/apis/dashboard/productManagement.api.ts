@@ -1,6 +1,10 @@
 'use client';
+'use client';
 
 import { toast } from '@/hooks/use-toast';
+import { API_BASE_URL } from '@/lib/constant';
+import { Product } from '@/lib/interfaces/productManagement.interface';
+import { useState } from 'react';
 import { API_BASE_URL } from '@/lib/constant';
 import { Product } from '@/lib/interfaces/productManagement.interface';
 import { useState } from 'react';
@@ -8,7 +12,35 @@ import { useState } from 'react';
 export default function productManagementAPI() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+export default function productManagementAPI() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  const fetchProducts = async (pageIndex: number, pageSize: number) => {
+    setIsLoading(true);
+    try {
+      const page = pageIndex + 1;
+      const productRes = await fetch(
+        `${API_BASE_URL}/dashboard/products?page=${page}&take=${pageSize}`,
+      );
+      const productData = await productRes.json();
+
+      if (productRes.ok) {
+        setProducts(productData.data);
+        console.log('Products fetched successfully: ', productData);
+        return productData;
+      } else {
+        console.error(
+          'Failed to fetch products:',
+          productData.message || 'Unknown Error',
+        );
+      }
+    } catch (error) {
+      console.log('Error fetching data: ', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const fetchProducts = async (pageIndex: number, pageSize: number) => {
     setIsLoading(true);
     try {
@@ -207,3 +239,4 @@ export default function productManagementAPI() {
     handleDeleteProduct,
   };
 }
+

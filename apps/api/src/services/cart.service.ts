@@ -8,12 +8,6 @@ const productInclude = {
   product: {
     include: {
       images: { where: { isMain: true }, take: 1 },
-      inventory: {
-        select: {
-          quantity: true,
-          store: { select: { id: true, name: true } },
-        },
-      },
     },
   },
 };
@@ -22,12 +16,16 @@ export class CartService {
   private async findOrCreateCart(userId: string) {
     let cart = await prismaclient.cart.findUnique({
       where: { userId },
-      include: { items: { include: productInclude } },
+      include: {
+        items: { include: productInclude, orderBy: { addedAt: 'asc' } },
+      },
     });
     if (!cart) {
       cart = await prismaclient.cart.create({
         data: { userId },
-        include: { items: { include: productInclude } },
+        include: {
+          items: { include: productInclude },
+        },
       });
     }
     return cart;
@@ -47,38 +45,24 @@ export class CartService {
     }
 
     const cart = await this.findOrCreateCart(userId);
-    const product = await prismaclient.product.findUnique({
-      where: { id: dto.productId, isActive: true },
-      include: { inventory: { where: { storeId: dto.storeId } } },
-    });
-    if (!product) throw new Error('Product not found');
-    const inventory = product.inventory[0];
-    if (!inventory)
-      throw new BadRequestError('Product not available in selected store');
-    if (inventory.quantity < dto.quantity)
-      throw new BadRequestError(`Only ${inventory.quantity} item(s) available`);
-
-    const existingItem = await prismaclient.cartItem.findFirst({
-      where: { cartId: cart.id, productId: dto.productId },
-    });
-
-    if (existingItem) {
-      const total = existingItem.quantity + dto.quantity;
-      if (total > inventory.quantity)
-        throw new BadRequestError(
-          `Cannot add more than ${inventory.quantity} item(s)`,
-        );
-      return await prismaclient.cartItem.update({
-        where: { id: existingItem.id },
-        data: { quantity: total, updatedAt: new Date() },
+    const itemfound = cart.items.find((c) => c.productId === dto.productId);
+    if (!itemfound) {
+      return await prismaclient.cartItem.create({
+        data: {
+          quantity: dto.quantity,
+          cartId: cart.id,
+          productId: dto.productId,
+        },
         include: { product: true },
       });
     }
 
-    return await prismaclient.cartItem.create({
+    return await prismaclient.cartItem.update({
+      where: {
+        id: itemfound.id,
+        productId: itemfound.productId,
+      },
       data: {
-        cartId: cart.id,
-        productId: dto.productId,
         quantity: dto.quantity,
       },
       include: { product: true },
@@ -93,7 +77,7 @@ export class CartService {
     if (!cart) throw new BadRequestError('Cart not found');
 
     const cartItem = await prismaclient.cartItem.findUnique({
-      where: { id: dto.cartItemId },
+      where: { id: dto.itemId },
     });
 
     if (!cartItem) throw new BadRequestError('Cart item not found');
@@ -103,23 +87,8 @@ export class CartService {
       );
     }
 
-    if (dto.quantity === 0) {
-      await prismaclient.cartItem.delete({ where: { id: dto.cartItemId } });
-      return { message: 'Item removed from cart' };
-    }
-
-    const inventory = await prismaclient.inventory.findFirst({
-      where: { productId: cartItem.productId, storeId: dto.storeId },
-    });
-
-    if (!inventory)
-      throw new BadRequestError('Product not available in selected store');
-    if (inventory.quantity < dto.quantity) {
-      throw new BadRequestError(`Only ${inventory.quantity} item(s) available`);
-    }
-
     return await prismaclient.cartItem.update({
-      where: { id: dto.cartItemId },
+      where: { id: dto.itemId },
       data: { quantity: dto.quantity, updatedAt: new Date() },
       include: { product: true },
     });
