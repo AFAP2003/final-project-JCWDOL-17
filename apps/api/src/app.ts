@@ -12,9 +12,11 @@ import { HealthRouter } from './routers/health.router';
 import { LocationRouter } from './routers/location.router';
 import { ProductCategoryRouter } from './routers/product-category.router';
 import { ProductRouter } from './routers/product.router';
+import { ShippingRouter } from './routers/shipping.router';
 import { StoreRouter } from './routers/store.router';
 import { TokenRouter } from './routers/token.router';
 import { UserRouter } from './routers/user.router';
+import { VoucherRouter } from './routers/voucher.router';
 
 export default class App {
   static VERSION = '1.0.0';
@@ -55,6 +57,8 @@ export default class App {
     const productRouter = new ProductRouter();
     const cartRouter = new CartRouter();
     const storeRouter = new StoreRouter();
+    const shippingRouter = new ShippingRouter();
+    const voucherRouter = new VoucherRouter();
 
     this.app.use('/api', healthRouter.getRouter());
     this.app.use('/api/auth', authRouter.getRouter());
@@ -66,6 +70,8 @@ export default class App {
     this.app.use('/api/dashboard', apiRouter);
     this.app.use('/api/cart', cartRouter.getRouter());
     this.app.use('/api/store', storeRouter.getRouter());
+    this.app.use('/api/shipping', shippingRouter.getRouter());
+    this.app.use('/api/voucher', voucherRouter.getRouter());
   }
 
   public start(): void {

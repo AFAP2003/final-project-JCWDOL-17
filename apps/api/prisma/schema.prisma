@@ -42,6 +42,7 @@ model User {
   sessions     Session[]
   accounts     Account[]
   stores       Store[]
+  vouchers     Voucher[] @relation("UserVoucher")
 }
 
 model Session {
@@ -313,7 +314,7 @@ model Discount {
   isPercentage Boolean? // NO_RULES_DISCOUNT / WITH_MAX_PRICE
   value        Decimal? @db.Decimal(10, 2) // NO_RULES_DISCOUNT / WITH_MAX_PRICE
   maxDiscount  Decimal? @db.Decimal(10, 2) // Required jika isPercentage = true;
-  minPurchase  Decimal? @db.Decimal(10, 2) // WITH_MAX_PRICE
+  minPurchase  Decimal? @db.Decimal(10, 2) // NO_RULES_DISCOUNT / WITH_MAX_PRICE
   buyQuantity  Int? // BUY_X_GET_Y
   getQuantity  Int? // BUY_X_GET_Y
 
@@ -346,6 +347,7 @@ model Voucher {
   createdAt     DateTime    @default(now())
 
   products      Product[]      @relation("ProductVoucher")
+  users         User[]         @relation("UserVoucher")
   orderVouchers OrderVoucher[]
 }
 
@@ -417,7 +419,6 @@ enum DiscountType {
 
 enum VoucherType {
   PRODUCT_SPECIFIC
-  CART
   SHIPPING
   REFERRAL
 }

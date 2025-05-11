@@ -27,6 +27,7 @@ Table User {
   sessions Session [not null]
   accounts Account [not null]
   stores Store [not null]
+  vouchers Voucher [not null]
 }
 
 Table Session {
@@ -311,6 +312,7 @@ Table Voucher {
   usageCount Int [not null, default: 0]
   createdAt DateTime [default: `now()`, not null]
   products Product [not null]
+  users User [not null]
   orderVouchers OrderVoucher [not null]
 }
 
@@ -330,6 +332,11 @@ Table OrderVoucher {
 
 Table StoreToUser {
   storesId String [ref: > Store.id]
+  usersId String [ref: > User.id]
+}
+
+Table UserVoucher {
+  vouchersId String [ref: > Voucher.id]
   usersId String [ref: > User.id]
 }
 
@@ -398,7 +405,6 @@ Enum DiscountType {
 
 Enum VoucherType {
   PRODUCT_SPECIFIC
-  CART
   SHIPPING
   REFERRAL
 }

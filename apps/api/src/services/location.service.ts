@@ -1,4 +1,4 @@
-import { RAJA_ONGKIR_API, RAPID_API_KEY } from '@/config';
+import { RAJA_ONGKIR_V1_API, RAPID_API_KEY } from '@/config';
 import { CityGetAllDTO } from '@/dtos/city-get-all.dto';
 import { GeocodingDTO } from '@/dtos/geocoding.dto';
 import { ProvinceGetAllDTO } from '@/dtos/province-get-all.dto';
@@ -229,7 +229,7 @@ export class LocationService {
       const { data: fetchprovinces } = await axios.get<RO_GetAllProvince>(
         'https://api.rajaongkir.com/starter/province',
         {
-          headers: { key: RAJA_ONGKIR_API },
+          headers: { key: RAJA_ONGKIR_V1_API },
         },
       );
       const provinces = fetchprovinces.rajaongkir.results;
@@ -245,7 +245,7 @@ export class LocationService {
       const { data: fetchcities } = await axios.get<RO_GetAllCity>(
         'https://api.rajaongkir.com/starter/city',
         {
-          headers: { key: RAJA_ONGKIR_API },
+          headers: { key: RAJA_ONGKIR_V1_API },
         },
       );
       const cities = fetchcities.rajaongkir.results;

@@ -1,5 +1,5 @@
 import { prismaclient } from '@/prisma';
-import crypto from 'crypto';
+import { genRandomString } from './gen-random-string';
 
 async function isCodeUnique(code: string) {
   const exist = await prismaclient.user.findUnique({
@@ -16,29 +16,17 @@ type Option = {
 };
 
 const defaultopt = {
-  length: 8,
+  length: 10,
   maxRetries: 10,
 };
 
-/**
- * Generates a unique referral code with minimal duplicates.
- * @param {number} opt.length - The length of the referral code.
- * @param {number} opt.maxRetries - Maximum retries in case of collision.
- * @returns {string} - A unique referral code.
- */
 export async function genReferralCode(
   opt: Option = defaultopt,
 ): Promise<string> {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-
   for (let attempt = 0; attempt < opt.maxRetries; attempt++) {
-    let code = Array.from(
-      { length: opt.length },
-      () => charset[crypto.randomInt(0, charset.length)],
-    ).join('');
-
+    const code = genRandomString(opt.length).toUpperCase();
     if (await isCodeUnique(code)) {
-      return `REF-${code}`;
+      return `REFFCODE-${code}`;
     }
   }
 

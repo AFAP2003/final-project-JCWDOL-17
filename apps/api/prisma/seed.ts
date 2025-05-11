@@ -1,4 +1,14 @@
-import { Category, PrismaClient, Product, Store, User } from '@prisma/client';
+import {
+  Category,
+  Inventory,
+  PrismaClient,
+  Product,
+  Store,
+  User,
+  ValueType,
+  Voucher,
+  VoucherType,
+} from '@prisma/client';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { add } from 'date-fns/add';
@@ -16,20 +26,15 @@ const auth = betterAuth({
 async function SEED_SUPER_ADMIN() {
   const ctx = await auth.$context;
 
-  const superemail = process.env.SUPER_ADMIN_EMAIL;
-  if (!superemail) {
-    throw new Error('No super admin email was provided on evironment');
-  }
-  const superpassword = process.env.SUPER_ADMIN_PASSWORD;
-  if (!superpassword) {
-    throw new Error('No super admin password was provided on evironment');
-  }
-  // Seed Super Admin
+  const superemail = 'super.gogrocery@mailinator.com';
+  const superpassword = '@Password';
+  const supername = 'Super Admin Gogrocery';
+
   const superadmin = await prisma.user.create({
     data: {
       email: superemail,
       emailVerified: true,
-      name: 'John Doe',
+      name: supername,
       role: 'SUPER',
       signupMethod: {
         set: ['CREDENTIAL'],
@@ -126,6 +131,21 @@ async function SEED_USER() {
     },
   ];
 
+  const genReffCode = async () => {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const code = `REFFCODE-${uuid().replace(/-/g, '').substring(0, 10).toUpperCase()}`;
+      const exist = await prisma.user.findUnique({
+        where: {
+          referralCode: code,
+        },
+      });
+      if (!exist) {
+        return code;
+      }
+    }
+    throw new Error('Failed to generate a unique referral code.');
+  };
+
   const ctx = await auth.$context;
 
   const users: User[] = [];
@@ -139,6 +159,7 @@ async function SEED_USER() {
         signupMethod: {
           set: ['CREDENTIAL'],
         },
+        referralCode: await genReffCode(),
       },
     });
     await prisma.account.create({
@@ -238,15 +259,25 @@ async function SEED_PRODUCT(categories: Category[]) {
     perlengkapan_hewan,
   ] = categories;
 
-  const genSKU = () => {
-    const uniqueId = uuid().trim().toUpperCase().slice(0, 18);
-    return uniqueId;
+  const genSKU = async () => {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const sku = uuid().trim().toUpperCase().slice(0, 18);
+      const exist = await prisma.product.findUnique({
+        where: {
+          sku: sku,
+        },
+      });
+      if (!exist) {
+        return sku;
+      }
+    }
+
+    throw new Error('Failed to generate a unique SKU code.');
   };
 
   const datas: {
     name: string;
     description: string;
-    sku: string;
     price: number;
     weight: number;
     categoryId: string;
@@ -257,7 +288,6 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Buah Naga Merah',
       description:
         'Buah naga dengan daging buah berwarna merah. Rasanya ringan cenderung manis. Teksturnya lembut. Cocok untuk camilan atau bekal. Dapat diolah menjadi jus atau digunakan sebagai pewarna merah alami dalam kreasi makanan atau kue.',
-      sku: genSKU(),
       price: 20000,
       weight: 1,
       categoryId: buah.id,
@@ -270,7 +300,6 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Pisang Cavendish',
       description:
         'Pisang cavendish memiliki tekstur yang lembut dan rasanya manis. Cocok untuk sarapan, bekal, atau sebagai topping smoothies dan makanan lainnya. Kulit pisang cenderung kuning mulus, namun ada juga yang memiliki sedikit bercak hitam. Produk ini dapat digunakan sebagai menu MPASI. Tunggu 2-3 hari agar matang sempurna.',
-      sku: genSKU(),
       price: 10000,
       weight: 1,
       categoryId: buah.id,
@@ -283,7 +312,6 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Kelapa Hijau',
       description:
         'Kelapa Ijo memiliki kulit berwarna hijau, memiliki semburat pink saat dikupas. Cenderung tidak memiliki daging buah dengan peruntukan dikonsumsi airnya.',
-      sku: genSKU(),
       price: 15000,
       weight: 1.5,
       categoryId: buah.id,
@@ -296,7 +324,6 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Strawberry Sweetheart',
       description:
         'Ditanam secara hidroponik. Lebih segar, sehat, dan berkualitas. Strawberry sweetheart memiliki bentuk yang unik dan warna merah yang menggugah selera. Daging buah juicy dengan rasa yang segar. Cocok untuk camilan, selai, smoothies, jus, dan berbagai kreasi lainnya.',
-      sku: genSKU(),
       price: 14900,
       weight: 0.125,
       categoryId: buah.id,
@@ -309,7 +336,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Strawberry Golden Berries',
       description:
         'Ditanam secara hidroponik. Lebih segar, sehat, dan berkualitas. Strawberry Golden Berries Hidroponik memiliki warna merah dengan biji kuning kecil. Daging buah juicy dengan rasa manis cenderung asam segar. Cocok untuk camilan, selai, smoothies, jus, dan berbagai kreasi lainnya.',
-      sku: genSKU(),
+
       price: 43200,
       weight: 0.25,
       categoryId: buah.id,
@@ -322,7 +349,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Blackberry Hidroponik',
       description:
         'Blackberry memiliki ukuran yang kecil dan rasa asam manis yang segar. Buah ini ditanam secara hodroponik, sehingga memberikan kualitas dan rasa buah blackberry terbaik.',
-      sku: genSKU(),
+
       price: 51900,
       weight: 0.125,
       categoryId: buah.id,
@@ -335,7 +362,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Jeruk Papagan',
       description:
         'Jeruk Papagan merupakan salah satu jeruk mandarin yang memiliki perpaduan rasa manis dan keasaman yang menyegarkan. Karakteristik kulit buah yang berwarna oranye cerah dengan tekstur juicy dan berair. Cocok untuk dikonsumsi secara langsung maupun diolah menjadi jus.',
-      sku: genSKU(),
+
       price: 56000,
       weight: 0.5,
       categoryId: buah.id,
@@ -348,7 +375,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Anggur Hitam Melody',
       description:
         'Anggur hitam impor yang memiliki rasa manis dengan tekstur yang padat dan lembut. Cenderung tidak memiliki biji atau berbiji sedikit.',
-      sku: genSKU(),
+
       price: 20200,
       weight: 0.25,
       categoryId: buah.id,
@@ -361,7 +388,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Blueberry Golden Berries',
       description:
         'Blueberry Golden Berries memiliki rasa manis agak asam yang menyegarkan. Dapat dimakan sebagai camilan sehat atau makanan pencuci mulut, dibuat selai, ditambahkan sebagai topping oat, smoothies, dan lain-lain sesuai selera.',
-      sku: genSKU(),
+
       price: 115000,
       weight: 0.125,
       categoryId: buah.id,
@@ -374,7 +401,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Durian Medan Frozen',
       description:
         'Durian Medan dengan Brand Ucok Durian yang memiliki rasa cenderung manis legit. Dengan aroma yang tidak terlalu tajam. Cocok untuk dimakan langsung atau diolah menjadi berbagai macam kudapan.',
-      sku: genSKU(),
+
       price: 87300,
       weight: 0.45,
       categoryId: buah.id,
@@ -389,7 +416,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Bawang Bombay',
       description:
         'Bawang bombay memiliki rasa agak pedas gurih dan teksturnya renyah. Cocok untuk teriyaki, onion ring, dan berbagai kreasi masakan lainnya. Terdapat potensi kelebihan/kekurangan gramasi +-10% per pack',
-      sku: genSKU(),
+
       price: 22000,
       weight: 0.5,
       categoryId: sayuran.id,
@@ -402,7 +429,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Bawang Merah',
       description:
         'Bawang Merah pilihan yang diproses khusus dan lebih kering dari bawang merah biasa, sehingga tidak mudah busuk dan tahan lebih dari 1 minggu di suhu ruang. Bawang Merah Konvensional lebih wangi dan pedas dibandingkan Bawang Merah Besar dan memiliki ukuran lebih beragam. Pengiriman sesuai ketersediaan dari petani di daerah Brebes, Nganjuk, atau Batu.',
-      sku: genSKU(),
+
       price: 7600,
       weight: 0.1,
       categoryId: sayuran.id,
@@ -415,7 +442,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Bawang Putih',
       description:
         'Bawang putih bulat utuh pilihan terbaik. Lebih tahan lama. Aromanya khas dan membuat rasa masakan lebih sedap. Terdapat potensi kelebihan/kekurangan gramasi +-10% per pack Produk ini dapat digunakan sebagai menu MPASI',
-      sku: genSKU(),
+
       price: 6000,
       weight: 0.1,
       categoryId: sayuran.id,
@@ -428,7 +455,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Bayam Hijau',
       description:
         'Sedang low season, ukuran beragam dan sedikit berlubang. Namun rasa dan manfaatnya tetap sama. Cocok untuk sayur bening, tumis bayam jagung, omelet, keripik bayam, dan lain-lain. 300 gr bayam hijau dapat menjadi satu gelas bayam masak. Terdapat potensi kelebihan/kekurangan gramasi +-10% per pack.',
-      sku: genSKU(),
+
       price: 5900,
       weight: 0.25,
       categoryId: sayuran.id,
@@ -441,7 +468,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Brokoli',
       description:
         'Brokoli konvensional memiliki warna hijau segar. Cocok diolah sebagai sup, dimasak saus, capcay, atau tumisan lainnya. Dapat dikreasikan dengan cara dikukus, digoreng, atau dibakar sesuai selera. Terdapat potensi kelebihan/kekurangan gramasi +-10% per pack Produk ini dapat digunakan sebagai menu MPASI.',
-      sku: genSKU(),
+
       price: 24300,
       weight: 0.5,
       categoryId: sayuran.id,
@@ -454,7 +481,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Buncis Afrika',
       description:
         'Buncis memiliki rasa yang sedikit manis dibandingkan kacang panjang. Teksturnya renyah. Cocok diolah sebagai tumisan, sop, atau direbus sebentar dan disajikan bersama steak. Bentuknya agak melengkung atau lurus. Warna kulit buncis bervariasi antara hijau muda hingga hijau tua. Pengiriman random sesuai ketersediaan di petani. Terdapat potensi kelebihan/kekurangan gramasi +-10% per pack Produk ini dapat digunakan sebagai menu MPASI',
-      sku: genSKU(),
+
       price: 7300,
       weight: 0.25,
       categoryId: sayuran.id,
@@ -467,7 +494,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Cabai Merah Keriting',
       description:
         'Cabai merah keriting memiliki ukuran kecil, bentuk memanjang, dan permukaan yang tidak rata. Umumnya digunakan sebagai penambah rasa pedas atau pewarna merah pada masakan. Cabai Keriting Ekonomis disarankan untuk segera diolah dan tidak disimpan lebih dari 2 hari. Terdapat potensi kelebihan/kekurangan gramasi +-10% per pack',
-      sku: genSKU(),
+
       price: 5100,
       weight: 0.1,
       categoryId: sayuran.id,
@@ -480,7 +507,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Jagung Manis Kulit',
       description:
         'Jagung manis memiliki rasa yang lebih manis dari jagung biasa. Khususnya setelah dimasak. Biasa digunakan dalam berbagai masakan atau diolah sebagai jagung bakar. Masih memiliki kulit luar berwarna hijau - putih. Sehingga lebih awet dan tahan lama untuk disimpan. Terdapat potensi kelebihan/kekurangan gramasi +-10% per pack Produk ini dapat digunakan sebagai menu MPASI',
-      sku: genSKU(),
+
       price: 6500,
       weight: 1,
       categoryId: sayuran.id,
@@ -493,7 +520,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Kentang Dieng',
       description:
         'Kentang asal Dieng, Jawa Tengah ini memiliki ukuran yang lebih besar dari kentang biasa. Dagingnya berwarna kuning ke-emasan dan teksturnya lebih lembut. Kandungan airnya yang cukup rendah membuat kentang ini cocok diolah menjadi berbagai jenis masakan karena tidak gampang hancur Terdapat potensi kelebihan/kekurangan gramasi +-10% per pack Produk ini dapat digunakan sebagai menu MPASI',
-      sku: genSKU(),
+
       price: 21300,
       weight: 1,
       categoryId: sayuran.id,
@@ -506,7 +533,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Wortel Berastagi',
       description:
         'Wortel berastagi memiliki bentuk yang lebih gemuk, kulitnya lebih mulus dan cerah, teksturnya renyah, dan rasanya manis. Dapat diolah sebagai camilan sehat, sup, tumisan, salad, jus, dan lain-lain. Produk ini dapat digunakan sebagai menu MPASI. Terdapat potensi kelebihan/kekurangan gramasi +-10% per pack',
-      sku: genSKU(),
+
       price: 21500,
       weight: 1,
       categoryId: sayuran.id,
@@ -521,7 +548,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Ikan Dori Fillet',
       description:
         'Ikan dori lokal atau ikan patin fillet tanpa duri. Lebih mudah diolah sebagai fish and chips atau kreasi masakan lainnya.',
-      sku: genSKU(),
+
       price: 20900,
       weight: 0.25,
       categoryId: daging_seafood.id,
@@ -534,7 +561,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Fillet Dada Ayam Frozen Sreeya',
       description:
         'Dada Ayam Frozen ini diproses dan dikemas langsung secara higenis untuk menjaga kualitas dan kesegaran. Tekstur bagian dada ini lebih kenyal dan elastis.',
-      sku: genSKU(),
+
       price: 32000,
       weight: 1,
       categoryId: daging_seafood.id,
@@ -547,7 +574,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Sayap Ayam',
       description:
         'Sayap ini diproses dan dikemas langsung secara higenis untuk menjaga kualitas dan kesegaran. Tekstur bagian sayap ini lebih kenyal dan elastis',
-      sku: genSKU(),
+
       price: 29900,
       weight: 0.5,
       categoryId: daging_seafood.id,
@@ -560,7 +587,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Urat Sapi Berkat',
       description:
         'Urat Sapi Berkat ini diproses dan dikemas langsung secara higenis untuk menjaga kualitas dan kesegaran. Tekstur ini lebih kenyal dan elastis',
-      sku: genSKU(),
+
       price: 77900,
       weight: 1,
       categoryId: daging_seafood.id,
@@ -573,7 +600,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Cumi Merah Besar',
       description:
         'Cumi merah besar segar, tidak beku. Panjang cumi 5-8 cm. Cocok untuk cumi asam manis, tumis cabe merah ijo, cumi goreng, saus tiram, dll.',
-      sku: genSKU(),
+
       price: 67500,
       weight: 1,
       categoryId: daging_seafood.id,
@@ -586,7 +613,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Ikan Tuna Loin',
       description:
         'Ikan tuna lokal beku potongan fillet. Tanpa duri. Dapat dimasak bumbu pedas, bumbu kecap, kuah asam pedas, dan lain sebagainya. Berat produk dapat berkurang 10% dari berat beku.',
-      sku: genSKU(),
+
       price: 52500,
       weight: 1,
       categoryId: daging_seafood.id,
@@ -599,7 +626,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Udang Vaname Kupas',
       description:
         'Sudah kupas kulit, dan buang ekor serta kepala. Lebih praktis dan mudah diolah. Udang  ini direndam dengan air panas untuk melepaskan cangkang dan kepalanya, tetapi kondisinya masih mentah sehingga perlu diolah kembali untuk proses pematangannya.',
-      sku: genSKU(),
+
       price: 77900,
       weight: 1,
       categoryId: daging_seafood.id,
@@ -612,7 +639,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Lamb Chop',
       description:
         'Potongan daging domba muda bagian punggung yang di potong tegak lurus. Dapat dimasak steak atau dioven dengan bumbu barbekyu.',
-      sku: genSKU(),
+
       price: 109900,
       weight: 1,
       categoryId: daging_seafood.id,
@@ -622,7 +649,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Cumi Tube Kupas Golden Seafood',
       description:
         'Cumi tube lokal beku atau cumi kupas fillet. Sudah bersih. Tanpa kepala dan isi perut. Berat produk dapat berkurang 10% dari berat beku.',
-      sku: genSKU(),
+
       price: 49900,
       weight: 1,
       categoryId: daging_seafood.id,
@@ -635,7 +662,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Telur Ayam Negeri',
       description:
         'Telur Ayam Negeri 100% Tersertifikasi NKV dan berasal dari ayam lokal pilihan. Nomor Kontrol Veteriner (NKV) adalah sertifikat telah dipenuhinya persyaratan higiene dan sanitasi sebagai jaminan keamanan produk hewan pada unit usaha produk hewan. Produk ini dapat digunakan sebagai menu MPASI.',
-      sku: genSKU(),
+
       price: 22800,
       weight: 1,
       categoryId: daging_seafood.id,
@@ -650,7 +677,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Fanta Minuman Soda Rasa Stroberi Kaleng 250 ml',
       description:
         'Menjadi muda adalah menjalani setiap hari dengan segala hal yang asyik dan seru sesuai dengan karaktermu. Sangat bersemangat dan menyenangkan. Apalagi, jika itu semua dijalani bersama dengan teman-teman yang selalu ada setiap saat. Seperti minuman Fanta rasa buah yang menyenangkan. Fanta dari The Coca Cola Company telah menemani banyak momen seru anak-anak muda sepertimu.',
-      sku: genSKU(),
+
       price: 11000,
       weight: 0.1,
       categoryId: minuman.id,
@@ -663,7 +690,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Teh Kotak Minuman Teh Jasmine Less Sugar',
       description:
         'Teh Kotak Jasmine Less Sugar 300 ml adalah minuman teh melati siap minum dengan kadar gula lebih rendah, cocok untuk gaya hidup aktif dan sehat. Terbuat dari daun teh berkualitas tinggi dan bunga melati, diproses menggunakan teknologi UHT dan dikemas dalam kemasan aseptik 6 lapis untuk menjaga kesegaran tanpa pengawet. Mengandung vitamin C, minuman ini memberikan kesegaran alami yang menenangkan.',
-      sku: genSKU(),
+
       price: 4200,
       weight: 0.1,
       categoryId: minuman.id,
@@ -676,7 +703,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Pristine Mineral Water',
       description:
         'Pristine Mineral Water 600 ml adalah air minum dalam kemasan yang melalui proses ionisasi untuk membantu menjaga keseimbangan pH tubuh. Dengan rasa yang ringan dan segar, Pristine cocok dikonsumsi setiap hari untuk menjaga hidrasi dan kesehatan. Dikemas praktis dalam botol 600 ml, ideal untuk dibawa ke mana saja.',
-      sku: genSKU(),
+
       price: 3900,
       weight: 0.1,
       categoryId: minuman.id,
@@ -689,7 +716,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Soft Drink Zero Kaleng Bintang',
       description:
         'Bintang Zero Can merupakan minuman malt berkarbonasi nonalkohol dengan rasa apel yang menyegarkan. Memberikan sensasi menyegarkan dengan rasa ringan yang cocok untuk dinikmati saat santai, olahraga, atau sebagai pendamping makanan cepat saji.',
-      sku: genSKU(),
+
       price: 9000,
       weight: 0.1,
       categoryId: minuman.id,
@@ -702,7 +729,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Diamond Juice Orange Unsweet',
       description:
         'BDiamond Juice Orange Unsweet 946 ml adalah jus jeruk alami yang tidak mengandung pemanis tambahan, memberikan rasa segar dan kaya vitamin C. Minuman ini ideal untuk mereka yang menginginkan minuman sehat tanpa tambahan gula. Diamond Juice Orange Unsweet dapat membantu memperkuat sistem kekebalan tubuh, meningkatkan kesehatan kulit, dan menjaga hidrasi tubuh. Dengan kemasan 946 ml, produk ini sangat cocok untuk dinikmati bersama keluarga sebagai pilihan minuman sehat yang menyegarkan setiap hari.',
-      sku: genSKU(),
+
       price: 35000,
       weight: 0.5,
       categoryId: minuman.id,
@@ -712,7 +739,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'ABC Minuman Sari Kacang Hijau',
       description:
         'ABC Minuman Sari Kacang Hijau adalah minuman siap saji yang terbuat dari sari kacang hijau pilihan, kaya akan serat dan protein nabati. Minuman ini juga mengandung vitamin B kompleks yang baik untuk menjaga stamina dan kesehatan pencernaan. Cocok dinikmati dingin kapan saja sebagai pelengkap gaya hidup sehat.',
-      sku: genSKU(),
+
       price: 5400,
       weight: 0.1,
       categoryId: minuman.id,
@@ -725,7 +752,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Marjan Sirup With Milk Orange',
       description:
         'Sirup Marjan cocok diminum langsung atau dibuat menjadi aneka kreasi minuman yang segar dan nikmat. Sirup Marjan sendiri memiliki rasa manis yang pas dan aroma khas, membuat sirup ini sulit untuk dilewatkan dari berbagai acara keluarga. Bagi Anda yang menginginkan momen penting jadi makin spesial, pilihlah Marjan sesuai selera sebagai pendamping momen penting tersebut.',
-      sku: genSKU(),
+
       price: 22000,
       weight: 0.5,
       categoryId: minuman.id,
@@ -738,7 +765,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Frestea Green Tea Lemongrass Botol',
       description:
         'Frestea Green Tea Lemongrass adalah minuman teh hijau dengan aroma sereh yang menyegarkan dan menenangkan. Cocok diminum dingin untuk merelaksasi tubuh, dan pas jadi teman santai di tengah kesibukan.',
-      sku: genSKU(),
+
       price: 4900,
       weight: 0.3,
       categoryId: minuman.id,
@@ -748,7 +775,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Pocari Sweat Isotonik',
       description:
         'Pocari Sweat merupakan minuman penambah ion tubuh yang mengandung komposisi seperti air, gula, asam sitrat, natrium sitrat, natrium klorida, kalium klorida, kalsium laktat, magnesium karbonat dan perasa. Membantu menggantikan cairan tubuh yang hilang setelah beraktivitas.',
-      sku: genSKU(),
+
       price: 6900,
       weight: 0.3,
       categoryId: minuman.id,
@@ -761,7 +788,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Aqua Air Mineral',
       description:
         'Aqua Air Mineral adalah air minum berkualitas tinggi yang diambil dari sumber mata air pegunungan dan dikemas higienis. Ukurannya pas untuk dibawa bepergian, cocok untuk menemani aktivitas harian, olahraga, ataupun dikonsumsi saat makan. Segar, praktis, dan terpercaya menjaga hidrasi tubuh.',
-      sku: genSKU(),
+
       price: 2500,
       weight: 0.1,
       categoryId: minuman.id,
@@ -776,7 +803,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Molto Pewangi Pakaian - Floral Bliss Refill',
       description:
         'Molto Pewangi Pakaian Floral Bliss Refill adalah pelembut dan pewangi pakaian dengan aroma floral yang segar dan tahan lama. Diformulasikan untuk menghilangkan bau tidak sedap dan menjaga pakaian tetap wangi sepanjang hari. Membantu melembutkan serat kain serta memudahkan proses menyetrika. Cocok digunakan untuk berbagai jenis pakaian keluarga.',
-      sku: genSKU(),
+
       price: 20000,
       weight: 0.7,
       categoryId: kebutuhan_rumah.id,
@@ -789,7 +816,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Nice Facial Tissue Queen Size',
       description:
         'Nice Facial Tissue Queen Size adalah tisu wajah berkualitas dalam kemasan besar yang ekonomis. Lembaran tisunya lembut, tidak mudah robek, dan sangat menyerap. Cocok digunakan untuk keperluan rumah tangga, kantor, restoran, maupun usaha lainnya. Hadir dalam jumlah banyak, hemat dan praktis untuk stok jangka panjang. Terbuat dari bahan berkualitas tinggi yang aman untuk kulit sensitif, bahkan untuk bayi.',
-      sku: genSKU(),
+
       price: 16000,
       weight: 0.7,
       categoryId: kebutuhan_rumah.id,
@@ -802,7 +829,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Sabun Cuci Piring - Mama Lime 60ml',
       description:
         'Cairan pencuci piring yang berguna untuk membersihkan, mengangkat kotoran dan noda membandel di peralatan memasak. Juga dapat digunakan untuk mencuci buah-buahan dan sayur.',
-      sku: genSKU(),
+
       price: 2000,
       weight: 0.1,
       categoryId: kebutuhan_rumah.id,
@@ -815,7 +842,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Pembersih Lantai - Lemon Twist SOS 750ml',
       description:
         'Pembersih lantai yang dirancang khusus untuk membersihkan lantai rumah dengan lebih mudah. Membantu menghilangkan bau tidak sedap, membunuh kuman dan bakteri dengan lebih cepat. Disertai dengan harum lemon yang menyegarkan.',
-      sku: genSKU(),
+
       price: 10000,
       weight: 0.1,
       categoryId: kebutuhan_rumah.id,
@@ -828,7 +855,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'ABC Baterai Biru Besar R-20 2 pcs',
       description:
         'ABC Baterai Biru Besar R-20 2 pcs merupakan batu baterai persembahan ABC. Ukuran besar dan tidak mengandung mercury. Cocok untuk digunakan pada berbagai perangkat elektronik Anda.',
-      sku: genSKU(),
+
       price: 22000,
       weight: 0.25,
       categoryId: kebutuhan_rumah.id,
@@ -841,7 +868,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Xander Gembok Pendek 40 mm',
       description:
         'Xander Security Lock Gembok 40 mm adalah gembok berukuran pendek 40 mm dari Xander yang berbahan Case-Hardened steel. Lengkap dengan sistem Dual-Locking dan Precision Pin Tumbler Mechanism yang kuat, tahan lama dan berkualitas. Dibuat dengan standardisasi Jerman. Dilengkapi dengan 3 buah kunci.',
-      sku: genSKU(),
+
       price: 40000,
       weight: 0.5,
       categoryId: kebutuhan_rumah.id,
@@ -854,7 +881,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Lilin Ulang Tahun 24 pcs',
       description:
         'Alfamart Lilin Ulang Tahun 24 pcs adalah lilin berukuran kecil dan warna-warni. Dibuat dari bahan yang membuatnya kuat dan tahan lama setelah dibakar dengan api. Lilin ulang tahun ini tidak mudah gosong dan tidak memberikan aroma bau tidak sedap. Dalam kemasannya, lilin ini juga sudah dilengkapi dengan alas lilin untuk ditancapkan pada kue tanpa merusak keindahannya. Tersedia dalam kemasan isi 24 pcs.',
-      sku: genSKU(),
+
       price: 15000,
       weight: 0.1,
       categoryId: kebutuhan_rumah.id,
@@ -867,7 +894,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Shamu Lampu Senter Rechargeable',
       description:
         'SHAMU Lampu Senter Rechargeable 4+1 LED merupakan lampu senter dengan LED terbaik yang dapat digunakan pada saat mati lampu hingga ketika berkemah dengan orang-orang terdekat. Senter dari Shamu ini memiliki lampu LED berkualitas sehingga menghasilkan nyala cahaya yang terang menyala dan juga jernih kurang lebih selama 40 jam.',
-      sku: genSKU(),
+
       price: 32000,
       weight: 0.2,
       categoryId: kebutuhan_rumah.id,
@@ -880,7 +907,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Kenmaster Steker Adaptor Listrik S0203',
       description:
         'Steker adaptor dengan lampu indikator. Seluruh komponen terbuat dari bahan kuningan. Ideal dipakai di dalam ruangan dan tempat yang kering. Tidak untuk dipergunakan pada produk bertegangan tinggi.',
-      sku: genSKU(),
+
       price: 21000,
       weight: 0.2,
       categoryId: kebutuhan_rumah.id,
@@ -893,7 +920,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       name: 'Kenmaster Kanebo Yellow 2 Pcs',
       description:
         'Lap kenebo Kenmaster dengan daya serap tinggi sehingga dapat membersihkan air, debu dan kotoran. Menyerap air tanpa menetes, tahan terhadap minyak, kotoran, deterjen ringan dan netral. Dapat digunakan untuk membersihkan kaca, lapisan krom, dan roda. Aman pada semua cat termasuk bahan mantel.',
-      sku: genSKU(),
+
       price: 52000,
       weight: 0.2,
       categoryId: kebutuhan_rumah.id,
@@ -910,7 +937,7 @@ async function SEED_PRODUCT(categories: Category[]) {
       data: {
         name: data.name,
         description: data.description,
-        sku: genSKU(),
+        sku: await genSKU(),
         price: data.price,
         weight: data.weight,
         categoryId: data.categoryId,
@@ -1073,8 +1100,6 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
   const productData = products.filter((product, idx) => {
     return idx % 10 <= 4;
   });
-  console.log(products.length);
-  console.log(productData.length);
 
   const s1 = stores[0];
 
@@ -1187,6 +1212,174 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
   }
 }
 
+async function SEED_STOCK(stores: Store[], products: Product[]) {
+  const randstock = (min: number = 10, max: number = 50) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  };
+
+  let inventories: Inventory[] = [];
+
+  products.forEach((product) => {
+    stores.forEach(async (store) => {
+      const stock =
+        product.name === 'Buah Naga Merah' || product.name === 'Bawang Bombay'
+          ? 0
+          : randstock();
+      const inventory = await prisma.inventory.create({
+        data: {
+          quantity: stock,
+          productId: product.id,
+          storeId: store.id,
+        },
+      });
+
+      inventories.push(inventory);
+    });
+  });
+
+  return inventories;
+}
+
+async function SEED_VOUCHER(
+  users: User[],
+  products: Product[],
+  categories: Category[],
+) {
+  const currentDate = new Date();
+  const nextMonth = add(currentDate, { months: 1 });
+
+  const genVoucherCode = async (type: VoucherType) => {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      let prefix = '';
+      switch (type) {
+        case 'REFERRAL':
+          prefix = 'VREF-';
+          break;
+        case 'SHIPPING':
+          prefix = 'ONGK-';
+          break;
+        case 'PRODUCT_SPECIFIC':
+          prefix = 'PROD-';
+          break;
+      }
+      const suffix = `-${currentDate.getFullYear()}`;
+      const middle = uuid().replace(/-/g, '').substring(0, 10).toUpperCase();
+      const code = `${prefix}${middle}${suffix}`;
+
+      const exist = await prisma.voucher.findUnique({
+        where: {
+          code: code,
+        },
+      });
+
+      if (!exist) {
+        return code;
+      }
+    }
+    throw new Error('Failed to generate a unique voucher code.');
+  };
+
+  const buahCategory = categories.find((category) => category.name === 'Buah');
+  const sayuranCategory = categories.find(
+    (category) => category.name === 'Sayuran',
+  );
+
+  const datas = [
+    {
+      name: 'Bonus Teman Baru 10K',
+      description:
+        'Ajak teman belanja dan dapatkan bonus Rp10.000 untuk pembelian pertama mereka. Berlaku untuk pembelian minimal Rp50.000.',
+      type: 'REFERRAL' as VoucherType,
+      valueType: 'FIXED_AMOUNT' as ValueType,
+      maxDiscount: null,
+      value: 10000,
+      minPurchase: 50000,
+      startDate: currentDate,
+      endDate: nextMonth,
+      isForShipping: false,
+    },
+    {
+      name: 'Segarnya Diskon Buah 10%!',
+      description:
+        'Nikmati kesegaran buah pilihan dengan diskon 10% hingga Rp20.000. Cocok untuk bekal, jus, atau camilan sehat!',
+      type: 'PRODUCT_SPECIFIC' as VoucherType,
+      valueType: 'PERCENTAGE' as ValueType,
+      maxDiscount: 20000,
+      value: 10,
+      minPurchase: 10000,
+      startDate: currentDate,
+      endDate: nextMonth,
+      isForShipping: false,
+      products: products.filter(
+        (product) => product.categoryId === buahCategory?.id,
+      ),
+    },
+    {
+      name: 'Diskon Sayur Rp5.000 Langsung!',
+      description:
+        'Belanja sayuran segar makin hemat dengan potongan langsung Rp5.000. Bahan dapur sehat, harga bersahabat!',
+      type: 'PRODUCT_SPECIFIC' as VoucherType,
+      valueType: 'FIXED_AMOUNT' as ValueType,
+      maxDiscount: null,
+      value: 5000,
+      minPurchase: 20000,
+      startDate: currentDate,
+      endDate: nextMonth,
+      isForShipping: false,
+      products: products.filter(
+        (product) => product.categoryId === sayuranCategory?.id,
+      ),
+    },
+    {
+      name: 'Gratis Ongkir Spesial',
+      description:
+        'Nikmati gratis ongkir 50% up to Rp40.000 untuk semua jenis pengiriman. Berlaku di seluruh Indonesia.',
+      type: 'SHIPPING' as VoucherType,
+      valueType: 'PERCENTAGE' as ValueType,
+      maxDiscount: 40000,
+      value: 50,
+      minPurchase: null,
+      startDate: currentDate,
+      endDate: nextMonth,
+      isForShipping: true,
+    },
+  ];
+
+  let vouchers: Voucher[] = [];
+  for (const data of datas) {
+    for (const user of users) {
+      const voucher = await prisma.voucher.create({
+        data: {
+          code: await genVoucherCode(data.type),
+          name: data.name,
+          description: data.description,
+          type: data.type,
+          valueType: data.valueType,
+          maxDiscount: data.maxDiscount,
+          value: data.value,
+          minPurchase: data.minPurchase,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          isForShipping: data.isForShipping,
+          products: {
+            connect: data.products ? data.products : [],
+          },
+          users: {
+            connect: [
+              {
+                id: user.id,
+              },
+            ],
+          },
+        },
+      });
+
+      vouchers.push(voucher);
+    }
+  }
+  return vouchers;
+}
+
 async function main() {
   ['.env', 'env.local'].forEach((envfile) =>
     config({ path: resolve(__dirname, `../${envfile}`), override: true }),
@@ -1200,6 +1393,8 @@ async function main() {
   const products = await SEED_PRODUCT(categories);
   const stores = await SEED_STORES(admins);
   const productDiscounts = await SEED_PRODUCT_DISCOUNT(products, stores);
+  const inventories = await SEED_STOCK(stores, products);
+  const vouchers = await SEED_VOUCHER(users, products, categories);
 }
 
 main()

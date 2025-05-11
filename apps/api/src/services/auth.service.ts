@@ -578,7 +578,7 @@ export class AuthService {
     switch (param.type) {
       case AuthEmailType.SignupConfirmation: {
         const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
+        const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
         const verifrecord = await prismaclient.verification.findMany({
@@ -641,7 +641,7 @@ export class AuthService {
         }
 
         const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
+        const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
         await prismaclient.verification.create({
@@ -684,7 +684,7 @@ export class AuthService {
 
         const uainfo = UAParser(session?.userAgent || '');
         const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
+        const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
         await prismaclient.verification.create({
@@ -737,7 +737,7 @@ export class AuthService {
         }
 
         const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
+        const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
         await prismaclient.verification.create({
@@ -788,7 +788,7 @@ export class AuthService {
         }
 
         const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
+        const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
         await prismaclient.verification.create({

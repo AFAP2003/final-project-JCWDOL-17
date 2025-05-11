@@ -5,12 +5,12 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CheckoutErrorType } from '@/hooks/useCheckout';
+import { CheckoutPrepareErrorType } from '@/context/checkout-provider/use-pre-checkout';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
 type Props = {
-  error: { type: CheckoutErrorType; description?: string } | null;
+  error: CheckoutPrepareErrorType | null;
 };
 
 export default function DialogInfo(props: Props) {
@@ -19,7 +19,9 @@ export default function DialogInfo(props: Props) {
 
   return (
     <>
-      <div style={{ height: 'calc(100vh - 220px)' }}></div>
+      {props.error !== null && (
+        <div style={{ height: 'calc(100vh - 220px)' }}></div>
+      )}
       <Dialog open={props.error !== null}>
         <DialogContent
           closeClass="hidden"
@@ -60,9 +62,7 @@ export default function DialogInfo(props: Props) {
 /*                              helper                              */
 /* ---------------------------------------------------------------- */
 
-function getDialogContent(
-  error: { type: CheckoutErrorType; description?: string } | null,
-): {
+function getDialogContent(error: CheckoutPrepareErrorType | null): {
   title: string;
   description: string;
   actionHref: string;
@@ -77,7 +77,7 @@ function getDialogContent(
     };
   }
 
-  switch (error.type) {
+  switch (error) {
     case 'NOT_LOGIN':
       return {
         title: 'Ups! Kamu belum login',
@@ -121,6 +121,15 @@ function getDialogContent(
           'Maaf, semua produk yang kamu pilih saat ini sudah habis. Silakan cek kembali nanti atau pilih produk lainnya.',
         actionHref: '/',
         actionLabel: 'Cari Produk Lain',
+      };
+
+    case 'NO_COURIER_AVAILABLE':
+      return {
+        title: 'Pengiriman Tidak Tersedia',
+        description:
+          'Maaf, saat ini tidak ada kurir yang dapat mengantarkan pesanan ke alamatmu. Kami terus berusaha memperluas jangkauan layanan kami.',
+        actionHref: '/',
+        actionLabel: 'Kembali Belanja',
       };
   }
 }

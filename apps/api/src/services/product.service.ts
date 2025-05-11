@@ -208,11 +208,9 @@ export class ProductService {
         discounts: Discount[];
       }
     >();
-    let resultCount = 0;
+    let resultCount = result.at(0)?.result_count || 0;
 
     for (const row of result) {
-      resultCount = row.result_count;
-
       if (!productsMap.has(row.id)) {
         productsMap.set(row.id, {
           id: row.id,
