@@ -1,4 +1,6 @@
 import { ProductGetAllDTO } from '@/dtos/product-get-all.dto';
+import { ProductGetByIdDTO } from '@/dtos/product-get-by-id.dto';
+import { InternalSeverError, NotFoundError } from '@/errors';
 import { currentDate } from '@/helpers/datetime';
 import { calculateMetadataPagination } from '@/helpers/pagination';
 import { prismaclient } from '@/prisma';
@@ -12,14 +14,28 @@ import {
 import { z } from 'zod';
 
 export class ProductService {
-  getAll = async (dto: z.infer<typeof ProductGetAllDTO>) => {
-    const searchterm = dto.query?.trim()
-      ? dto.query
-          .trim()
-          .split(/\s+/)
-          .map((term) => `${term}:*`)
-          .join(' & ')
-      : null;
+  getAll = async (
+    dto: z.infer<typeof ProductGetAllDTO>,
+    option?: {
+      excludeIds: string[];
+    },
+  ) => {
+    const searchterm = (() => {
+      const term = dto.query?.trim()
+        ? dto.query
+            .trim()
+            .split(/\s+/)
+            .map((term) => `${term}:*`)
+            .join(' & ')
+        : null;
+
+      return term
+        ? Prisma.sql`AND (
+            to_tsvector('simple', p."name") @@ to_tsquery('simple', ${term}) OR
+            to_tsvector('simple', p."description") @@ to_tsquery('simple', ${term})
+        )`
+        : Prisma.empty;
+    })();
 
     const orderBy = (() => {
       switch (dto.orderBy) {
@@ -36,30 +52,88 @@ export class ProductService {
       }
     })();
 
+    const filterPromo = (() => {
+      if (!dto.promo) {
+        return Prisma.sql`AND (
+          d."id" IS NULL OR (
+            d."isActive" = true AND
+            d."endDate" > ${currentDate()}
+          )
+        )`;
+      }
+
+      const promos = dto.promo.map((pr) => {
+        switch (pr) {
+          case 'bogo':
+            return Prisma.sql`d."type" = 'BUY_X_GET_Y'`;
+          case 'max-price':
+            return Prisma.sql`d."type" = 'WITH_MAX_PRICE'`;
+          case 'no-rules':
+            return Prisma.sql`d."type" = 'NO_RULES_DISCOUNT'`;
+        }
+      });
+
+      return Prisma.sql`AND ${Prisma.join(promos, ' OR ')} AND d."isActive" = true AND d."endDate" > ${currentDate()}`;
+    })();
+
+    const filterPrice = (() => {
+      if (!dto.price) return Prisma.empty;
+
+      const hasLowerBound = dto.price[0] > 0;
+      const hasUpperBound = dto.price[1] > 0;
+
+      const builder: Prisma.Sql[] = [];
+
+      if (hasLowerBound) {
+        builder.push(Prisma.sql`p."price" >= ${dto.price[0]}::DECIMAL`);
+      }
+
+      if (hasUpperBound) {
+        builder.push(Prisma.sql`p."price" <= ${dto.price[1]}::DECIMAL`);
+      }
+
+      if (!builder.length) {
+        return Prisma.empty;
+      }
+      return Prisma.sql`AND ${Prisma.join(builder, ' AND ')}`;
+    })();
+
+    const filterCategory = (() => {
+      if (!dto.category || dto.category.length <= 0) {
+        return Prisma.empty;
+      }
+
+      const builder: Prisma.Sql[] = [];
+      dto.category.forEach((name) => {
+        builder.push(Prisma.sql`c."name" = ${name}`);
+      });
+      return Prisma.sql`AND (${Prisma.join(builder, ' OR ')})`;
+    })();
+
+    const exclude = (() => {
+      if (!option?.excludeIds || option.excludeIds.length === 0) {
+        return Prisma.empty;
+      }
+
+      const ids = option.excludeIds.map((id) => Prisma.sql`${id}`);
+      return Prisma.sql`AND p."id" NOT IN (${Prisma.join(ids, ', ')})`;
+    })();
+
     const query = Prisma.sql`
       WITH filtered_products AS (
         SELECT p."id", p."createdAt", p."price"
         FROM "Product" p
         JOIN "Category" c ON p."categoryId" = c.id
-        LEFT JOIN "_ProductDiscount" pd ON pd."A" = p.id
-        LEFT JOIN "Discount" d ON d.id = pd."B"
+        LEFT JOIN "_ProductDiscount" pd ON pd."B" = p.id
+        LEFT JOIN "Discount" d ON d.id = pd."A"
         WHERE
-          p."isActive" = true AND
-          c."isActive" = true AND
-          (
-            d."id" IS NULL OR (
-              d."isActive" = true AND
-              d."endDate" > ${currentDate()}
-            )
-          )
-          ${
-            searchterm
-              ? Prisma.sql`AND (
-                  to_tsvector('simple', p."name") @@ to_tsquery('simple', ${searchterm}) OR
-                  to_tsvector('simple', p."description") @@ to_tsquery('simple', ${searchterm})
-              )`
-              : Prisma.empty
-          }
+          p."isActive" = true AND c."isActive" = true
+          ${searchterm}
+          ${filterPrice}
+          ${filterPromo}
+          ${filterCategory}
+          ${exclude}
+
       ),
       product_page AS (
         SELECT fp."id"
@@ -104,6 +178,7 @@ export class ProductService {
         d."description" AS "discount_description",
         d."type" AS "discount_type",
         d."value" AS "discount_value",
+        d."isPercentage" AS "discount_isPercentage",
         d."minPurchase" AS "discount_minPurchase",
         d."maxDiscount" AS "discount_maxDiscount",
         d."buyQuantity" AS "discount_buyQuantity",
@@ -119,8 +194,8 @@ export class ProductService {
       JOIN "Product" p ON p.id = pp.id
       JOIN "Category" c ON p."categoryId" = c.id
       LEFT JOIN "ProductImage" pi ON pi."productId" = p.id
-      LEFT JOIN "_ProductDiscount" pd ON pd."A" = p.id
-      LEFT JOIN "Discount" d ON d.id = pd."B"
+      LEFT JOIN "_ProductDiscount" pd ON pd."B" = p.id
+      LEFT JOIN "Discount" d ON d.id = pd."A"
       JOIN total_count tc ON true`;
 
     const result: any[] = await prismaclient.$queryRaw(query);
@@ -163,33 +238,50 @@ export class ProductService {
       }
 
       if (row.image_id) {
-        productsMap.get(row.id)!.images.push({
-          id: row.image_id,
-          productId: row.id,
-          imageUrl: row.image_url,
-          isMain: row.image_isMain,
-          createdAt: row.image_createdAt,
-        });
+        const product = productsMap.get(row.id);
+        if (!product) {
+          throw new InternalSeverError(`Missing product id ${row.id}`);
+        }
+
+        if (!product.images.some((image) => image.id === row.image_id)) {
+          productsMap.get(row.id)!.images.push({
+            id: row.image_id,
+            productId: row.id,
+            imageUrl: row.image_url,
+            isMain: row.image_isMain,
+            createdAt: row.image_createdAt,
+          });
+        }
       }
 
       if (row.discount_id) {
-        productsMap.get(row.id)!.discounts.push({
-          id: row.discount_id,
-          storeId: row.discount_storeId,
-          name: row.discount_name,
-          description: row.discount_description,
-          type: row.discount_type,
-          value: row.discount_value,
-          minPurchase: row.discount_minPurchase,
-          maxDiscount: row.discount_maxDiscount,
-          buyQuantity: row.discount_buyQuantity,
-          getQuantity: row.discount_getQuantity,
-          startDate: row.discount_startDate,
-          endDate: row.discount_endDate,
-          isActive: row.discount_isActive,
-          createdAt: row.discount_createdAt,
-          updatedAt: row.discount_updatedAt,
-        });
+        const product = productsMap.get(row.id);
+        if (!product) {
+          throw new InternalSeverError(`Missing product id ${row.id}`);
+        }
+
+        if (
+          !product.discounts.some((discount) => discount.id === row.discount_id)
+        ) {
+          productsMap.get(row.id)!.discounts.push({
+            id: row.discount_id,
+            storeId: row.discount_storeId,
+            name: row.discount_name,
+            description: row.discount_description,
+            type: row.discount_type,
+            value: row.discount_value,
+            isPercentage: row.discount_isPercentage,
+            minPurchase: row.discount_minPurchase,
+            maxDiscount: row.discount_maxDiscount,
+            buyQuantity: row.discount_buyQuantity,
+            getQuantity: row.discount_getQuantity,
+            startDate: row.discount_startDate,
+            endDate: row.discount_endDate,
+            isActive: row.discount_isActive,
+            createdAt: row.discount_createdAt,
+            updatedAt: row.discount_updatedAt,
+          });
+        }
       }
     }
 
@@ -203,5 +295,21 @@ export class ProductService {
       products: Array.from(productsMap.values()),
       metadata: metadata,
     };
+  };
+
+  getById = async (dto: z.infer<typeof ProductGetByIdDTO>) => {
+    const product = await prismaclient.product.findUnique({
+      where: {
+        id: dto.productId,
+      },
+      include: {
+        images: true,
+        category: true,
+        discounts: true,
+      },
+    });
+    if (!product) throw new NotFoundError();
+
+    return product;
   };
 }

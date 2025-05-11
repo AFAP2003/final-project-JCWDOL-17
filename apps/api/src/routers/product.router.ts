@@ -14,6 +14,11 @@ export class ProductRouter {
 
   private initializeRoutes(): void {
     this.router.get('/', asynchandler(this.controller.getAll));
+    this.router.get('/:productId', asynchandler(this.controller.getById));
+    this.router.get(
+      '/:productId/category/similar',
+      asynchandler(this.controller.getSimilarByCategory),
+    );
   }
 
   getRouter(): Router {

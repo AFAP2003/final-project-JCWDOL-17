@@ -52,13 +52,15 @@ export function CartButton({ className }: Props) {
                   {/* Icon container */}
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-600 transition-colors duration-200 group-hover:text-neutral-900-neutral-100">
                     {/* Status indicator */}
-                    <div
-                      className={cn(
-                        'absolute -right-4 -top-1.5 px-[6px] py-[2px] rounded-full border border-white text-[10px] font-mono bg-red-500 text-white',
-                      )}
-                    >
-                      {totalItems}
-                    </div>
+                    {session?.user && (
+                      <div
+                        className={cn(
+                          'absolute -right-4 -top-1.5 px-[6px] py-[2px] rounded-full border border-white text-[10px] font-mono bg-red-500 text-white',
+                        )}
+                      >
+                        {totalItems}
+                      </div>
+                    )}
                     {/* Bag icon - using the same size as Map */}
                     <ShoppingBag className="size-6" />
                   </div>
