@@ -31,8 +31,8 @@ export class AddressService {
       );
     }
 
-    const province = await this.locationService.provinceGetByName(dto.province);
-    const city = await this.locationService.cityGetByName(dto.city);
+    // const province = await this.locationService.provinceGetByName(dto.province);
+    // const city = await this.locationService.cityGetByName(dto.city);
 
     if (dto.isPrimary) {
       const oldDefault = await prismaclient.address.findUnique({
@@ -57,8 +57,8 @@ export class AddressService {
       data: {
         label: dto.label,
         address: dto.address,
-        province: province.provinceName,
-        city: city.cityName,
+        province: dto.province,
+        city: dto.city,
         postalCode: dto.postalCode,
         isDefault: dto.isPrimary ? true : null,
         latitude: dto.latitude,
@@ -105,8 +105,8 @@ export class AddressService {
       }
     }
 
-    const province = await this.locationService.provinceGetByName(dto.province);
-    const city = await this.locationService.cityGetByName(dto.city);
+    // const province = await this.locationService.provinceGetByName(dto.province);
+    // const city = await this.locationService.cityGetByName(dto.city);
 
     const updated = await prismaclient.address.update({
       where: {
@@ -116,8 +116,8 @@ export class AddressService {
       data: {
         label: dto.label,
         address: dto.address,
-        province: province.provinceName,
-        city: city.cityName,
+        province: dto.province,
+        city: dto.city,
         postalCode: dto.postalCode,
         isDefault: dto.isPrimary ? true : null,
         latitude: dto.latitude,
@@ -165,7 +165,8 @@ export class AddressService {
       a."updatedAt", a."userId"
     FROM "Address" as a
     WHERE
-      a."userId" = ${session.user.id} 
+      a."userId" = ${session.user.id} AND
+      a."isActive" = true
       ${searchterm}
     ORDER BY a."createdAt" DESC
     OFFSET ${(dto.page - 1) * dto.pageSize}
@@ -202,9 +203,12 @@ export class AddressService {
     });
     if (!address) throw new NotFoundError();
 
-    return await prismaclient.address.delete({
+    return await prismaclient.address.update({
       where: {
         id: address.id,
+      },
+      data: {
+        isActive: false,
       },
     });
   };

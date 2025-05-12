@@ -74,7 +74,10 @@ export default function DateOfBirthPicker(props: Props) {
             <SelectTrigger className="h-8 w-full rounded-md border-neutral-200 bg-neutral-50 text-neutral-800">
               <SelectValue placeholder="Month" />
             </SelectTrigger>
-            <SelectContent className="max-h-80 rounded-md bg-neutral-700 text-neutral-200 border-neutral-200">
+            <SelectContent
+              id="prevent-lenis"
+              className="max-h-80 rounded-md bg-neutral-700 text-neutral-200 border-neutral-200"
+            >
               {months.map((month, index) => (
                 <SelectItem key={month} value={index.toString()}>
                   {month}
@@ -90,6 +93,7 @@ export default function DateOfBirthPicker(props: Props) {
               <SelectValue placeholder="Year" />
             </SelectTrigger>
             <SelectContent
+              id="prevent-lenis"
               align="center"
               className="max-h-80 rounded-md bg-neutral-700 text-neutral-200 border-neutral-200"
             >

@@ -1,6 +1,7 @@
 import {
   Category,
   Inventory,
+  PrismaClient,
   Product,
   Store,
   User,
@@ -14,10 +15,10 @@ import { add } from 'date-fns/add';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { v4 as uuid } from 'uuid';
-import { prismaclient } from '../src/prisma';
 
+const prisma = new PrismaClient();
 const auth = betterAuth({
-  database: prismaAdapter(prismaclient, {
+  database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
 });
@@ -41,20 +42,14 @@ async function SEED_SUPER_ADMIN() {
     },
   });
 
-  const existingAccount = await prismaclient.account.findFirst({
-    where: { accountId: superadmin.id },
+  await prisma.account.create({
+    data: {
+      accountId: superadmin.id,
+      userId: superadmin.id,
+      providerId: 'credential',
+      password: await ctx.password.hash(superpassword),
+    },
   });
-
-  if (!existingAccount) {
-    await prismaclient.account.create({
-      data: {
-        accountId: superadmin.id,
-        userId: superadmin.id,
-        providerId: 'credential',
-        password: await ctx.password.hash(superpassword),
-      },
-    });
-  }
 
   return { superId: superadmin.id };
 }
@@ -99,7 +94,7 @@ async function SEED_STORE_ADMIN() {
 
   const admins: User[] = [];
   for (const data of datas) {
-    const admin = await prismaclient.user.create({
+    const admin = await prisma.user.create({
       data: {
         email: data.email,
         emailVerified: true,
@@ -110,7 +105,7 @@ async function SEED_STORE_ADMIN() {
         },
       },
     });
-    await prismaclient.account.create({
+    await prisma.account.create({
       data: {
         accountId: admin.id,
         userId: admin.id,
@@ -122,49 +117,6 @@ async function SEED_STORE_ADMIN() {
   }
 
   return admins;
-}
-
-async function SEED_SHIPPING_METHODS() {
-  const shippingMethods = [
-    {
-      name: 'JNE Regular (REG)',
-      description: 'Estimasi pengiriman 2-3 hari',
-      baseCost: 15000,
-      isActive: true,
-    },
-    {
-      name: 'JNE Express (YES)',
-      description: 'Estimasi pengiriman 1 hari',
-      baseCost: 25000,
-      isActive: true,
-    },
-    {
-      name: 'TIKI Regular',
-      description: 'Estimasi pengiriman 3-4 hari',
-      baseCost: 12000,
-      isActive: true,
-    },
-    {
-      name: 'POS Indonesia Standard',
-      description: 'Estimasi pengiriman 3-5 hari',
-      baseCost: 10000,
-      isActive: true,
-    },
-  ];
-
-  console.log('Seeding shipping methods...');
-
-  await prismaclient.shippingMethod.deleteMany({});
-
-  for (const method of shippingMethods) {
-    await prismaclient.shippingMethod.create({
-      data: method,
-    });
-  }
-
-  console.log(`Created ${shippingMethods.length} shipping methods`);
-
-  return await prismaclient.shippingMethod.findMany();
 }
 
 async function SEED_USER() {
@@ -198,7 +150,7 @@ async function SEED_USER() {
 
   const users: User[] = [];
   for (const data of datas) {
-    const user = await prismaclient.user.create({
+    const user = await prisma.user.create({
       data: {
         email: data.email,
         emailVerified: true,
@@ -210,7 +162,7 @@ async function SEED_USER() {
         referralCode: await genReffCode(),
       },
     });
-    await prismaclient.account.create({
+    await prisma.account.create({
       data: {
         accountId: user.id,
         userId: user.id,
@@ -280,7 +232,7 @@ async function SEED_PRODUCT_CATEGORY() {
 
   let result: Category[] = [];
   for (const data of datas) {
-    const category = await prismaclient.category.create({
+    const category = await prisma.category.create({
       data: {
         name: data.name,
         image: data.image,
@@ -981,7 +933,7 @@ async function SEED_PRODUCT(categories: Category[]) {
 
   let result: Product[] = [];
   for (const data of datas) {
-    const product = await prismaclient.product.create({
+    const product = await prisma.product.create({
       data: {
         name: data.name,
         description: data.description,
@@ -993,7 +945,7 @@ async function SEED_PRODUCT(categories: Category[]) {
     });
 
     if (data.images.length) {
-      await prismaclient.productImage.createMany({
+      await prisma.productImage.createMany({
         data: data.images.map((imgurl, idx) => {
           return {
             imageUrl: imgurl,
@@ -1119,7 +1071,7 @@ async function SEED_STORES(admins: User[]) {
     const store = stores[i];
     const admin = admins[i];
 
-    const newstore = await prismaclient.store.create({
+    const newstore = await prisma.store.create({
       data: {
         name: store.name,
         address: store.address,
@@ -1156,7 +1108,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
     switch (x) {
       // untuk produk ke 1 dari masing-masing kategori insert buy 1 get one
       case 0:
-        await prismaclient.discount.create({
+        await prisma.discount.create({
           data: {
             name: 'Buy One Get One',
             description:
@@ -1176,7 +1128,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
 
       // untuk produk ke 2 dan 3 masing2 kategori insert promo bersyarat
       case 1:
-        await prismaclient.discount.create({
+        await prisma.discount.create({
           data: {
             name: 'Big Deal 10k',
             description:
@@ -1197,7 +1149,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
         break;
 
       case 2:
-        await prismaclient.discount.create({
+        await prisma.discount.create({
           data: {
             name: 'Big Deal 20k',
             description:
@@ -1218,7 +1170,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
 
       // untuk produk 4 dan 5 NO RULES DISCOUNT
       case 3:
-        await prismaclient.discount.create({
+        await prisma.discount.create({
           data: {
             name: 'Hemat 6k',
             description:
@@ -1239,7 +1191,7 @@ async function SEED_PRODUCT_DISCOUNT(products: Product[], stores: Store[]) {
 
       case 4:
         if (productData[i].price.gte(20000)) {
-          await prismaclient.discount.create({
+          await prisma.discount.create({
             data: {
               name: 'Hemat 5k',
               description:
@@ -1428,6 +1380,49 @@ async function SEED_VOUCHER(
   return vouchers;
 }
 
+async function SEED_SHIPPING_METHODS() {
+  const shippingMethods = [
+    {
+      name: 'JNE Regular (REG)',
+      description: 'Estimasi pengiriman 2-3 hari',
+      baseCost: 15000,
+      isActive: true,
+    },
+    {
+      name: 'JNE Express (YES)',
+      description: 'Estimasi pengiriman 1 hari',
+      baseCost: 25000,
+      isActive: true,
+    },
+    {
+      name: 'TIKI Regular',
+      description: 'Estimasi pengiriman 3-4 hari',
+      baseCost: 12000,
+      isActive: true,
+    },
+    {
+      name: 'POS Indonesia Standard',
+      description: 'Estimasi pengiriman 3-5 hari',
+      baseCost: 10000,
+      isActive: true,
+    },
+  ];
+
+  console.log('Seeding shipping methods...');
+
+  await prisma.shippingMethod.deleteMany({});
+
+  for (const method of shippingMethods) {
+    await prisma.shippingMethod.create({
+      data: method,
+    });
+  }
+
+  console.log(`Created ${shippingMethods.length} shipping methods`);
+
+  return await prisma.shippingMethod.findMany();
+}
+
 async function main() {
   ['.env', 'env.local'].forEach((envfile) =>
     config({ path: resolve(__dirname, `../${envfile}`), override: true }),
@@ -1443,6 +1438,7 @@ async function main() {
   const productDiscounts = await SEED_PRODUCT_DISCOUNT(products, stores);
   const inventories = await SEED_STOCK(stores, products);
   const vouchers = await SEED_VOUCHER(users, products, categories);
+  const shippingMethods = await SEED_SHIPPING_METHODS();
 }
 
 main()
@@ -1451,5 +1447,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prismaclient.$disconnect();
+    await prisma.$disconnect();
   });

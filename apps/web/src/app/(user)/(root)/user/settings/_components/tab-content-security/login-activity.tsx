@@ -13,6 +13,7 @@ import { Lightbulb } from 'lucide-react';
 import { useState } from 'react';
 import EmailVerification from '../email-verification';
 import SectionHeading from '../section-heading';
+import LoginActivitySkeleton from './login-activiy-skeleton';
 
 type Props = {
   current: Session | null;
@@ -23,7 +24,11 @@ export default function LoginActivity({ current }: Props) {
   const { cooldownTime, rawCooldownTime, restartCooldown } = useCooldown(120);
 
   // TODO: handle errror
-  const { data: sessions, refetch: refetchSession } = useQuery({
+  const {
+    data: sessions,
+    refetch: refetchSession,
+    isPending,
+  } = useQuery({
     queryKey: ['user/settings', 'list-session'],
     queryFn: async () => {
       const { data } = await apiclient.get('/auth/sessions');
@@ -98,6 +103,10 @@ export default function LoginActivity({ current }: Props) {
       await refetchSession();
     },
   });
+
+  if (isPending) {
+    return <LoginActivitySkeleton />;
+  }
 
   return (
     <>

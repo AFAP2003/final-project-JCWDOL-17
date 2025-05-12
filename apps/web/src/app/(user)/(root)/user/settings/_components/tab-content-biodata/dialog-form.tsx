@@ -74,12 +74,16 @@ const FormSchema = z.object({
 
   gender: z.enum(['MALE', 'FEMALE']).optional(),
 
-  // email: z.string().email('Invalid email format'),
-
   phone: z
     .string()
+    .trim()
+    .transform((val) => {
+      if (val === '') return undefined;
+      return val;
+    })
     .refine(
       (value) => {
+        if (!value) return true;
         // Remove spaces, dashes, etc.
         const sanitized = value.replace(/[\s-]/g, '');
         const phoneRX = /^(?:\+62|0)[2-9]{1}[0-9]{7,11}$/;
@@ -156,6 +160,7 @@ export default function DialogForm(props: Props) {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       name: '',
+      phone: '',
     },
   });
 
@@ -165,9 +170,12 @@ export default function DialogForm(props: Props) {
     }
     if (open === true) {
       form.setValue('name', props.user.name);
-      form.setValue('dateOfBirth', props.user.dateOfBirth as unknown as Date);
-      form.setValue('gender', props.user.gender);
-      form.setValue('phone', props.user.phone);
+      form.setValue(
+        'dateOfBirth',
+        (props.user.dateOfBirth as unknown as Date) || undefined,
+      );
+      form.setValue('gender', props.user.gender || undefined);
+      form.setValue('phone', props.user.phone || undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, form]);

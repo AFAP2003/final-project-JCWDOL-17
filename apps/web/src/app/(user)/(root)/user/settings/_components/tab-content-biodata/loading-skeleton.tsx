@@ -1,28 +1,18 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { useSession } from '@/lib/auth/client';
-import { format } from 'date-fns';
-import { redirect } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 import SectionHeading from '../section-heading';
-import DialogForm from './dialog-form';
-import LoadingSkeleton from './loading-skeleton';
-import Profile from './profile';
 
-export default function TabContentBiodata() {
-  const { data, isPending, refetch } = useSession();
-
-  if (isPending) return <LoadingSkeleton />;
-  if (!data) redirect('/auth/signin');
-
-  const { user } = data;
-
+export default function LoadingSkeleton() {
   return (
     <Card className="p-6">
       <div className="flex max-lg:flex-col gap-12 w-full text-neutral-700 rounded-lg">
         {/* Left Content */}
         <div className="p-6 border rounded-lg shadow-sm bg-neutral-50 text-neutral-200 flex flex-col items-center h-fit">
-          <Profile user={user} refetchSession={refetch} />
+          <Skeleton className="h-[240px] w-[240px] mb-6" />
+          <Skeleton className="w-[240px] h-[32px] mb-6" />
+          <Skeleton className="w-[240px] h-[40px]" />
         </div>
 
         {/* Right Content */}
@@ -30,23 +20,17 @@ export default function TabContentBiodata() {
           <div className="mb-12">
             <SectionHeading>Personal Information</SectionHeading>
             <div className="bg-neutral-50 rounded-lg p-6 border shadow-sm">
-              <div className="text-sm grid grid-cols-[30%_70%] w-full gap-y-6">
+              <div className="text-sm grid grid-cols-[30%_70%] w-full gap-y-9">
                 {/* Bio */}
                 <div className="text-neutral-500 font-medium flex w-full items-center">
                   Full Name
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-medium">
-                    {user.name || 'Not provided'}
+                    <Skeleton className="w-[140px] h-[20px]" />
                   </span>
 
-                  <DialogForm
-                    user={user}
-                    refetchSession={refetch}
-                    label="Edit First Name"
-                    field="name"
-                    inputType="STRING"
-                  />
+                  <Skeleton className="w-[20px] h-[20px]" />
                 </div>
 
                 <div className="text-neutral-500 font-medium flex w-full items-center">
@@ -54,17 +38,9 @@ export default function TabContentBiodata() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-medium">
-                    {user.dateOfBirth
-                      ? format(user.dateOfBirth, 'MMMM d, yyyy')
-                      : 'Not Provided'}
+                    <Skeleton className="w-[140px] h-[20px]" />
                   </span>
-                  <DialogForm
-                    user={user}
-                    refetchSession={refetch}
-                    label="Edit Date Of Birth"
-                    field="dateOfBirth"
-                    inputType="DATE"
-                  />
+                  <Skeleton className="w-[20px] h-[20px]" />
                 </div>
 
                 <div className="text-neutral-500 font-medium flex w-full items-center">
@@ -72,17 +48,9 @@ export default function TabContentBiodata() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-medium">
-                    {user.gender || 'Not Provided'}
+                    <Skeleton className="w-[140px] h-[20px]" />
                   </span>
-                  <DialogForm
-                    user={user}
-                    refetchSession={refetch}
-                    label="Edit Gender"
-                    field="gender"
-                    inputType="RADIO"
-                    values={['MALE', 'FEMALE']}
-                    default="MALE"
-                  />
+                  <Skeleton className="w-[20px] h-[20px]" />
                 </div>
               </div>
             </div>
@@ -91,14 +59,13 @@ export default function TabContentBiodata() {
           <div>
             <SectionHeading>Contact Information</SectionHeading>
             <div className="bg-neutral-50 rounded-lg p-6 border shadow-sm">
-              <div className="text-sm grid grid-cols-[30%_70%] w-full gap-y-6">
-                {/* Contact Field */}
+              <div className="text-sm grid grid-cols-[30%_70%] w-full gap-y-9">
                 <div className="text-neutral-500 font-medium flex w-full items-center">
                   Email
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium line-clamp-1">
-                    {user.email || 'Not provided'}
+                  <span className="font-medium">
+                    <Skeleton className="w-[140px] h-[20px]" />
                   </span>
                 </div>
 
@@ -107,15 +74,9 @@ export default function TabContentBiodata() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-medium">
-                    {user.phone || 'Not Provided'}
+                    <Skeleton className="w-[140px] h-[20px]" />
                   </span>
-                  <DialogForm
-                    user={user}
-                    refetchSession={refetch}
-                    label="Edit Phone"
-                    field="phone"
-                    inputType="STRING"
-                  />
+                  <Skeleton className="w-[20px] h-[20px]" />
                 </div>
               </div>
             </div>
