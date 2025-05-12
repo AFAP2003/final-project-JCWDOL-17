@@ -45,7 +45,7 @@ export default function SearchBox() {
             setQuery(e.target.value);
           }}
           placeholder="Search for product..."
-          className="w-full border-t-0 border-x-0 focus-visible:ring-0 bg-neutral-50 shadow-none border-neutral-500 rounded-none pl-12"
+          className="w-full border-t-0 border-x-0 focus-visible:ring-0 bg-neutral-50 shadow-none border-neutral-500 rounded-none pl-12 text-sm sm:text-sm"
         />
       </div>
 

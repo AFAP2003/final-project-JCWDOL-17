@@ -9,7 +9,8 @@ const envs = ['.env', 'env.local'];
     config({ path: resolve(__dirname, `../${envfile}`), override: true }),
   );
 })();
-
+export const RAJA_ONGKIR_STARTER_API =
+  process.env.RAJA_ONGKIR_STARTER_API || '';
 export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const BASE_FRONTEND_URL = process.env.BASE_FRONTEND_URL || '';
 export const BASE_API_URL = process.env.BASE_API_URL || '';

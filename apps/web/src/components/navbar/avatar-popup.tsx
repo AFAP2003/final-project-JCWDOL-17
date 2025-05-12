@@ -36,11 +36,11 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
               src={user.image || '/placeholder.svg'}
               alt={`${user.name}'s profile`}
             />
-            <AvatarFallback className="bg-neutral-100 text-neutral-700   font-medium">
+            <AvatarFallback className="bg-neutral-100 text-neutral-700 font-medium">
               {`${user.name.at(0)?.toUpperCase()}`}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium text-neutral-700  hidden sm:block">
+          <span className="text-sm font-medium text-neutral-700 hidden lg:block">
             {user.name.split(' ').at(0)}
           </span>
         </button>

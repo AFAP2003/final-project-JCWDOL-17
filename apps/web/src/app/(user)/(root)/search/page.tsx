@@ -1,3 +1,6 @@
+import MaxWidthWrapper from '@/components/max-width-wrapper';
+import Filter from './_components/filter';
+
 type Props = {
   searchParams: {
     query?: string;
@@ -9,6 +12,15 @@ type Props = {
 };
 
 export default function SearchPage({ searchParams }: Props) {
-  console.log({ searchParams });
-  return <div>SearchPage </div>;
+  return (
+    <MaxWidthWrapper>
+      <div>
+        <Filter
+          category={searchParams.category}
+          price={searchParams.price}
+          promo={searchParams.promo}
+        />
+      </div>
+    </MaxWidthWrapper>
+  );
 }
