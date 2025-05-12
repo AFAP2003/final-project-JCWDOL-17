@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -18,13 +17,6 @@ import CategorySalesChart from './_components/categorySalesChart';
 import ProductSalesChart from './_components/productSalesChart';
 import StockReport from './_components/stockReport';
 
-import AllSalesChart from './_components/allSalesChart';
-import CategorySalesChart from './_components/categorySalesChart';
-import ProductSalesChart from './_components/productSalesChart';
-import StockReport from './_components/stockReport';
-
-export default function Page() {
-  const [activeTab, setActiveTab] = useState<'all'|'category'|'product'|'stock'>('all');
 export default function Page() {
   const [activeTab, setActiveTab] = useState<'all'|'category'|'product'|'stock'>('all');
   const [selectedYear, setSelectedYear] = useState('2025');
@@ -36,23 +28,15 @@ export default function Page() {
     onResize();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-    const onResize = () => setIsSmallScreen(window.innerWidth < 640);
-    onResize();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   return (
     <div className="w-full p-6 sm:p-0">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-4">
         {/* Tab navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-4">
-        {/* Tab navigation */}
         <div className="mb-4">
           {/* small‐screen dropdown */}
-          {/* small‐screen dropdown */}
           <div className="block sm:hidden mb-2">
-            <Select defaultValue={activeTab} onValueChange={setActiveTab}>
             <Select defaultValue={activeTab} onValueChange={setActiveTab}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih Laporan" />
@@ -64,22 +48,13 @@ export default function Page() {
                   <SelectItem value="category">Per Kategori</SelectItem>
                   <SelectItem value="product">Per Produk</SelectItem>
                   <SelectItem value="stock">Stok</SelectItem>
-                  <SelectItem value="all">Penjualan Keseluruhan</SelectItem>
-                  <SelectItem value="category">Per Kategori</SelectItem>
-                  <SelectItem value="product">Per Produk</SelectItem>
-                  <SelectItem value="stock">Stok</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
           </div>
           {/* large‐screen tabs */}
-          {/* large‐screen tabs */}
           <div className="hidden sm:flex">
             <TabsList className="w-full">
-              <TabsTrigger value="all" className="flex-1">Penjualan Keseluruhan</TabsTrigger>
-              <TabsTrigger value="category" className="flex-1">Per Kategori</TabsTrigger>
-              <TabsTrigger value="product" className="flex-1">Per Produk</TabsTrigger>
-              <TabsTrigger value="stock" className="flex-1">Stok</TabsTrigger>
               <TabsTrigger value="all" className="flex-1">Penjualan Keseluruhan</TabsTrigger>
               <TabsTrigger value="category" className="flex-1">Per Kategori</TabsTrigger>
               <TabsTrigger value="product" className="flex-1">Per Produk</TabsTrigger>
@@ -94,22 +69,8 @@ export default function Page() {
             year={selectedYear}
             onYearChange={setSelectedYear}
           />
-        {/* ----------- CONTENT PANES ----------- */}
-        <TabsContent value="all">
-          <AllSalesChart
-            year={selectedYear}
-            onYearChange={setSelectedYear}
-          />
         </TabsContent>
 
-        <TabsContent value="category">
-          <CategorySalesChart
-            month={selectedMonth}
-            year={selectedYear}
-            onMonthChange={setSelectedMonth}
-            onYearChange={setSelectedYear}
-            isSmall={isSmallScreen}
-          />
         <TabsContent value="category">
           <CategorySalesChart
             month={selectedMonth}
@@ -127,22 +88,8 @@ export default function Page() {
             onMonthChange={setSelectedMonth}
             onYearChange={setSelectedYear}
           />
-        <TabsContent value="product">
-          <ProductSalesChart
-            month={selectedMonth}
-            year={selectedYear}
-            onMonthChange={setSelectedMonth}
-            onYearChange={setSelectedYear}
-          />
         </TabsContent>
 
-        <TabsContent value="stock">
-          <StockReport
-            month={selectedMonth}
-            year={selectedYear}
-            onMonthChange={setSelectedMonth}
-            onYearChange={setSelectedYear}
-          />
         <TabsContent value="stock">
           <StockReport
             month={selectedMonth}

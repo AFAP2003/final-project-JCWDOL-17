@@ -11,13 +11,23 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
-import * as Yup from 'yup';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { MoreHorizontal } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useFormik } from 'formik';
@@ -42,7 +52,7 @@ export default function UseDiscountManagement() {
   const [editingDiscountId, setEditingDiscountId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
-
+  const [isDetailMode,setIsDetailMode] = useState(false)
 
  const fetchDiscounts = useCallback(
      (pageIndex: number, pageSize: number) => {
@@ -174,9 +184,10 @@ const columns: ColumnDef<Discount>[] = [
     header: 'Aksi',
     cell: ({ row }) => {
       const discount = row.original;
+      const [isAlertOpen, setIsAlertOpen] = useState(false);
 
       return (
-      
+      <>
       <DropdownMenu>
         <DropdownMenuTrigger>
           <MoreHorizontal />
@@ -206,16 +217,66 @@ const columns: ColumnDef<Discount>[] = [
           }}>
             Edit
           </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
+          <DropdownMenuCheckboxItem onCheckedChange={() => {
+                                         setIsEditMode(false)
+                                         setIsDetailMode(true)
+                                         formik.setValues({
+                                          nama: discount.name,
+                                          deskripsi: discount.description,
+                                          toko: discount.storeId ?? 'all',
+                                          tipe_diskon:
+                                            discount.type === 'NO_RULES_DISCOUNT' ? 'diskon_normal' :
+                                            discount.type === 'WITH_MAX_PRICE'  ? 'diskon_syarat' :
+                                            discount.type === 'BUY_X_GET_Y'      ? 'bogo' :
+                                            '',
+                                          tipe_nilai_diskon: discount.isPercentage ? 'percentage' : 'nominal',
+                                          nilai_diskon: String(discount.value),
+                                          min_pembelian: String(discount.minPurchase ?? ''),
+                                          potongan_maks: String(discount.maxDiscount ?? ''),
+                                          // ensure dates are YYYY-MM-DD for your <input type="date">
+                                          tanggal_mulai:  discount.startDate.split('T')[0],
+                                          kadaluwarsa:    discount.endDate?.split('T')[0] ?? '',
+                                        });
+                         
+                                         setDialogOpen(true)
+                                       }}>
+                                         Lihat Detail
+                                       </DropdownMenuCheckboxItem>
+         <DropdownMenuCheckboxItem 
             className="text-red-600"
-            onClick={() => {
-              handleDeleteDiscount(discount.id)
+            onCheckedChange={(checked) => {
+              if (checked) {
+                // Close dropdown and open alert manually
+                setTimeout(() => setIsAlertOpen(true), 100);
+              }
             }}
           >
             Delete
           </DropdownMenuCheckboxItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Akan menghapus user "{discount.name}" secara permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={ () => {
+                handleDeleteDiscount(discount.id);
+                
+              }}
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      </>
     )}
   },
 ];
@@ -353,6 +414,8 @@ const columns: ColumnDef<Discount>[] = [
     handleTypeFilter,
     handleTypeValueFilter,
     setIsEditMode,
-    setEditingDiscountId
+    setEditingDiscountId,
+    isDetailMode,
+    setIsDetailMode
   };
 }

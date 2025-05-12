@@ -1,17 +1,10 @@
 'use client';
-'use client';
 
 import { toast } from '@/hooks/use-toast';
 import { API_BASE_URL } from '@/lib/constant';
 import { Inventory } from '@/lib/interfaces/inventoryManagement.interface';
 import { useState } from 'react';
-import { API_BASE_URL } from '@/lib/constant';
-import { Inventory } from '@/lib/interfaces/inventoryManagement.interface';
-import { useState } from 'react';
 
-export function inventoryManagementAPI() {
-  const [inventories, setInventories] = useState<Inventory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 export function inventoryManagementAPI() {
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,32 +13,7 @@ export function inventoryManagementAPI() {
     setIsLoading(true);
     try {
       const page = pageIndex + 1;
-  const fetchInventories = async (pageIndex: number, pageSize: number) => {
-    setIsLoading(true);
-    try {
-      const page = pageIndex + 1;
 
-      const inventoryRes = await fetch(
-        `${API_BASE_URL}/dashboard/inventories?page=${page}&take=${pageSize}`,
-      );
-      const inventoryData = await inventoryRes.json();
-
-      if (inventoryRes.ok) {
-        setInventories(inventoryData.data);
-        console.log('Inventories fetched successfully: ', inventoryData);
-        return inventoryData;
-      } else {
-        console.error(
-          'Failed to fetch Inventories:',
-          inventoryData.message || 'Unknown Error',
-        );
-      }
-    } catch (error) {
-      console.log('Error fetching data: ', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
       const inventoryRes = await fetch(
         `${API_BASE_URL}/dashboard/inventories?page=${page}&take=${pageSize}`,
       );
@@ -219,4 +187,3 @@ export function inventoryManagementAPI() {
     handleDeleteInventory,
   };
 }
-

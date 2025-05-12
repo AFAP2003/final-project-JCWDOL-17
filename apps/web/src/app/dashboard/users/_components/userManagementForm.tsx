@@ -39,6 +39,8 @@ interface UserManagementFormProps {
   setPreviews: (any: any) => any[];
   mainIndex: number;
   setMainIndex: (index: number) => void;
+  isDetailMode:boolean
+  setIsDetailMode:(detail:boolean)=>void
 }
 
 export default function UserManagementForm({
@@ -52,7 +54,9 @@ export default function UserManagementForm({
   previews,
   setPreviews,
   mainIndex,
-  setMainIndex
+  setMainIndex,
+  isDetailMode,
+  setIsDetailMode
 }: UserManagementFormProps) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,12 +69,7 @@ export default function UserManagementForm({
     setMainIndex(0);
   };
 
-  const handleRemove = (index: number) => {
-    setPreviews([]);
-    formik.setFieldValue('image', []);
-    formik.setFieldValue('keptImages', []);
-    setMainIndex(0);
-  };
+  
   
   const [showPassword, setShowPassword] = useState(false);
   const handleGeneratePassword = () => {
@@ -80,6 +79,7 @@ export default function UserManagementForm({
       navigator.clipboard.writeText(pwd);
     } catch (_) {}
   };
+  const disabled=isDetailMode
   return (
     <Dialog
       open={dialogOpen}
@@ -90,10 +90,12 @@ export default function UserManagementForm({
           formik.resetForm();
           setPreviews([]);
           setMainIndex(0);
+          setIsDetailMode(false)
         }
 
         if (!open) {
           setIsEditMode(false);
+          setIsDetailMode(false)
           setEditingUserId(null);
           setPreviews([]);
           setMainIndex(0);
@@ -108,10 +110,12 @@ export default function UserManagementForm({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? 'Edit User' : 'Tambah User Baru'}
+          <DialogTitle >
+            {isDetailMode?'Lihat Detail User':isEditMode ? 'Edit User' : 'Tambah User Baru'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription
+           className={`${disabled?'hidden':'block'}`}
+          >
             {isEditMode
               ? 'Tolong isi detail di bawah ini untuk edit user.'
               : 'Tolong isi detail di bawah ini untuk tambah user baru.'}
@@ -127,6 +131,7 @@ export default function UserManagementForm({
               type="file"
               accept=".jpg,.jpeg,.png,.gif"
              onChange={handleFileChange}
+             disabled={disabled}
             />
             {formik.touched.foto && formik.errors.foto && (
               <p className="text-xs text-red-600">{formik.errors.foto}</p>
@@ -168,6 +173,8 @@ export default function UserManagementForm({
               value={formik.values.nama}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              disabled={disabled}
+
             />
             {formik.touched.nama && formik.errors.nama && (
               <p className="text-xs text-red-600">{formik.errors.nama}</p>
@@ -189,6 +196,8 @@ export default function UserManagementForm({
               value={formik.values.email}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              disabled={disabled}
+
             />
             {formik.touched.email && formik.errors.email && (
               <p className="text-xs text-red-600">{formik.errors.email}</p>
@@ -199,7 +208,7 @@ export default function UserManagementForm({
             <div className="flex justify-between">
               <label
                 htmlFor="password"
-                className="text-sm font-medium text-gray-700"
+                className={`${isDetailMode?'hidden':'block'} text-sm font-medium text-gray-700`}
               >
                 Password
               </label>
@@ -207,9 +216,10 @@ export default function UserManagementForm({
                 type="button"
                 size="sm"
                 variant="secondary"
-                className="  h-7 px-2 "
+                className={`${isDetailMode?'hidden':"block"}  h-7 px-2 `}
                 onClick={handleGeneratePassword}
                 title="Generate & copy password"
+                disabled={disabled}
               >
                 <RefreshCw className="h-3 w-3 mr-1" />
                 Buat Password
@@ -224,13 +234,16 @@ export default function UserManagementForm({
                 value={formik.values.password}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
+                disabled={disabled}
+                className={isDetailMode?'hidden':'block'}
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
+                disabled={disabled}
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute bottom-1 right-1 h-7 w-7"
+                className= {`${isDetailMode?'hidden':'block'} absolute bottom-1 right-1 h-7 w-7`}
                 title={showPassword ? 'Sembunyikan' : 'Lihat password'}
               >
                 {showPassword ? (
@@ -275,6 +288,8 @@ export default function UserManagementForm({
             <Select
               onValueChange={(value) => formik.setFieldValue('toko', value)}
               value={formik.values.toko}
+              disabled={disabled}
+
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih Toko" />
@@ -302,6 +317,8 @@ export default function UserManagementForm({
             <Select
               onValueChange={(value) => formik.setFieldValue('role', value)}
               value={formik.values.role}
+              disabled={disabled}
+
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih Role" />
@@ -321,7 +338,7 @@ export default function UserManagementForm({
           <DialogFooter>
             <Button
               variant="outline"
-              className="mt-2 sm:mt-0"
+              className={`${disabled?'hidden':'block'} mt-2 sm:mt-0`}
               onClick={() => {
                 formik.resetForm();
                 setDialogOpen(false);
@@ -330,7 +347,7 @@ export default function UserManagementForm({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={formik.isSubmitting}>
+            <Button className={`${disabled?'hidden':'block'}`} type="submit" disabled={formik.isSubmitting}>
 
               {isEditMode ? 'Simpan Perubahan' : 'Tambah User'}
             </Button>

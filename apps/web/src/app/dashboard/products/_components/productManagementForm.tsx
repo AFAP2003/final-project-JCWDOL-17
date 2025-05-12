@@ -36,6 +36,8 @@ interface ProductManagementFormProps {
   setPreviews: (any: any) => any[];
   mainIndex: number;
   setMainIndex: (index: number) => void;
+  isDetailMode:boolean
+  setIsDetailMode:(detail:boolean)=>void
 }
 export default function ProductManagementForm({
   formik,
@@ -48,7 +50,9 @@ export default function ProductManagementForm({
   previews,
   setPreviews,
   mainIndex,
-  setMainIndex
+  setMainIndex,
+  isDetailMode,
+  setIsDetailMode
 }: ProductManagementFormProps) {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const selectedFiles = Array.from(e.currentTarget.files || []);
@@ -91,6 +95,7 @@ export default function ProductManagementForm({
       else if (index < mainIndex) setMainIndex((prev) => prev - 1);
     };
     
+    const disabled = isDetailMode
     
   return (
      <Dialog
@@ -101,6 +106,7 @@ export default function ProductManagementForm({
       formik.resetForm();
       setPreviews([]);
       setMainIndex(0);
+      setIsDetailMode(false)
     }
 
     // when closing, clear edit state
@@ -109,6 +115,7 @@ export default function ProductManagementForm({
        setEditingProductId(null);
        setPreviews([]);
        setMainIndex(0);
+       setIsDetailMode(false)
      }
 
     setDialogOpen(open);
@@ -117,14 +124,14 @@ export default function ProductManagementForm({
       <DialogTrigger asChild>
         <Button className="w-[150px]">
           <Plus className="w-4 h-4 mr-1" />
-          {isEditMode ? 'Edit Produk' : 'Tambah Produk'}
+          {isDetailMode?'Lihat Produk':isEditMode ? 'Edit Produk' : 'Tambah Produk'}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="max-h-[90vh] sm:max-h-full overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditMode?'Edit Produk':'Tambah Produk Baru'}</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className={isDetailMode?'hidden':'block'}>
             {isEditMode
               ? 'Isi detail di bawah ini untuk mengedit.'
               : 'Isi detail di bawah ini untuk menambah produk.'}
@@ -142,6 +149,7 @@ export default function ProductManagementForm({
         multiple
         accept=".jpg,.jpeg,.png,.gif"
         onChange={handleFileChange}
+        disabled={disabled}
       />
 
       {formik.touched.image && formik.errors.image && (
@@ -163,13 +171,14 @@ export default function ProductManagementForm({
       src={src}
       alt={`preview-${index}`}
       className="w-full h-full object-cover"
+      
     />
 
     {index === mainIndex && (
       <Badge className="absolute top-1 left-1 z-10">Main</Badge>
     )}
 
-    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 flex flex-col justify-center items-center space-y-2 transition">
+    <div className={`${isDetailMode?'hidden':'block'} absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 flex flex-col justify-center items-center space-y-2 transition`}>
       {index !== mainIndex && (
         <Button
           variant="secondary"
@@ -208,6 +217,8 @@ export default function ProductManagementForm({
               value={formik.values.nama}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              disabled={disabled}
+
             />
             {formik.touched.nama && formik.errors.nama && (
               <p className="text-xs text-red-600">{formik.errors.nama}</p>
@@ -219,6 +230,8 @@ export default function ProductManagementForm({
             <Select
               value={formik.values.kategoriId || undefined}
               onValueChange={(v) => formik.setFieldValue('kategoriId', v)}
+              disabled={disabled}
+
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih kategori" />
@@ -249,6 +262,8 @@ export default function ProductManagementForm({
               value={formik.values.harga}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              disabled={disabled}
+
             />
             {formik.touched.harga && formik.errors.harga && (
               <p className="text-xs text-red-600">{formik.errors.harga}</p>
@@ -266,6 +281,8 @@ export default function ProductManagementForm({
               value={formik.values.sku}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              disabled={disabled}
+
             />
             {formik.touched.sku && formik.errors.sku && (
               <p className="text-xs text-red-600">{formik.errors.sku}</p>
@@ -282,6 +299,8 @@ export default function ProductManagementForm({
               value={formik.values.berat}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              disabled={disabled}
+
             />
             {formik.touched.berat && formik.errors.berat && (
               <p className="text-xs text-red-600">{formik.errors.berat}</p>
@@ -300,6 +319,8 @@ export default function ProductManagementForm({
               onBlur={formik.handleBlur}
               placeholder="Masukkan deskripsi produk"
               className="w-full bg-white rounded-md border  px-3 py-2 text-sm focus:outline-none "
+              disabled={disabled}
+
             />
             {formik.touched.deskripsi && formik.errors.deskripsi && (
               <p className="text-xs text-red-600">{formik.errors.deskripsi}</p>
@@ -331,7 +352,7 @@ export default function ProductManagementForm({
               )}
             </div> */}
 
-          <DialogFooter>
+          <DialogFooter className={isDetailMode?'hidden':'block'}>
             <Button
               variant="outline"
               type="button"

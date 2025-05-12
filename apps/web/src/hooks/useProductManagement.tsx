@@ -21,8 +21,19 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal,ImageOff } from 'lucide-react';
+import { MoreHorizontal, ImageOff } from 'lucide-react';
 import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
 import { getValidationSchema } from '@/validations/product.validation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -36,16 +47,16 @@ export default function UseProductManagement() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
-const [previews, setPreviews] = useState<string[]>([]); // ✅ typed
-const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
-
+  const [previews, setPreviews] = useState<string[]>([]); // ✅ typed
+  const [mainIndex, setMainIndex] = useState<number>(0); // ✅ typed
+  const [isDetailMode,setIsDetailMode] = useState(false)
   const {
     products,
     isLoading,
     fetchProducts: apiFetchProducts,
     handleCreateProduct,
     handleUpdateProduct,
-    handleDeleteProduct:apiDeleteProduct,
+    handleDeleteProduct: apiDeleteProduct,
   } = productManagementAPI();
 
   const { categories, fetchCategories } = categoryManagementAPI();
@@ -66,9 +77,9 @@ const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
     fetchProducts(pagination.pageIndex, pagination.pageSize);
   }, [pagination.pageIndex, pagination.pageSize]);
 
-  useEffect(()=>{
-    fetchCategories(0,50)
-  },[])
+  useEffect(() => {
+    fetchCategories(0, 50);
+  }, []);
   const formik = useFormik({
     initialValues: {
       nama: '',
@@ -78,9 +89,9 @@ const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
       sku: '',
       kategoriId: '',
       isActive: true,
-      image:[],
-      keptImages: [],        // ✅ Add this
-    mainIndex: 0  
+      image: [],
+      keptImages: [], // ✅ Add this
+      mainIndex: 0,
     },
     validationSchema: getValidationSchema(),
     onSubmit: async (values, { resetForm }) => {
@@ -96,8 +107,6 @@ const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
         formik.setFieldValue('sku', newSku, false);
         setDialogOpen(false);
         fetchProducts(pagination.pageIndex, pagination.pageSize);
-
-
       }
     },
   });
@@ -108,19 +117,19 @@ const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
         id: 'mainImage',
         header: 'Gambar',
         // accessorFn now returns only the main image object (or undefined)
-        accessorFn: row => row.images.find(img => img.isMain),
+        accessorFn: (row) => row.images.find((img) => img.isMain),
         cell: ({ getValue }) => {
-          const img = getValue() 
+          const img = getValue();
           if (!img) {
             return (
-              <Avatar className='h-32 w-32 overflow-hidden rounded-sm flex justify-center items-center'>
-  <ImageOff className="w-32 h-32 text-gray-400" />
-  </Avatar>
+              <Avatar className="h-32 w-32 overflow-hidden rounded-sm flex justify-center items-center">
+                <ImageOff className="w-32 h-32 text-gray-400" />
+              </Avatar>
             );
           }
           return (
-            <Avatar className='h-32 w-32 overflow-hidden rounded-md'>
-              <AvatarImage src={img.imageUrl} alt="main product image"  />
+            <Avatar className="h-32 w-32 overflow-hidden rounded-md">
+              <AvatarImage src={img.imageUrl} alt="main product image" />
             </Avatar>
           );
         },
@@ -135,14 +144,15 @@ const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
           return row.original.category?.name ?? '-';
         },
       },
-      { accessorKey: 'price', header: 'Harga',
-        cell:({row})=>{
-          const {price} = row.original
-          const num = Number(price)
-          return `Rp ${num.toLocaleString()}`
-          
-        }
-       },
+      {
+        accessorKey: 'price',
+        header: 'Harga',
+        cell: ({ row }) => {
+          const { price } = row.original;
+          const num = Number(price);
+          return `Rp ${num.toLocaleString()}`;
+        },
+      },
       { accessorKey: 'sku', header: 'SKU' },
       { accessorKey: 'weight', header: 'Berat (kg)' },
       {
@@ -151,9 +161,9 @@ const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
         cell: ({ row }) => {
           const inventoryArray = row.original.inventory;
 
-          const quantity = inventoryArray?.[0]?.quantity ?? 0; 
+          const quantity = inventoryArray?.[0]?.quantity ?? 0;
 
-          return quantity; 
+          return quantity;
         },
       },
       {
@@ -195,50 +205,115 @@ const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
         header: 'Aksi',
         cell: ({ row }: any) => {
           const product = row.original;
+          const [isAlertOpen, setIsAlertOpen] = useState(false);
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
-                <MoreHorizontal className="w-5 h-5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
-                <DropdownMenuCheckboxItem
-                  onCheckedChange={() => {
-                    setDialogOpen(true);
-                    setEditingProductId(product.id);
-                    setIsEditMode(true);
-                    formik.setValues({
-                      nama: product.name || '',
-                      deskripsi: product.description || '',
-                      harga: product.price || 0,
-                      berat: product.weight || 0,
-                      isActive: product.isActive || '',
-                      sku: product.sku || '',
-                      kategoriId: product.categoryId || '',
-                      image: [],
-                      keptImages: product.images.map((img: any) => img.imageUrl), // ✅ include this
-                      mainIndex: product.images.findIndex((img: any) => img.isMain) || 0, // ✅ optional
-                    
-                    });
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
+                  <MoreHorizontal className="w-5 h-5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
+                  <DropdownMenuCheckboxItem
+                    onCheckedChange={() => {
+                      setDialogOpen(true);
+                      setEditingProductId(product.id);
+                      setIsEditMode(true);
+                      formik.setValues({
+                        nama: product.name || '',
+                        deskripsi: product.description || '',
+                        harga: product.price || 0,
+                        berat: product.weight || 0,
+                        isActive: product.isActive || '',
+                        sku: product.sku || '',
+                        kategoriId: product.categoryId || '',
+                        image: [],
+                        keptImages: product.images.map(
+                          (img: any) => img.imageUrl,
+                        ), // ✅ include this
+                        mainIndex:
+                          product.images.findIndex((img: any) => img.isMain) ||
+                          0, // ✅ optional
+                      });
 
-                    setPreviews(product.images.map((img: any) => img.imageUrl));
-    const mainIdx = product.images.findIndex((img: any) => img.isMain);
-    setMainIndex(mainIdx >= 0 ? mainIdx : 0);
-                  }}
-                >
-                  Edit
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  className="text-red-600"
-                  onCheckedChange={() => {
-                    handleDeleteProduct(product.id);
+                      setPreviews(
+                        product.images.map((img: any) => img.imageUrl),
+                      );
+                      const mainIdx = product.images.findIndex(
+                        (img: any) => img.isMain,
+                      );
+                      setMainIndex(mainIdx >= 0 ? mainIdx : 0);
+                    }}
+                  >
+                    Edit
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem onCheckedChange={() => {
+                               setIsEditMode(false)
+                               setIsDetailMode(true)
+                               formik.setValues({
+                                nama: product.name || '',
+                                deskripsi: product.description || '',
+                                harga: product.price || 0,
+                                berat: product.weight || 0,
+                                isActive: product.isActive || '',
+                                sku: product.sku || '',
+                                kategoriId: product.categoryId || '',
+                                image: [],
+                                keptImages: product.images.map(
+                                  (img: any) => img.imageUrl,
+                                ), // ✅ include this
+                                mainIndex:
+                                  product.images.findIndex((img: any) => img.isMain) ||
+                                  0, // ✅ optional
+                              });
+        
+                              setPreviews(
+                                product.images.map((img: any) => img.imageUrl),
+                              );
+                              const mainIdx = product.images.findIndex(
+                                (img: any) => img.isMain,
+                              );
+                              setMainIndex(mainIdx >= 0 ? mainIdx : 0);
+                              setDialogOpen(true);
 
-                  }}
-                >
-                  Delete
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                            }}
+                              >
+                               Lihat Detail
+                             </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    className="text-red-600"
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        // Close dropdown and open alert manually
+                        setTimeout(() => setIsAlertOpen(true), 100);
+                      }
+                    }}
+                  >
+                    Delete
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Hapus user?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Akan menghapus user "{product.name}" secara permanen.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        handleDeleteProduct(product.id);
+                      }}
+                    >
+                      Hapus
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
           );
         },
       },
@@ -330,12 +405,12 @@ const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
   };
 
   const handleDeleteProduct = async (id: string) => {
-    const ok = await apiDeleteProduct(id)
+    const ok = await apiDeleteProduct(id);
     if (ok) {
-      await fetchProducts(pagination.pageIndex, pagination.pageSize)
+      await fetchProducts(pagination.pageIndex, pagination.pageSize);
     }
-    return ok
-  }
+    return ok;
+  };
   return {
     formik,
     columns,
@@ -364,6 +439,8 @@ const [mainIndex, setMainIndex] = useState<number>(0);  // ✅ typed
     previews,
     setPreviews,
     mainIndex,
-    setMainIndex
+    setMainIndex,
+    isDetailMode,
+    setIsDetailMode
   };
 }

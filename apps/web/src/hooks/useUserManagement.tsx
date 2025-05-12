@@ -9,6 +9,17 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
 } from '@tanstack/react-table';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { useFormik } from 'formik';
 import { userManagementAPI } from '@/lib/apis/dashboard/userManagement.api';
 import { getValidationSchema } from '@/validations/user.validation';
@@ -36,7 +47,8 @@ export function useUserManagement() {
   const [pageCount,setPageCount] = useState(1)
   const [previews, setPreviews] = useState<string[]>([]); 
   const [mainIndex, setMainIndex] = useState<number>(0);  
-  
+  const [isDetailMode, setIsDetailMode] = useState(false);
+
   const {
     users,
     isLoading,
@@ -162,8 +174,10 @@ export function useUserManagement() {
       header: 'Aksi',
       cell: ({ row }: any) => {
         const user = row.original;
+        const [isAlertOpen, setIsAlertOpen] = useState(false);
 
         return (
+          <>
           <DropdownMenu>
             <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
               <MoreHorizontal className="w-5 h-5" />
@@ -190,20 +204,62 @@ export function useUserManagement() {
               >
                 Edit
               </DropdownMenuCheckboxItem>
-              {/* <DropdownMenuCheckboxItem onCheckedChange={() => {}}>
+              <DropdownMenuCheckboxItem onCheckedChange={() => {
+                setIsEditMode(false)
+                setIsDetailMode(true)
+                formik.setValues({
+                  gambar: user.image || '',
+                  nama: user.name || '',
+                  email: user.email || '',
+                  password: '', // don't pre-fill password for security
+                  alamat: user.alamat || '',
+                  toko: user.storeId || '',
+                  kode_rujukan: user.referralCode || '',
+                  role: user.role || '',
+                  verifikasi: !!user.emailVerified,
+                });
+                setPreviews(user.image ? [user.image] : []);
+
+                setDialogOpen(true)
+              }}>
                 Lihat Detail
-              </DropdownMenuCheckboxItem> */}
-              <DropdownMenuCheckboxItem
-                className="text-red-600"
-                onCheckedChange={() => {
-                  handleDeleteUser(user.id);
-                 
-                }}
-              >
-                Delete
               </DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem 
+            className="text-red-600"
+            onCheckedChange={(checked) => {
+              if (checked) {
+                // Close dropdown and open alert manually
+                setTimeout(() => setIsAlertOpen(true), 100);
+              }
+            }}
+          >
+            Delete
+          </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Akan menghapus user "{user.name}" secara permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={ () => {
+                handleDeleteUser(user.id);
+
+              }}
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+          </>
+          
         );
       },
     },
@@ -298,6 +354,8 @@ export function useUserManagement() {
     previews,
     setPreviews,
     mainIndex,
-    setMainIndex
+    setMainIndex,
+    isDetailMode,
+    setIsDetailMode
   };
 }

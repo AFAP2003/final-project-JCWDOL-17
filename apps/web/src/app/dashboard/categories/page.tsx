@@ -22,6 +22,8 @@ export default function Category() {
     dialogOpen,
     setDialogOpen,
     isEditMode,
+    isDetailMode,
+    setIsDetailMode
   } = useCategoryManagement();
 
   if (isLoading) {
@@ -42,6 +44,8 @@ export default function Category() {
           dialogOpen={dialogOpen}
           setDialogOpen={setDialogOpen}
           isEditMode={isEditMode}
+          isDetailMode={isDetailMode}
+          setIsDetailMode={setIsDetailMode}
         />
       </div>
       <CategoryManagementFilter

@@ -20,6 +20,17 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { getValidationSchema } from '@/validations/category.validation';
 import { toast } from '@/hooks/use-toast';
 export function useCategoryManagement() {
@@ -32,6 +43,7 @@ export function useCategoryManagement() {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null,);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
+  const [isDetailMode,setIsDetailMode] = useState(false)
   const {
     categories,
     isLoading,
@@ -90,8 +102,10 @@ export function useCategoryManagement() {
         header: 'Aksi',
         cell: ({ row }: any) => {
           const category = row.original;
+          const [isAlertOpen, setIsAlertOpen] = useState(false);
 
           return (
+            <>
             <DropdownMenu>
               <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
                 <MoreHorizontal className="w-5 h-5" />
@@ -112,20 +126,56 @@ export function useCategoryManagement() {
                 >
                   Edit
                 </DropdownMenuCheckboxItem>
-                {/* <DropdownMenuCheckboxItem onCheckedChange={() => {}}>
-                  Lihat Detail
-                </DropdownMenuCheckboxItem> */}
-                <DropdownMenuCheckboxItem
-                  className="text-red-600"
-                  onCheckedChange={() => {
-                    handleDeleteCategory(category.id);
-                   
-                  }}
-                >
-                  Delete
-                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem onCheckedChange={() => {
+                               setIsEditMode(false)
+                               setIsDetailMode(true)
+                               formik.setValues({
+                                gambar: category.image || '',
+                                nama: category.name || '',
+                                isActive: category.isActive || '',
+                                deskripsi: category.description || '',
+                              });
+               
+                               setDialogOpen(true)
+                             }}>
+                               Lihat Detail
+                             </DropdownMenuCheckboxItem>
+                   <DropdownMenuCheckboxItem 
+            className="text-red-600"
+            onCheckedChange={(checked) => {
+              if (checked) {
+                // Close dropdown and open alert manually
+                setTimeout(() => setIsAlertOpen(true), 100);
+              }
+            }}
+          >
+            Delete
+          </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
+
             </DropdownMenu>
+            <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Akan menghapus user "{category.name}" secara permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={ () => {
+                handleDeleteCategory(category.id);
+
+              }}
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+            </>
           );
         },
       },
@@ -196,5 +246,7 @@ export function useCategoryManagement() {
     dialogOpen,
     isEditMode,
     setDialogOpen,
+    isDetailMode,
+    setIsDetailMode
   };
 }

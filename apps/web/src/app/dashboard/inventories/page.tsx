@@ -25,7 +25,9 @@ export default function Inventory() {
     handleCategoryFilter,
     handleStoreFilter,
     setIsEditMode,
-    setEditingInventoryId
+    setEditingInventoryId,
+    isDetailMode,
+    setIsDetailMode
   } = UseInventoryManagement();
 
 
@@ -47,6 +49,8 @@ export default function Inventory() {
           stores={stores}
           setIsEditMode={setIsEditMode}
           setEditingInventoryId={setEditingInventoryId}
+          isDetailMode={isDetailMode}
+          setIsDetailMode={setIsDetailMode}
         />
       </div>
 

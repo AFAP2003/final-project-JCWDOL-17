@@ -29,20 +29,25 @@ interface DiscountManagementFormProps{
   dialogOpen:boolean
   setIsEditMode: (edit: boolean) => void;
   setEditingDiscountId: (id: string | null) => void;
-
+  isDetailMode:boolean
+  setIsDetailMode:(detail:boolean)=>void
 }
-export default function DiscountManagementForm({ formik,stores,setDialogOpen ,isEditMode,dialogOpen,setIsEditMode,setEditingDiscountId}:DiscountManagementFormProps) {
+export default function DiscountManagementForm({ formik,stores,setDialogOpen ,isEditMode,dialogOpen,setIsEditMode,setEditingDiscountId,isDetailMode,setIsDetailMode}:DiscountManagementFormProps) {
+  const disabled = isDetailMode
   return (
     <Dialog open={dialogOpen} 
     onOpenChange={(open) => {
       // if opening fresh (not edit), reset all fields
       if (open && !isEditMode) {
         formik.resetForm();
+        setIsDetailMode(false)
+
       }
       // closing always clears edit state
       if (!open) {
         setIsEditMode(false);
         setEditingDiscountId(null);
+        setIsDetailMode(false)
       }
       setDialogOpen(open);
     }}>
@@ -55,8 +60,8 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
 
       <DialogContent className="max-h-[90vh] bg-white overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode?'Edit Diskon':'Tambah Diskon Baru'}</DialogTitle>
-          <DialogDescription>{isEditMode?'Edit detail diskon di bawah ini.':'Isi detail diskon di bawah ini.'}</DialogDescription>
+          <DialogTitle>{isDetailMode?'Lihat Diskon':isEditMode?'Edit Diskon':'Tambah Diskon Baru'}</DialogTitle>
+          <DialogDescription className={isDetailMode?'hidden':'block'}>{isEditMode?'Edit detail diskon di bawah ini.':'Isi detail diskon di bawah ini.'}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={formik.handleSubmit} className="grid gap-4 py-4">
@@ -70,6 +75,7 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               value={formik.values.nama}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              disabled={disabled}
             />
             {formik.touched.nama && formik.errors.nama && (
               <p className="text-xs text-red-600">
@@ -89,6 +95,8 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               onBlur={formik.handleBlur}
               placeholder="Masukkan deskripsi diskon"
               className="w-full bg-white rounded-md border  px-3 py-2 text-sm focus:outline-none "
+              disabled={disabled}
+
             />
             {formik.touched.deskripsi && formik.errors.deskripsi && (
               <p className="text-xs text-red-600">{formik.errors.deskripsi}</p>
@@ -102,6 +110,8 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
             <Select
               value={formik.values.toko}
               onValueChange={(v) => formik.setFieldValue('toko', v)}
+              disabled={disabled}
+
             >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih toko" />
@@ -132,6 +142,8 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
             <Select
               value={formik.values.tipe_diskon}
               onValueChange={(v) => formik.setFieldValue('tipe_diskon', v)}
+              disabled={disabled}
+
             >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih tipe diskon" />
@@ -159,6 +171,8 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
             <Select
               value={formik.values.tipe_nilai_diskon}
               onValueChange={(v) => formik.setFieldValue('tipe_nilai_diskon', v)}
+              disabled={disabled}
+
             >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih tipe diskon" />
@@ -187,7 +201,10 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               placeholder="Masukkan nilai diskon"
               value={formik.values.nilai_diskon}
               onChange={formik.handleChange}
-              onBlur={formik.handleBlur}            />
+              onBlur={formik.handleBlur}      
+              disabled={disabled}
+
+              />
             {formik.touched.nilai_diskon && formik.errors.nilai_diskon && (
               <p className="text-xs text-red-600">
                 {formik.errors.nilai_diskon}
@@ -205,7 +222,10 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               placeholder="Masukkan minimal pembelian"
               value={formik.values.min_pembelian}
               onChange={formik.handleChange}
-              onBlur={formik.handleBlur}            />
+              onBlur={formik.handleBlur}        
+              disabled={disabled}
+
+              />
             {formik.touched.min_pembelian && formik.errors.min_pembelian && (
               <p className="text-xs text-red-600">
                 {formik.errors.min_pembelian}
@@ -223,7 +243,10 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               placeholder="Masukkan potongan maksmimal"
               value={formik.values.potongan_maks}
               onChange={formik.handleChange}
-              onBlur={formik.handleBlur}            />
+              onBlur={formik.handleBlur}        
+              disabled={disabled}
+
+              />
             {formik.touched.potongan_maks && formik.errors.potongan_maks && (
               <p className="text-xs text-red-600">
                 {formik.errors.potongan_maks}
@@ -270,7 +293,10 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               type="date"
               value={formik.values.tanggal_mulai}
               onChange={formik.handleChange}
-              onBlur={formik.handleBlur}            />
+              onBlur={formik.handleBlur}          
+              disabled={disabled}
+
+              />
                 {formik.touched.tanggal_mulai &&
               formik.errors.tanggal_mulai && (
                 <p className="text-xs text-red-600">
@@ -287,7 +313,10 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               type="date"
               value={formik.values.kadaluwarsa}
               onChange={formik.handleChange}
-              onBlur={formik.handleBlur}            />
+              onBlur={formik.handleBlur}           
+              disabled={disabled}
+
+              />
                 {formik.touched.kadaluwarsa &&
               formik.errors.kadaluwarsa && (
                 <p className="text-xs text-red-600">
@@ -304,10 +333,13 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
                 formik.resetForm()
                 setDialogOpen(false)
               }}
+              className={isDetailMode?'hidden':'block'}
             >
               Cancel
             </Button>
-            <Button type="submit">{isEditMode?'Simpan Perubahan':'Tambah Diskon'}</Button>
+            <Button type="submit"               
+            className={isDetailMode?'hidden':'block'}
+            >{isEditMode?'Simpan Perubahan':'Tambah Diskon'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

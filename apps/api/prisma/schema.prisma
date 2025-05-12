@@ -27,23 +27,7 @@ model User {
   signupMethod  SignupMethodType[]
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
-  id            String             @id @default(uuid())
-  role          UserRole
-  name          String
-  email         String             @unique
-  emailVerified Boolean
-  image         String?
-  phone         String?
-  gender        Gender?
-  dateOfBirth   DateTime?
-  signupMethod  SignupMethodType[]
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
 
-  referralCode  String? @unique
-  referredById  String?
-  referredUsers User[]  @relation("UserReferrals")
-  referredBy    User?   @relation("UserReferrals", fields: [referredById], references: [id])
   referralCode  String? @unique
   referredById  String?
   referredUsers User[]  @relation("UserReferrals")
@@ -52,15 +36,7 @@ model User {
   addresses Address[]
   cart      Cart?
   orders    Order[]
-  addresses Address[]
-  cart      Cart?
-  orders    Order[]
 
-  managedStore Store?    @relation("StoreToAdmin")
-  storeId      String?
-  sessions     Session[]
-  accounts     Account[]
-  stores       Store[]
   managedStore Store?    @relation("StoreToAdmin")
   storeId      String?
   sessions     Session[]
@@ -110,14 +86,11 @@ model Verification {
 model Address {
   id         String   @id @default(uuid())
   isDefault  Boolean? @unique
-  isDefault  Boolean? @unique
   label      String
   address    String
   city       String
   province   String
   postalCode String
-  recipient  String
-  phone      String
   recipient  String
   phone      String
   latitude   Float?
@@ -128,14 +101,10 @@ model Address {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-
   orders Order[]
 }
 
 model Store {
-  id          String   @id @default(uuid())
   id          String   @id @default(uuid())
   name        String
   address     String
@@ -149,18 +118,7 @@ model Store {
   isMain      Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  maxDistance Float    @default(10)
-  isActive    Boolean  @default(true)
-  isMain      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
-  adminId   String?     @unique
-  admin     User?       @relation("StoreToAdmin", fields: [adminId], references: [id])
-  inventory Inventory[]
-  orders    Order[]
-  discounts Discount[]
-  users     User[] // A store can have multiple users (e.g., employees)
   adminId   String?     @unique
   admin     User?       @relation("StoreToAdmin", fields: [adminId], references: [id])
   inventory Inventory[]
@@ -354,7 +312,7 @@ model Discount {
 
   isPercentage Boolean? // NO_RULES_DISCOUNT / WITH_MAX_PRICE
   value        Decimal? @db.Decimal(10, 2) // NO_RULES_DISCOUNT / WITH_MAX_PRICE
-  maxDiscount  Decimal? @db.Decimal(10, 2) // NO_RULES_DISCOUNT / WITH_MAX_PRICE
+  maxDiscount  Decimal? @db.Decimal(10, 2) // Required jika isPercentage = true;
   minPurchase  Decimal? @db.Decimal(10, 2) // WITH_MAX_PRICE
   buyQuantity  Int? // BUY_X_GET_Y
   getQuantity  Int? // BUY_X_GET_Y
@@ -368,7 +326,6 @@ model Discount {
   store    Store     @relation(fields: [storeId], references: [id])
   products Product[] @relation("ProductDiscount")
 }
-
 
 model Voucher {
   id            String      @id @default(uuid())
@@ -455,8 +412,6 @@ enum StockJournalType {
 enum DiscountType {
   NO_RULES_DISCOUNT
   WITH_MAX_PRICE
-  NO_RULES_DISCOUNT
-  WITH_MAX_PRICE
   BUY_X_GET_Y
 }
 
@@ -470,11 +425,6 @@ enum VoucherType {
 enum ValueType {
   PERCENTAGE
   FIXED_AMOUNT
-}
-
-enum Gender {
-  MALE
-  FEMALE
 }
 
 enum Gender {

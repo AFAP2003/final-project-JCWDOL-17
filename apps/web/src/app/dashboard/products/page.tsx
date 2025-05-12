@@ -28,7 +28,10 @@ export default function Products() {
     previews,
     setPreviews,
     mainIndex,
-    setMainIndex
+    setMainIndex,
+    isDetailMode,
+    setIsDetailMode
+    
   } = UseProductManagement();
 
   if (isLoading) {
@@ -58,6 +61,8 @@ export default function Products() {
           setPreviews={setPreviews}
           mainIndex={mainIndex}
           setMainIndex={setMainIndex}
+          isDetailMode={isDetailMode}
+          setIsDetailMode={setIsDetailMode}
         />  
       </div>
 

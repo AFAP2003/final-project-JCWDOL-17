@@ -28,7 +28,9 @@
       previews,
       setPreviews,
       mainIndex,
-      setMainIndex
+      setMainIndex,
+      isDetailMode,
+      setIsDetailMode
     } = useUserManagement();
 
     if (isLoading) {
@@ -51,6 +53,8 @@
             setPreviews={setPreviews}
             mainIndex={mainIndex}
             setMainIndex={setMainIndex}
+            isDetailMode={isDetailMode}
+            setIsDetailMode={setIsDetailMode}
           />
         </div>
 

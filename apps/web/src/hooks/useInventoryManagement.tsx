@@ -18,6 +18,17 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { useFormik } from 'formik';
 import { Badge } from '@/components/ui/badge';
 import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
@@ -48,6 +59,7 @@ export default function UseInventoryManagement() {
   const [editingInventoryId, setEditingInventoryId] = useState<string | null>(null);
   const [pageCount, setPageCount] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isDetailMode,setIsDetailMode] = useState(false)
 
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
@@ -151,7 +163,10 @@ export default function UseInventoryManagement() {
         header: 'Aksi',
         cell: ({ row }) => {
           const inventory = row.original;
+          const [isAlertOpen, setIsAlertOpen] = useState(false);
+
           return (
+            <>
             <DropdownMenu>
               <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
                 <MoreHorizontal className="w-5 h-5" />
@@ -173,16 +188,59 @@ export default function UseInventoryManagement() {
                 }}>
                   Edit
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  className="text-red-600"
-                  onCheckedChange={() => {
-                    handleDeleteInventory(inventory.id);
-                  }}
-                >
-                  Delete
-                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem onCheckedChange={() => {
+                        setIsEditMode(false)
+                        setIsDetailMode(true)
+                        formik.setValues({
+                        produk: inventory.productId,
+                        toko:inventory.storeId,
+                        tambah:'',
+                        kurangi:'',
+                        minimal:inventory.minStock,
+                        mode:'tambah'
+                        
+                        })
+        
+                        setDialogOpen(true)
+                      }}>
+                        Lihat Detail
+                      </DropdownMenuCheckboxItem>
+                
+                <DropdownMenuCheckboxItem 
+            className="text-red-600"
+            onCheckedChange={(checked) => {
+              if (checked) {
+                // Close dropdown and open alert manually
+                setTimeout(() => setIsAlertOpen(true), 100);
+              }
+            }}
+          >
+            Delete
+          </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Akan menghapus user "{inventory.name}" secara permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={ () => {
+                handleDeleteInventory(inventory.id);
+
+              }}
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+            </>
           );
         },
       },
@@ -356,6 +414,8 @@ export default function UseInventoryManagement() {
     handleStoreFilter,
     handleCategoryFilter,
     setIsEditMode,
-    setEditingInventoryId
+    setEditingInventoryId,
+    isDetailMode,
+    setIsDetailMode
   };
 }

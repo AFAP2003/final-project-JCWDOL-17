@@ -36,7 +36,9 @@ export default function DiscountManagement() {
     handleTypeFilter,
     handleTypeValueFilter,
     setIsEditMode,
-    setEditingDiscountId
+    setEditingDiscountId,
+    isDetailMode,
+    setIsDetailMode
     
   } = UseDiscountManagement();
  
@@ -59,6 +61,8 @@ export default function DiscountManagement() {
         setDialogOpen={setDialogOpen}
         setIsEditMode={setIsEditMode}
         setEditingDiscountId={setEditingDiscountId}
+        isDetailMode={isDetailMode}
+        setIsDetailMode={setIsDetailMode}
         />
       </div>
 
