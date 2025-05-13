@@ -134,8 +134,10 @@ export class OrderController {
       const { user } = getSessionUser(req);
       const { orderId, paymentProofId, approved, notes } = req.body;
 
+      // Verify admin permissions
       await this.validateAdminPermission(user.id);
 
+      // Call service method to verify payment
       const result = await this.orderService.verifyPaymentProof(
         user.id,
         orderId,
@@ -159,8 +161,10 @@ export class OrderController {
       const { user } = getSessionUser(req);
       const { orderId } = req.params;
 
+      // Verify admin permissions
       await this.validateAdminPermission(user.id);
 
+      // Check stock availability for this order
       const result = await this.orderService.checkOrderStock(orderId);
 
       res.json(result);
@@ -177,9 +181,11 @@ export class OrderController {
     try {
       const { user } = getSessionUser(req);
 
+      // Get the admin's store (if they're a store admin)
       const adminStore = await this.orderService.getAdminStore(user.id);
       const storeId = adminStore?.id;
 
+      // Extract query parameters
       const {
         status,
         storeId: requestedStoreId,
@@ -190,6 +196,8 @@ export class OrderController {
         orderNumber,
       } = req.query;
 
+      // Store admins can only see orders for their store
+      // Super admins can see all orders or filter by specific store
       const effectiveStoreId =
         user.role === 'SUPER' ? (requestedStoreId as string) : storeId;
 
@@ -222,8 +230,10 @@ export class OrderController {
       const { user } = getSessionUser(req);
       const { orderId, paymentProofId, verifyPayment, notes } = req.body;
 
+      // Verify admin permissions
       await this.validateAdminPermission(user.id);
 
+      // Process the order
       const result = await this.orderService.processOrder(user.id, {
         orderId,
         paymentProofId,
@@ -246,8 +256,10 @@ export class OrderController {
       const { user } = getSessionUser(req);
       const { orderId, trackingNumber, notes } = req.body;
 
+      // Verify admin permissions
       await this.validateAdminPermission(user.id);
 
+      // Ship the order
       const result = await this.orderService.shipOrder(user.id, {
         orderId,
         trackingNumber,
@@ -269,8 +281,10 @@ export class OrderController {
       const { user } = getSessionUser(req);
       const { orderId, reason } = req.body;
 
+      // Verify admin permissions
       await this.validateAdminPermission(user.id);
 
+      // Cancel the order
       const result = await this.orderService.adminCancelOrder(
         user.id,
         orderId,
@@ -286,6 +300,8 @@ export class OrderController {
       throw error;
     }
   };
+
+  // Helper method to validate admin permissions
   private validateAdminPermission = async (userId: string) => {
     const user = await prismaclient.user.findUnique({
       where: { id: userId },
@@ -450,9 +466,11 @@ export class OrderController {
     try {
       const payload = req.body;
 
+      // Handle the Midtrans webhook response (status updates, etc.)
       const paymentService = new PaymentService();
       await paymentService.handleMidtransWebhook(payload);
 
+      // Respond 200 to Midtrans to acknowledge receipt
       res.status(200).json({ status: 'ok' });
     } catch (error) {
       console.error('Midtrans webhook error:', error);

@@ -1,0 +1,166 @@
+import orderManagementRepository from '@/repositories/orderManagement.repository';
+import { prismaclient } from '@/prisma';
+import { ForbiddenError, NotFoundError } from '@/errors';
+
+class OrderManagementService {
+  async listAllOrders(page = 1, take = 10, filters = {}) {
+    return await orderManagementRepository.getOrders(page, take, filters);
+  }
+
+  async getOrderByNumber(orderNumber: string) {
+    const order = await orderManagementRepository.getOrderByNumber(orderNumber);
+    if (!order) {
+      throw new NotFoundError('Order not found');
+    }
+    return order;
+  }
+
+  async verifyPaymentProof(
+    orderId: string,
+    paymentProofId: string,
+    approved: boolean,
+    adminId: string,
+    notes?: string,
+  ) {
+    const order = await prismaclient.order.findUnique({
+      where: { id: orderId },
+      include: {
+        paymentProofs: true,
+        store: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundError('Order not found');
+    }
+
+    const paymentProof = order.paymentProofs.find(
+      (proof) => proof.id === paymentProofId,
+    );
+    if (!paymentProof) {
+      throw new NotFoundError('Payment proof not found for this order');
+    }
+
+    await this.validateAdminPermission(adminId, order.storeId);
+
+    return await orderManagementRepository.verifyPaymentProof(
+      orderId,
+      paymentProofId,
+      approved,
+      adminId,
+      notes,
+    );
+  }
+
+  async shipOrder(
+    orderId: string,
+    trackingNumber: string,
+    adminId: string,
+    notes?: string,
+  ) {
+    const order = await prismaclient.order.findUnique({
+      where: { id: orderId },
+      include: { store: true },
+    });
+
+    if (!order) {
+      throw new NotFoundError('Order not found');
+    }
+
+    if (order.status !== 'PROCESSING') {
+      throw new Error('Only orders in PROCESSING state can be shipped');
+    }
+
+    await this.validateAdminPermission(adminId, order.storeId);
+
+    const stockCheck = await orderManagementRepository.checkOrderStock(orderId);
+    if (!stockCheck.hasAllStock) {
+      throw new Error('Cannot ship order: some items are out of stock');
+    }
+
+    return await orderManagementRepository.shipOrder(
+      orderId,
+      trackingNumber,
+      adminId,
+      notes,
+    );
+  }
+
+  async cancelOrder(orderId: string, adminId: string, reason: string) {
+    const order = await prismaclient.order.findUnique({
+      where: { id: orderId },
+      include: { store: true },
+    });
+
+    if (!order) {
+      throw new NotFoundError('Order not found');
+    }
+
+    if (order.status === 'SHIPPED' || order.status === 'CONFIRMED') {
+      throw new Error('Cannot cancel shipped or confirmed orders');
+    }
+
+    await this.validateAdminPermission(adminId, order.storeId);
+
+    return await orderManagementRepository.cancelOrder(
+      orderId,
+      adminId,
+      reason,
+    );
+  }
+
+  async checkOrderStock(orderId: string, adminId: string) {
+    const order = await prismaclient.order.findUnique({
+      where: { id: orderId },
+      include: { store: true },
+    });
+
+    if (!order) {
+      throw new NotFoundError('Order not found');
+    }
+
+    await this.validateAdminPermission(adminId, order.storeId);
+
+    return await orderManagementRepository.checkOrderStock(orderId);
+  }
+
+  async autoConfirmShippedOrders() {
+    return await orderManagementRepository.checkAutoConfirmOrders();
+  }
+
+  private async validateAdminPermission(adminId: string, storeId: string) {
+    const user = await prismaclient.user.findUnique({
+      where: { id: adminId },
+    });
+
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER')) {
+      throw new ForbiddenError('Unauthorized: Admin privileges required');
+    }
+
+    if (user.role === 'SUPER') {
+      return true;
+    }
+
+    const adminStore = await prismaclient.store.findFirst({
+      where: { adminId },
+    });
+
+    if (!adminStore || adminStore.id !== storeId) {
+      throw new ForbiddenError(
+        'You do not have permission to manage orders for this store',
+      );
+    }
+
+    return true;
+  }
+
+  async getAdminStore(adminId: string) {
+    return await prismaclient.store.findFirst({
+      where: {
+        adminId,
+      },
+    });
+  }
+}
+
+export default new OrderManagementService();

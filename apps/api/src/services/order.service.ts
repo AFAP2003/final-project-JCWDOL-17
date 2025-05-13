@@ -965,6 +965,9 @@ export class OrderService {
         id: true,
         name: true,
         address: true,
+        city: true,
+        province: true,
+        postalCode: true,
         latitude: true,
         longitude: true,
         maxDistance: true,
@@ -1178,6 +1181,50 @@ export class OrderService {
     }
   }
 
+  async checkOrderStock(orderId: string) {
+    const order = await prismaclient.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+        store: true,
+      },
+    });
+
+    if (!order) throw new NotFoundError('Order not found');
+
+    const stockChecks = await Promise.all(
+      order.items.map(async (item) => {
+        const inventory = await prismaclient.inventory.findFirst({
+          where: {
+            productId: item.productId,
+            storeId: order.storeId,
+          },
+        });
+
+        return {
+          productId: item.productId,
+          productName: item.product.name,
+          orderQuantity: item.quantity,
+          stockQuantity: inventory?.quantity || 0,
+          available: inventory ? inventory.quantity >= item.quantity : false,
+        };
+      }),
+    );
+
+    const allAvailable = stockChecks.every((check) => check.available);
+
+    return {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      stockChecks,
+      allAvailable,
+    };
+  }
+
   async autoConfirmOrder(orderId: string) {
     try {
       return await prismaclient.order.update({
@@ -1207,6 +1254,7 @@ export class OrderService {
         include: {
           items: true,
           appliedVouchers: true,
+          address: true, // FIX: Include address relationship
         },
       });
 
@@ -1237,9 +1285,13 @@ export class OrderService {
         throw new BadRequestError('Voucher usage limit reached');
       }
 
-      if (voucher.minPurchase && order.subtotal < Number(voucher.minPurchase)) {
+      // FIX: Convert Decimal to Number for comparison
+      if (
+        voucher.minPurchase &&
+        Number(order.subtotal) < Number(voucher.minPurchase)
+      ) {
         throw new BadRequestError(
-          `Minimum purchase of ${formatCurrency(voucher.minPurchase)} required for this voucher`,
+          `Minimum purchase of ${voucher.minPurchase} required for this voucher`,
         );
       }
 
@@ -1249,7 +1301,7 @@ export class OrderService {
 
       let discountAmount = 0;
       if (voucher.valueType === 'PERCENTAGE') {
-        discountAmount = (order.subtotal * Number(voucher.value)) / 100;
+        discountAmount = (Number(order.subtotal) * Number(voucher.value)) / 100;
         if (
           voucher.maxDiscount &&
           discountAmount > Number(voucher.maxDiscount)
@@ -1260,8 +1312,9 @@ export class OrderService {
         discountAmount = Number(voucher.value);
       }
 
+      // FIX: Convert all Decimal values to Number before arithmetic
       const newTotal =
-        order.subtotal +
+        Number(order.subtotal) +
         Number(order.shippingCost) -
         (Number(order.discount) + discountAmount);
 
@@ -1301,10 +1354,11 @@ export class OrderService {
   async searchOrders(userId: string, query: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
+    // FIX: Fix the Prisma query structure
     const searchQuery = {
       OR: [
-        { orderNumber: { contains: query, mode: 'insensitive' } },
-        { status: { equals: query as OrderStatus } },
+        { orderNumber: { contains: query, mode: 'insensitive' as const } },
+        { status: query as OrderStatus },
       ],
       userId,
     };
@@ -1333,6 +1387,7 @@ export class OrderService {
         },
         store: true,
         paymentProofs: true,
+        address: true, // FIX: Include address relationship
       },
     });
 

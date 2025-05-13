@@ -96,7 +96,7 @@ export default function CancelOrderModal({
     }
   };
 
-  const handleCancelOrder = () => {
+  const handleCancelOrder = async () => {
     if (!reason.trim()) {
       toast({
         title: 'Alasan Diperlukan',
@@ -114,7 +114,8 @@ export default function CancelOrderModal({
     setLoading(true);
 
     try {
-      const response = await apiclient.post(`/order/admin/cancel`, {
+      // Update to use dashboard endpoint
+      const response = await apiclient.post(`/dashboard/orders/cancel`, {
         orderId: order.id,
         reason: reason.trim(),
       });

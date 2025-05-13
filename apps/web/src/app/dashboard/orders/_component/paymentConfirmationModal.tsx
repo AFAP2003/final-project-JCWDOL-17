@@ -40,6 +40,18 @@ interface PaymentConfirmationModalProps {
   onSuccess?: () => void;
 }
 
+function getImageUrl(filepath: string) {
+  if (filepath.startsWith('http')) {
+    return filepath;
+  }
+
+  if (filepath.startsWith('/')) {
+    return filepath;
+  }
+
+  return `/${filepath}`;
+}
+
 export default function PaymentConfirmationModal({
   order,
   open,
@@ -52,6 +64,7 @@ export default function PaymentConfirmationModal({
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [confirmReject, setConfirmReject] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (open && order) {
@@ -61,7 +74,6 @@ export default function PaymentConfirmationModal({
 
   if (!order) return null;
 
-  // Get the latest payment proof
   const paymentProof =
     order.paymentProofs && order.paymentProofs.length > 0
       ? order.paymentProofs[order.paymentProofs.length - 1]
@@ -87,13 +99,15 @@ export default function PaymentConfirmationModal({
           throw new Error('Failed to approve payment');
         }
       } else {
-        // Fallback to direct API call
-        const response = await apiclient.post(`/orders/verify-payment`, {
-          orderId: order.id,
-          paymentProofId: paymentProof.id,
-          approved: true,
-          notes: notes,
-        });
+        const response = await apiclient.post(
+          `/dashboard/orders/verify-payment`,
+          {
+            orderId: order.id,
+            paymentProofId: paymentProof.id,
+            approved: true,
+            notes: notes,
+          },
+        );
 
         if (!response.data) {
           throw new Error('Failed to approve payment');
@@ -146,13 +160,15 @@ export default function PaymentConfirmationModal({
           throw new Error('Failed to reject payment');
         }
       } else {
-        // Fallback to direct API call
-        const response = await apiclient.post(`/orders/verify-payment`, {
-          orderId: order.id,
-          paymentProofId: paymentProof.id,
-          approved: false,
-          notes: notes,
-        });
+        const response = await apiclient.post(
+          `/dashboard/orders/verify-payment`,
+          {
+            orderId: order.id,
+            paymentProofId: paymentProof.id,
+            approved: false,
+            notes: notes,
+          },
+        );
 
         if (!response.data) {
           throw new Error('Failed to reject payment');
@@ -232,12 +248,22 @@ export default function PaymentConfirmationModal({
                 <div className="space-y-4">
                   <div className="flex justify-center">
                     <div className="relative h-80 w-full max-w-md border rounded-md overflow-hidden">
-                      <Image
-                        src={paymentProof.filePath}
-                        alt="Bukti Pembayaran"
-                        layout="fill"
-                        objectFit="contain"
-                      />
+                      {!imageError ? (
+                        <Image
+                          src={getImageUrl(paymentProof.filePath)}
+                          alt="Bukti Pembayaran"
+                          layout="fill"
+                          objectFit="contain"
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <Image
+                          src="/placeholder-image.png"
+                          alt="Placeholder Image"
+                          layout="fill"
+                          objectFit="contain"
+                        />
+                      )}
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground text-center">

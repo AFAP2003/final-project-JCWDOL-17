@@ -1,45 +1,49 @@
-import { OrderController } from '@/controllers/order.controller';
-import { withAuthentication } from '@/middlewares/auth.middleware';
 import { Router } from 'express';
-import asynchandler from 'express-async-handler';
+import { withAuthentication, withRole } from '@/middlewares/auth.middleware';
+import orderManagementController from '@/controllers/orderManagement.controller';
 
 export const orderManagementRouter = () => {
   const router = Router();
-  const controller = new OrderController();
+
   router.get(
     '/orders',
     withAuthentication,
-    asynchandler(controller.getAdminOrders),
+    orderManagementController.getOrders,
   );
   router.get(
     '/orders/:orderNumber',
     withAuthentication,
-    asynchandler(controller.getUserOrderByNumber),
+    orderManagementController.getOrderByNumber,
   );
   router.post(
     '/orders/verify-payment',
     withAuthentication,
-    asynchandler(controller.verifyPaymentProof),
-  );
-  router.post(
-    '/orders/process',
-    withAuthentication,
-    asynchandler(controller.processOrder),
+    withRole(['ADMIN', 'SUPER']),
+    orderManagementController.verifyPaymentProof,
   );
   router.post(
     '/orders/ship',
     withAuthentication,
-    asynchandler(controller.shipOrder),
+    withRole(['ADMIN', 'SUPER']),
+    orderManagementController.shipOrder,
   );
   router.post(
     '/orders/cancel',
     withAuthentication,
-    asynchandler(controller.adminCancelOrder),
+    withRole(['ADMIN', 'SUPER']),
+    orderManagementController.cancelOrder,
   );
   router.get(
     '/orders/check-stock/:orderId',
     withAuthentication,
-    asynchandler(controller.checkOrderStock),
+    withRole(['ADMIN', 'SUPER']),
+    orderManagementController.checkOrderStock,
+  );
+  router.post(
+    '/orders/auto-confirm',
+    withAuthentication,
+    withRole(['ADMIN', 'SUPER']),
+    orderManagementController.autoConfirmShippedOrders,
   );
 
   return router;

@@ -35,6 +35,18 @@ const paymentStatusStyles = {
   REFUNDED: { variant: 'warning', label: 'Dikembalikan' },
 };
 
+function getImageUrl(filepath: string) {
+  if (filepath.startsWith('http')) {
+    return filepath;
+  }
+
+  if (filepath.startsWith('/')) {
+    return filepath;
+  }
+
+  return `/${filepath}`;
+}
+
 interface OrderDetailModalProps {
   order: any;
   open: boolean;
@@ -162,10 +174,17 @@ export default function OrderDetailModal({
                 <div className="font-medium">Bukti Pembayaran:</div>
                 <div className="relative h-48 w-full border rounded-md overflow-hidden">
                   <Image
-                    src={order.paymentProofs[0].filePath}
+                    src={getImageUrl(order.paymentProofs[0].filePath)}
                     alt="Bukti Pembayaran"
                     layout="fill"
                     objectFit="contain"
+                    onError={(e) => {
+                      console.error(
+                        'Error loading image:',
+                        order.paymentProofs[0].filePath,
+                      );
+                      e.currentTarget.src = '/placeholder-image.png';
+                    }}
                   />
                 </div>
                 <div className="text-sm text-muted-foreground">

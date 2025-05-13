@@ -21,7 +21,6 @@ export default function orderManagementAPI() {
   ) => {
     setIsLoading(true);
     try {
-      // Prepare query parameters
       const queryParams = new URLSearchParams();
       queryParams.append('page', (page + 1).toString());
       queryParams.append('limit', limit.toString());
@@ -46,8 +45,9 @@ export default function orderManagementAPI() {
         queryParams.append('orderNumber', filters.orderNumber);
       }
 
-      // Make the API call
-      const response = await apiclient.get(`/orders?${queryParams.toString()}`);
+      const response = await apiclient.get(
+        `/dashboard/orders?${queryParams.toString()}`,
+      );
 
       if (response.data && response.data.data) {
         setOrders(response.data.data);
@@ -74,12 +74,15 @@ export default function orderManagementAPI() {
     notes?: string,
   ) => {
     try {
-      const response = await apiclient.post('/orders/verify-payment', {
-        orderId,
-        paymentProofId,
-        approved,
-        notes,
-      });
+      const response = await apiclient.post(
+        '/dashboard/orders/verify-payment',
+        {
+          orderId,
+          paymentProofId,
+          approved,
+          notes,
+        },
+      );
 
       if (response.data) {
         toast({
@@ -108,7 +111,7 @@ export default function orderManagementAPI() {
     notes?: string,
   ) => {
     try {
-      const response = await apiclient.post('/orders/ship', {
+      const response = await apiclient.post('/dashboard/orders/ship', {
         orderId,
         trackingNumber,
         notes,
@@ -136,7 +139,7 @@ export default function orderManagementAPI() {
 
   const handleCancelOrder = async (orderId: string, reason: string) => {
     try {
-      const response = await apiclient.post('/orders/cancel', {
+      const response = await apiclient.post('/dashboard/orders/cancel', {
         orderId,
         reason,
       });
@@ -163,7 +166,9 @@ export default function orderManagementAPI() {
 
   const checkOrderStock = async (orderId: string) => {
     try {
-      const response = await apiclient.get(`/orders/check-stock/${orderId}`);
+      const response = await apiclient.get(
+        `/dashboard/orders/check-stock/${orderId}`,
+      );
       return response.data;
     } catch (error) {
       console.error('Error checking order stock:', error);

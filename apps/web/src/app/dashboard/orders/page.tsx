@@ -355,9 +355,7 @@ export default function OrderManagement() {
         order={selectedOrder}
         open={cancelOrderOpen}
         onOpenChange={setCancelOrderOpen}
-        onCancel={onCancelOrder}
-        isPending={actionsLoading}
-        onSuccess={() => {
+        onCanceled={() => {
           setCancelOrderOpen(false);
           fetchOrders(pagination.pageIndex, pagination.pageSize);
         }}
