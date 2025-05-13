@@ -23,8 +23,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { formatRupiah } from '@/lib/utils';
 import { apiclient } from '@/lib/apiclient';
+import { formatCurrency } from '@/lib/utils';
 
 interface CancelOrderModalProps {
   order: any;
@@ -188,7 +188,7 @@ export default function CancelOrderModal({
               </div>
               <div className="flex justify-between mt-2">
                 <span className="font-medium">Total:</span>
-                <span>{formatRupiah(order.total)}</span>
+                <span>{formatCurrency(order.total)}</span>
               </div>
             </div>
 

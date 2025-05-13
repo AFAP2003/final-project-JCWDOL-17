@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import Image from 'next/image';
-import { formatRupiah } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, XCircle } from 'lucide-react';
@@ -166,7 +166,7 @@ export default function PaymentConfirmationModal({
                   </p>
                   <p>
                     <span className="font-medium">Total Pesanan:</span>{' '}
-                    {formatRupiah(order.total)}
+                    {formatCurrency(order.total)}
                   </p>
                 </div>
                 <div>

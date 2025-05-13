@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect } from 'react';
-import { formatRupiah } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Truck, Package } from 'lucide-react';
@@ -171,7 +171,7 @@ export default function ShipOrderModal({
                 </p>
                 <p>
                   <span className="font-medium">Total Pesanan:</span>{' '}
-                  {formatRupiah(order.total)}
+                  {formatCurrency(order.total)}
                 </p>
               </div>
             </div>
@@ -229,7 +229,7 @@ export default function ShipOrderModal({
                         <div>
                           <p className="font-medium">{item.product.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {item.quantity} x {formatRupiah(item.price)}
+                            {item.quantity} x {formatCurrency(item.price)}
                           </p>
                         </div>
 
