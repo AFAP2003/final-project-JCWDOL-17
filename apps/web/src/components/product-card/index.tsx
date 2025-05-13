@@ -92,29 +92,34 @@ export default function ProductCard({ product }: Props) {
           className="bg-neutral-50 rounded-md overflow-hidden flex flex-col size-full hover:cursor-pointer"
         >
           <div className="rounded-lg relative">
-            {/* TODO: IMAGE handle isMain image */}
             {images.length > 1 ? (
               <div className="group/image relative aspect-square">
-                <Image
-                  src={images[0].imageUrl}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
-                <Image
-                  src={images[1].imageUrl}
-                  alt={product.name}
-                  fill
-                  className="object-cover absolute opacity-0 group-hover/image:opacity-100 transition-all duration-300 "
-                />
+                {images[0] && (
+                  <Image
+                    src={images[0].imageUrl}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                  />
+                )}
+                {images[1] && (
+                  <Image
+                    src={images[1].imageUrl}
+                    alt={product.name}
+                    fill
+                    className="object-cover absolute opacity-0 group-hover/image:opacity-100 transition-all duration-300"
+                  />
+                )}
               </div>
             ) : (
               <div className="group relative aspect-square">
-                <Image
-                  src={product.images[0].imageUrl}
-                  alt={product.name}
-                  fill
-                />
+                {images[0] ? (
+                  <Image src={images[0].imageUrl} alt={product.name} fill />
+                ) : (
+                  <div className="bg-neutral-200 w-full h-full flex items-center justify-center">
+                    <span className="text-neutral-500 text-xs">No image</span>
+                  </div>
+                )}
               </div>
             )}
 

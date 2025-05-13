@@ -67,7 +67,6 @@ export function inventoryManagementAPI() {
       const inventoryData = await inventoryRes.json();
 
       if (inventoryRes.ok) {
-        fetchInventories(1, 10);
         console.log('inventory Created Successfully: ', inventoryData);
         toast({
           description: 'inventory Created Successfully !',
@@ -97,8 +96,6 @@ export function inventoryManagementAPI() {
   const handleUpdateInventory = async (id: string, values) => {
     try {
       const updateData = {
-        productId: values.produk,
-        storeId: values.toko,
         minStock: Number(values.minimal),
         // These fields control the stock adjustment
         addQuantity: values.mode === 'tambah' ? Number(values.tambah || 0) : 0,
@@ -119,7 +116,6 @@ export function inventoryManagementAPI() {
       const inventoryData = await inventoryRes.json();
 
       if (inventoryRes.ok) {
-        fetchInventories(1, 10);
         toast({
           description: 'inventory Updated Successfully !',
         });
@@ -158,11 +154,11 @@ export function inventoryManagementAPI() {
       const inventoryData = await inventoryRes.json();
 
       if (inventoryRes.ok) {
-        fetchInventories(1, 10);
         toast({
           description: 'inventory Deleted Successfully !',
         });
         console.log('inventory deleted successfully:', inventoryData);
+        return true;
       } else {
         toast({
           variant: 'destructive',
@@ -172,6 +168,7 @@ export function inventoryManagementAPI() {
           'Failed to delete inventory:',
           inventoryData.message || 'Unknown error',
         );
+        return false;
       }
     } catch (error) {
       toast({
@@ -179,6 +176,7 @@ export function inventoryManagementAPI() {
         description: 'Error deleting inventory.',
       });
       console.error('Error deleting inventory:', error);
+      return false;
     }
   };
   return {

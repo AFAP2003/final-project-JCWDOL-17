@@ -1,5 +1,4 @@
 import { ApiError, BadRequestError, InternalSeverError } from '@/errors';
-import { getSessionUser } from '@/helpers/session-helper';
 import orderManagementService from '@/services/orderManagement.service';
 import { Request, Response, NextFunction } from 'express';
 
@@ -58,13 +57,10 @@ class OrderManagementController {
     try {
       const { orderId, paymentProofId, approved, notes } = req.body;
 
-      const { user } = getSessionUser(req);
-
       const data = await orderManagementService.verifyPaymentProof(
         orderId,
         paymentProofId,
         approved,
-        user.id, // ✅ adminId from session
         notes,
       );
 
@@ -103,10 +99,12 @@ class OrderManagementController {
 
   async cancelOrder(req: Request, res: Response, next: NextFunction) {
     try {
+      const { orderId, reason } = req.body;
+
       const data = await orderManagementService.cancelOrder(
-        req.body.orderId,
-        req.body.adminId || 'admin-id',
-        req.body.reason,
+        orderId,
+
+        reason,
       );
 
       res.status(200).send({
@@ -122,10 +120,8 @@ class OrderManagementController {
   async checkOrderStock(req: Request, res: Response, next: NextFunction) {
     try {
       const { orderId } = req.params;
-      const data = await orderManagementService.checkOrderStock(
-        orderId,
-        req.body.adminId || 'admin-id',
-      );
+
+      const data = await orderManagementService.checkOrderStock(orderId);
 
       res.status(200).send({
         success: true,

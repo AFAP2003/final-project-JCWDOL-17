@@ -99,17 +99,27 @@ export default function PaymentConfirmationModal({
           throw new Error('Failed to approve payment');
         }
       } else {
-        const response = await apiclient.post(
-          `/dashboard/orders/verify-payment`,
+        // Use the correct path
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/dashboard/orders/verify-payment`,
           {
-            orderId: order.id,
-            paymentProofId: paymentProof.id,
-            approved: true,
-            notes: notes,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderId: order.id,
+              paymentProofId: paymentProof.id,
+              approved: true,
+              notes: notes,
+            }),
+            credentials: 'include',
           },
         );
 
-        if (!response.data) {
+        const responseData = await response.json();
+
+        if (!response.ok) {
           throw new Error('Failed to approve payment');
         }
 
@@ -121,6 +131,7 @@ export default function PaymentConfirmationModal({
         });
 
         onOpenChange(false);
+        if (onSuccess) onSuccess();
       }
     } catch (error) {
       console.error('Error approving payment:', error);
@@ -160,17 +171,27 @@ export default function PaymentConfirmationModal({
           throw new Error('Failed to reject payment');
         }
       } else {
-        const response = await apiclient.post(
-          `/dashboard/orders/verify-payment`,
+        // Use the correct path
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/dashboard/orders/verify-payment`,
           {
-            orderId: order.id,
-            paymentProofId: paymentProof.id,
-            approved: false,
-            notes: notes,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderId: order.id,
+              paymentProofId: paymentProof.id,
+              approved: false,
+              notes: notes,
+            }),
+            credentials: 'include',
           },
         );
 
-        if (!response.data) {
+        const responseData = await response.json();
+
+        if (!response.ok) {
           throw new Error('Failed to reject payment');
         }
 
@@ -182,6 +203,7 @@ export default function PaymentConfirmationModal({
         });
 
         onOpenChange(false);
+        if (onSuccess) onSuccess();
       }
     } catch (error) {
       console.error('Error rejecting payment:', error);

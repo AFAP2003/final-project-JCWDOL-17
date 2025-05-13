@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { apiclient } from '@/lib/apiclient';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
+import { API_BASE_URL } from '@/lib/constant';
 import { OrderStatus } from '@/lib/enums';
 
 export default function orderManagementAPI() {
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const fetchOrders = async (
     page = 0,
@@ -23,7 +22,7 @@ export default function orderManagementAPI() {
     try {
       const queryParams = new URLSearchParams();
       queryParams.append('page', (page + 1).toString());
-      queryParams.append('limit', limit.toString());
+      queryParams.append('take', limit.toString());
 
       if (filters.status) {
         queryParams.append('status', filters.status);
@@ -45,19 +44,31 @@ export default function orderManagementAPI() {
         queryParams.append('orderNumber', filters.orderNumber);
       }
 
-      const response = await apiclient.get(
-        `/dashboard/orders?${queryParams.toString()}`,
+      const response = await fetch(
+        `${API_BASE_URL}/dashboard/orders?${queryParams.toString()}`,
+        {
+          credentials: 'include',
+        },
       );
 
-      if (response.data && response.data.data) {
-        setOrders(response.data.data);
+      const responseData = await response.json();
+
+      if (response.ok) {
+        setOrders(responseData.data || []);
       } else {
+        console.error(
+          'Failed to fetch orders:',
+          responseData.message || 'Unknown error',
+        );
         setOrders([]);
+        toast({
+          description: 'Failed to fetch orders. Please try again.',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
-        title: 'Error',
         description: 'Failed to fetch orders. Please try again.',
         variant: 'destructive',
       });
@@ -74,30 +85,38 @@ export default function orderManagementAPI() {
     notes?: string,
   ) => {
     try {
-      const response = await apiclient.post(
-        '/dashboard/orders/verify-payment',
+      const response = await fetch(
+        `${API_BASE_URL}/dashboard/orders/verify-payment`,
         {
-          orderId,
-          paymentProofId,
-          approved,
-          notes,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId,
+            paymentProofId,
+            approved,
+            notes,
+          }),
+          credentials: 'include',
         },
       );
 
-      if (response.data) {
+      const responseData = await response.json();
+
+      if (response.ok) {
         toast({
-          title: approved ? 'Payment Approved' : 'Payment Rejected',
           description: approved
             ? 'Payment has been verified and order is now being processed.'
             : 'Payment has been rejected and order status is set back to awaiting payment.',
-          variant: 'default',
         });
-        return response.data;
+        return responseData;
+      } else {
+        throw new Error(responseData.message || 'Failed to verify payment');
       }
     } catch (error) {
       console.error('Error verifying payment:', error);
       toast({
-        title: 'Error',
         description: `Failed to ${approved ? 'approve' : 'reject'} payment. Please try again.`,
         variant: 'destructive',
       });
@@ -111,25 +130,33 @@ export default function orderManagementAPI() {
     notes?: string,
   ) => {
     try {
-      const response = await apiclient.post('/dashboard/orders/ship', {
-        orderId,
-        trackingNumber,
-        notes,
+      const response = await fetch(`${API_BASE_URL}/dashboard/orders/ship`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          trackingNumber,
+          notes,
+        }),
+        credentials: 'include',
       });
 
-      if (response.data) {
+      const responseData = await response.json();
+
+      if (response.ok) {
         toast({
-          title: 'Order Shipped',
           description:
             'Order has been marked as shipped. Customer will need to confirm delivery within 7 days or it will be automatically confirmed.',
-          variant: 'default',
         });
-        return response.data;
+        return responseData;
+      } else {
+        throw new Error(responseData.message || 'Failed to ship order');
       }
     } catch (error) {
       console.error('Error shipping order:', error);
       toast({
-        title: 'Error',
         description: 'Failed to ship order. Please try again.',
         variant: 'destructive',
       });
@@ -139,24 +166,32 @@ export default function orderManagementAPI() {
 
   const handleCancelOrder = async (orderId: string, reason: string) => {
     try {
-      const response = await apiclient.post('/dashboard/orders/cancel', {
-        orderId,
-        reason,
+      const response = await fetch(`${API_BASE_URL}/dashboard/orders/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          reason,
+        }),
+        credentials: 'include',
       });
 
-      if (response.data) {
+      const responseData = await response.json();
+
+      if (response.ok) {
         toast({
-          title: 'Order Cancelled',
           description:
             'Order has been cancelled successfully and stock has been returned.',
-          variant: 'default',
         });
-        return response.data;
+        return responseData;
+      } else {
+        throw new Error(responseData.message || 'Failed to cancel order');
       }
     } catch (error) {
       console.error('Error cancelling order:', error);
       toast({
-        title: 'Error',
         description: 'Failed to cancel order. Please try again.',
         variant: 'destructive',
       });
@@ -166,14 +201,36 @@ export default function orderManagementAPI() {
 
   const checkOrderStock = async (orderId: string) => {
     try {
-      const response = await apiclient.get(
-        `/dashboard/orders/check-stock/${orderId}`,
+      const response = await fetch(
+        `${API_BASE_URL}/dashboard/orders/check-stock/${orderId}`,
+        {
+          credentials: 'include',
+        },
       );
-      return response.data;
+
+      const responseData = await response.json();
+
+      if (response.ok) {
+        if (responseData.data) {
+          return responseData.data;
+        } else if (
+          responseData.stockChecks &&
+          typeof responseData.allAvailable !== 'undefined'
+        ) {
+          return responseData;
+        } else {
+          console.error(
+            'Unexpected stock check response structure:',
+            responseData,
+          );
+          throw new Error('Invalid stock check response structure');
+        }
+      } else {
+        throw new Error(responseData.message || 'Failed to check order stock');
+      }
     } catch (error) {
       console.error('Error checking order stock:', error);
       toast({
-        title: 'Error',
         description: 'Failed to check order stock. Please try again.',
         variant: 'destructive',
       });
