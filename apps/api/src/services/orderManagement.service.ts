@@ -41,7 +41,7 @@ class OrderManagementService {
       throw new NotFoundError('Payment proof not found for this order');
     }
 
-    await this.validateAdminPermission(adminId, order.storeId);
+    await this.validateAdminPermission(order.storeId);
 
     return await orderManagementRepository.verifyPaymentProof(
       orderId,
@@ -71,7 +71,7 @@ class OrderManagementService {
       throw new Error('Only orders in PROCESSING state can be shipped');
     }
 
-    await this.validateAdminPermission(adminId, order.storeId);
+    await this.validateAdminPermission(order.storeId);
 
     const stockCheck = await orderManagementRepository.checkOrderStock(orderId);
     if (!stockCheck.hasAllStock) {
@@ -100,7 +100,7 @@ class OrderManagementService {
       throw new Error('Cannot cancel shipped or confirmed orders');
     }
 
-    await this.validateAdminPermission(adminId, order.storeId);
+    await this.validateAdminPermission(order.storeId);
 
     return await orderManagementRepository.cancelOrder(
       orderId,
@@ -109,7 +109,7 @@ class OrderManagementService {
     );
   }
 
-  async checkOrderStock(orderId: string, adminId: string) {
+  async checkOrderStock(orderId: string) {
     const order = await prismaclient.order.findUnique({
       where: { id: orderId },
       include: { store: true },
@@ -119,7 +119,7 @@ class OrderManagementService {
       throw new NotFoundError('Order not found');
     }
 
-    await this.validateAdminPermission(adminId, order.storeId);
+    await this.validateAdminPermission(order.storeId);
 
     return await orderManagementRepository.checkOrderStock(orderId);
   }
@@ -128,15 +128,13 @@ class OrderManagementService {
     return await orderManagementRepository.checkAutoConfirmOrders();
   }
 
-  private async validateAdminPermission(adminId: string, storeId: string) {
+  private async validateAdminPermission(storeId: string) {
     return true;
   }
 
   async getAdminStore(adminId: string) {
     return await prismaclient.store.findFirst({
-      where: {
-        adminId,
-      },
+      where: {},
     });
   }
 }

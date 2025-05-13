@@ -27,7 +27,6 @@ class OrderManagementRepository {
   async getOrders(page = 1, take = 10, filters: OrderFilters = {}) {
     const { storeId, status, startDate, endDate, orderNumber } = filters;
 
-    // Build where clause based on filters
     const where: any = {};
 
     if (storeId) where.storeId = storeId;
@@ -35,7 +34,6 @@ class OrderManagementRepository {
     if (orderNumber)
       where.orderNumber = { contains: orderNumber, mode: 'insensitive' };
 
-    // Date filters
     if (startDate || endDate) {
       where.createdAt = {};
       if (startDate) where.createdAt.gte = new Date(startDate);
@@ -161,9 +159,7 @@ class OrderManagementRepository {
     verifiedBy: string,
     notes?: string,
   ) {
-    // Transaction to update both payment proof and order
     return await prismaclient.$transaction(async (tx) => {
-      // Update payment proof status
       const paymentProof = await tx.paymentProof.update({
         where: { id: paymentProofId },
         data: {
@@ -176,7 +172,6 @@ class OrderManagementRepository {
         },
       });
 
-      // Update order status based on approval
       const order = await tx.order.findUnique({ where: { id: orderId } });
 
       if (!order) {
@@ -208,7 +203,6 @@ class OrderManagementRepository {
         },
       });
 
-      // If approved, update inventory for each item
       if (approved) {
         for (const item of updatedOrder.items) {
           const inventory = await tx.inventory.findFirst({
@@ -219,18 +213,15 @@ class OrderManagementRepository {
           });
 
           if (inventory) {
-            // Ensure there's enough stock
             if (inventory.quantity < item.quantity) {
               throw new Error(`Not enough stock for product ${item.productId}`);
             }
 
-            // Reduce inventory
             await tx.inventory.update({
               where: { id: inventory.id },
               data: { quantity: { decrement: item.quantity } },
             });
 
-            // Create stock journal entry
             await tx.stockJournal.create({
               data: {
                 inventoryId: inventory.id,
@@ -298,7 +289,6 @@ class OrderManagementRepository {
         throw new Error('Order not found');
       }
 
-      // Restore inventory if order was in processing state
       if (order.status === OrderStatus.PROCESSING) {
         for (const item of order.items) {
           const inventory = await tx.inventory.findFirst({
@@ -309,13 +299,11 @@ class OrderManagementRepository {
           });
 
           if (inventory) {
-            // Add back to inventory
             await tx.inventory.update({
               where: { id: inventory.id },
               data: { quantity: { increment: item.quantity } },
             });
 
-            // Create stock journal entry for return
             await tx.stockJournal.create({
               data: {
                 inventoryId: inventory.id,

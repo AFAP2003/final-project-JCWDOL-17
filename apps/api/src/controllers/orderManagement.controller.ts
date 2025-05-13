@@ -83,7 +83,6 @@ class OrderManagementController {
       const data = await orderManagementService.shipOrder(
         req.body.orderId,
         req.body.trackingNumber,
-        req.body.adminId || 'admin-id',
         req.body.notes,
       );
 
@@ -101,11 +100,7 @@ class OrderManagementController {
     try {
       const { orderId, reason } = req.body;
 
-      const data = await orderManagementService.cancelOrder(
-        orderId,
-
-        reason,
-      );
+      const data = await orderManagementService.cancelOrder(orderId, reason);
 
       res.status(200).send({
         success: true,

@@ -210,21 +210,8 @@ export default function orderManagementAPI() {
 
       const responseData = await response.json();
 
-      if (response.ok) {
-        if (responseData.data) {
-          return responseData.data;
-        } else if (
-          responseData.stockChecks &&
-          typeof responseData.allAvailable !== 'undefined'
-        ) {
-          return responseData;
-        } else {
-          console.error(
-            'Unexpected stock check response structure:',
-            responseData,
-          );
-          throw new Error('Invalid stock check response structure');
-        }
+      if (response.ok && responseData.success) {
+        return responseData.data;
       } else {
         throw new Error(responseData.message || 'Failed to check order stock');
       }

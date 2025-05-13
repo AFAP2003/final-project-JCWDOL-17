@@ -26,6 +26,14 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: `${process.env.NEXT_PUBLIC_BASE_API_URL}/uploads/:path*`,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
