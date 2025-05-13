@@ -3,7 +3,7 @@
 import { Separator } from '@/components/ui/separator';
 import { FilterIcon } from 'lucide-react';
 import CategoryFilter from './category-filter';
-import { PriceFilter } from './price-filter';
+import PriceFilter from './price-filter';
 import PromoFilter from './promo-filter';
 
 type Props = {
@@ -29,7 +29,7 @@ export default function Filter(props: Props) {
       <div className="space-y-6">
         <CategoryFilter category={props.category} />
         <PromoFilter promo={props.promo} />
-        <PriceFilter />
+        <PriceFilter price={props.price} />
       </div>
     </div>
   );

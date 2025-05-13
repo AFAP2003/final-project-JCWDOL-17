@@ -221,11 +221,9 @@ export default function DialogForm(props: Props) {
                       lng: 106.82716967509717,
                     };
                     if (props.action === 'update') {
-                      console.log('B');
                       initialpoint.lat = props.initialValue!.latitude;
                       initialpoint.lng = props.initialValue!.longitude;
                     } else if (location) {
-                      console.log('C');
                       initialpoint.lat = location.latitude;
                       initialpoint.lng = location.longitude;
                     }

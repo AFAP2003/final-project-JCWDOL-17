@@ -5,16 +5,26 @@ import { GetAllProductResponse } from '@/lib/types/get-all-product-response';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Search, ShoppingBasket } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import qs from 'query-string';
+import { useEffect, useState } from 'react';
 import { useDebounceValue } from 'usehooks-ts';
 import { Input } from '../ui/input';
 import { Separator } from '../ui/separator';
 
 export default function SearchBox() {
-  const [query, setQuery] = useState<string>('');
-  const [dbquery] = useDebounceValue(query, 500);
+  const searchParams = useSearchParams();
+  const path = usePathname();
   const router = useRouter();
+
+  const isSearchPage = path === '/search';
+
+  const [query, setQuery] = useState<string>(() => {
+    if (!isSearchPage) return '';
+    const q = searchParams.get('query') || '';
+    return q;
+  });
+  const [dbquery] = useDebounceValue(query, 500);
   const [showResult, setShowResult] = useState(true);
 
   const { data, isFetching } = useQuery({
@@ -25,8 +35,14 @@ export default function SearchBox() {
       );
       return data as GetAllProductResponse;
     },
-    enabled: dbquery !== '',
+    enabled: dbquery !== '' && !isSearchPage,
   });
+
+  useEffect(() => {
+    if (!isSearchPage && query) {
+      setQuery('');
+    }
+  }, [isSearchPage]);
 
   return (
     <div className="w-full relative">
@@ -37,7 +53,14 @@ export default function SearchBox() {
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               setShowResult(false);
-              router.push(`/search?query=${query}`);
+              const params = qs.parse(searchParams.toString());
+              params['query'] = query;
+              const searchquery = qs.stringify(params, {
+                skipEmptyString: true,
+                skipNull: true,
+              });
+
+              router.push(`/search?${searchquery}`);
             }
           }}
           onChange={(e) => {
@@ -50,7 +73,7 @@ export default function SearchBox() {
       </div>
 
       {/* Result Loading */}
-      {isFetching && showResult && (
+      {isFetching && showResult && !isSearchPage && (
         <div className="absolute top-full z-10 mt-3 w-full rounded-md bg-neutral-50 shadow border border-neutral-50 py-6">
           <div className="space-y-5">
             <h3 className="px-6 uppercase font-semibold">Top Match</h3>
@@ -68,7 +91,7 @@ export default function SearchBox() {
       )}
 
       {/* Result Search */}
-      {!isFetching && data && showResult && (
+      {!isFetching && data && showResult && !isSearchPage && (
         <div className="absolute top-full z-10 mt-3 w-full rounded-md bg-neutral-50 shadow border border-neutral-50 py-6 text-neutral-700">
           <div className="space-y-5">
             <h3 className="px-6 uppercase font-semibold">Top Match</h3>

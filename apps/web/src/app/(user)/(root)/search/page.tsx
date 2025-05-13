@@ -1,5 +1,6 @@
 import MaxWidthWrapper from '@/components/max-width-wrapper';
 import Filter from './_components/filter';
+import ProductList from './_components/product-list/product-list';
 
 type Props = {
   searchParams: {
@@ -14,12 +15,17 @@ type Props = {
 export default function SearchPage({ searchParams }: Props) {
   return (
     <MaxWidthWrapper>
-      <div>
-        <Filter
-          category={searchParams.category}
-          price={searchParams.price}
-          promo={searchParams.promo}
-        />
+      <div className="flex gap-12">
+        <div className="hidden lg:block">
+          <Filter
+            category={searchParams.category}
+            price={searchParams.price}
+            promo={searchParams.promo}
+          />
+        </div>
+        <div className="w-full">
+          <ProductList searchParams={searchParams} />
+        </div>
       </div>
     </MaxWidthWrapper>
   );

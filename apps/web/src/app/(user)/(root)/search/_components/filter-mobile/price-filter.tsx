@@ -105,8 +105,8 @@ function Filter({
 
   return (
     <div>
-      <div className="mb-4 flex justify-between items-center w-full pt-2">
-        <h4 className="text-base font-medium tracking-tight text-neutral-800">
+      <div className="mb-4 flex justify-between items-center w-full pt-3">
+        <h4 className="text-base font-medium tracking-tight text-neutral-200">
           Harga
         </h4>
         {(minInputValue !== minPrice ||
@@ -120,7 +120,7 @@ function Filter({
               setIncludeAboveMax(false);
               onChange?.([minPrice, maxPrice], false);
             }}
-            className="flex items-center gap-0.5 text-xs cursor-pointer p-1 hover:rounded-xl hover:bg-neutral-200 transition-all duration-200"
+            className="flex items-center gap-0.5 text-xs cursor-pointer p-1 px-2 rounded-xl hover:bg-neutral-200 hover:text-neutral-700 text-neutral-200 transition-all duration-200"
           >
             <X className="text-red-500 size-4" />
             <span className="text-neutral-500">Clear</span>
@@ -143,10 +143,10 @@ function Filter({
           </div>
 
           <div className="flex flex-col items-center justify-between gap-2">
-            <div className="grid grid-cols-[15%_85%] gap-2 items-center">
+            <div className="grid grid-cols-[15%_85%] gap-2 items-center w-full">
               <div>Min.</div>
               <div className="relative">
-                <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none text-neutral-700 text-sm">
+                <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none text-neutral-300 text-sm">
                   Rp
                 </div>
                 <Input
@@ -158,10 +158,10 @@ function Filter({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-[15%_85%] gap-2 items-center">
+            <div className="grid grid-cols-[15%_85%] gap-2 items-center w-full">
               <div>Max.</div>
               <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none text-neutral-700">
+                <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none text-neutral-300">
                   Rp
                 </div>
                 <Input
@@ -179,6 +179,7 @@ function Filter({
         <div className="flex items-center space-x-2">
           <Checkbox
             id="include-above-max"
+            className="bg-neutral-200 border border-neutral-600"
             checked={includeAboveMax}
             onCheckedChange={handleIncludeAboveMaxChange}
           />

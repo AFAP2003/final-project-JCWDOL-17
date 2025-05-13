@@ -33,17 +33,17 @@ export class VoucherService {
     const orderBy = (() => {
       switch (dto.orderBy) {
         case 'createdAt':
-          return Prisma.sql`v."createdAt" ASC`;
+          return Prisma.sql`"createdAt" ASC`;
         case '-createdAt':
-          return Prisma.sql`v."createdAt" DESC`;
+          return Prisma.sql`"createdAt" DESC`;
         case 'startDate':
-          return Prisma.sql`v."startDate" ASC`;
+          return Prisma.sql`"startDate" ASC`;
         case '-startDate':
-          return Prisma.sql`v."startDate" DESC`;
+          return Prisma.sql`"startDate" DESC`;
         case 'endDate':
-          return Prisma.sql`v."endDate" ASC`;
+          return Prisma.sql`"endDate" ASC`;
         case '-endDate':
-          return Prisma.sql`v."endDate" DESC`;
+          return Prisma.sql`"endDate" DESC`;
       }
     })();
 
@@ -121,6 +121,8 @@ export class VoucherService {
         LEFT JOIN "_ProductVoucher" pv ON pv."B" = v."id"
         LEFT JOIN "Product" p ON p."id" = pv."A"
         JOIN total_count tc ON true
+        ORDER BY ${orderBy}
+
     `;
 
     const result: any[] = await prismaclient.$queryRaw(query);

@@ -34,7 +34,7 @@ export default function NavbarSkeleton() {
               <Skeleton className="w-[32px] h-[32px]" />
             </div>
 
-            <div className="max-lg:block w-full">
+            <div className="hidden max-lg:block w-full">
               <Skeleton className="h-[32px] w-full" />
             </div>
 
