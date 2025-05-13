@@ -21,6 +21,7 @@ import {
 import { Store } from '@/lib/interfaces/storeManagement.interface';
 import { FormikProps } from 'formik';
 import { Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
 interface DiscountManagementFormProps{
   formik: FormikProps<any>
   stores:Store[]
@@ -34,6 +35,33 @@ interface DiscountManagementFormProps{
 }
 export default function DiscountManagementForm({ formik,stores,setDialogOpen ,isEditMode,dialogOpen,setIsEditMode,setEditingDiscountId,isDetailMode,setIsDetailMode}:DiscountManagementFormProps) {
   const disabled = isDetailMode
+
+  const type  = formik.values.tipe_diskon
+  const [disableValue,setDisableValue] = useState(false)
+  const [disableMinPembelian,setdisableMinPembelian] = useState(false)
+  const [disablePotonganMaks,setDisablePotonganMaks] = useState(false)
+ 
+  useEffect(()=>{
+    if(type=='diskon_normal' ){
+      formik.setFieldValue('min_pembelian','')
+      formik.setFieldValue('potongan_maks','')
+      setdisableMinPembelian(true)
+      setDisablePotonganMaks(true)
+     
+    } else if(type== 'bogo'){
+      formik.setFieldValue('nilai_diskon','')
+      formik.setFieldValue('min_pembelian','')
+      formik.setFieldValue('potongan_maks','')
+      setDisableValue(true)
+      setdisableMinPembelian(true)
+      setDisablePotonganMaks(true)
+      
+    }else{
+      setdisableMinPembelian(false)
+      setDisablePotonganMaks(false)
+    }
+  
+  },[type])
   return (
     <Dialog open={dialogOpen} 
     onOpenChange={(open) => {
@@ -202,7 +230,7 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               value={formik.values.nilai_diskon}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}      
-              disabled={disabled}
+              disabled={disabled || disableValue }
 
               />
             {formik.touched.nilai_diskon && formik.errors.nilai_diskon && (
@@ -223,7 +251,7 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               value={formik.values.min_pembelian}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}        
-              disabled={disabled}
+              disabled={disabled || disableMinPembelian}
 
               />
             {formik.touched.min_pembelian && formik.errors.min_pembelian && (
@@ -244,7 +272,7 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               value={formik.values.potongan_maks}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}        
-              disabled={disabled}
+              disabled={disabled || disablePotonganMaks}
 
               />
             {formik.touched.potongan_maks && formik.errors.potongan_maks && (
