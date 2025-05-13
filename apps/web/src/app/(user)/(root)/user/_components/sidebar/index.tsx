@@ -26,7 +26,7 @@ export default function UserSidebar() {
   const { user } = data;
 
   return (
-    <Card className="w-full max-w-64 h-[700px] flex flex-col rounded-lg overflow-hidden border border-neutral-200 bg-white/80 shadow-sm">
+    <Card className="w-full h-[700px] flex flex-col rounded-lg overflow-hidden border border-neutral-200 bg-white/80 shadow-sm">
       {/* User Profile Section */}
       <div className="bg-neutral-50 p-6">
         <div className="flex gap-4 items-center">
@@ -67,7 +67,7 @@ export default function UserSidebar() {
                 </div>
               </Link>
 
-              <Link href={'#'} passHref>
+              <Link href={`/user/my-vouchers`} passHref>
                 <div className="flex items-center gap-3 rounded-md px-3 py-2.5 cursor-pointer font-medium transition-all hover:bg-neutral-100 text-neutral-700 hover:text-neutral-900">
                   <Ticket className="size-4" />
                   <span>Voucher Saya</span>

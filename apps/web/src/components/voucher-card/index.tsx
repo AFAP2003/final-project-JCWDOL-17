@@ -64,8 +64,8 @@ type Props = {
     createdAt: string;
     products: { id: string }[];
     users: { id: string }[];
-    voucherInPrice: number;
-    voucherInPercent: string;
+    // voucherInPrice: number;
+    // voucherInPercent: string;
   };
   onOpenChange?: (value: boolean) => void;
 };
@@ -79,10 +79,10 @@ const VoucherCard: React.FC<Props> = ({ voucher, onOpenChange }) => {
     }
   }, [open]);
   return (
-    <div className="flex flex-col sm:flex-row w-full max-w-full sm:max-w-md mx-auto overflow-hidden rounded-lg shadow-md relative border border-neutral-500">
+    <div className="flex flex-row w-full overflow-hidden rounded-lg shadow-sm relative border border-neutral-300">
       {/* Left color bar with icon */}
       <div
-        className={`${typeColorMap[voucher.type]} w-full sm:w-20 h-16 sm:h-auto flex flex-row sm:flex-col items-center justify-center text-neutral-200 py-2 sm:py-4`}
+        className={`${typeColorMap[voucher.type]} w-20 h-auto flex flex-col items-center justify-center text-neutral-200 py-2 sm:py-4 shrink-0`}
       >
         <div className="mr-2 sm:mr-0 sm:mb-2">{typeIconMap[voucher.type]}</div>
         <div className="text-[10px] sm:text-xs font-semibold text-center px-1 sm:px-2 whitespace-pre-wrap">
@@ -90,22 +90,15 @@ const VoucherCard: React.FC<Props> = ({ voucher, onOpenChange }) => {
         </div>
       </div>
 
-      {/* Perforated edge for mobile (horizontal) */}
-      <div className="absolute top-16 left-0 right-0 flex flex-row justify-between px-2 sm:hidden">
-        {Array.from({ length: 10 }).map((_, i) => (
-          <div key={i} className="h-1 w-1 rounded-full bg-background" />
-        ))}
-      </div>
-
       {/* Perforated edge for desktop (vertical) */}
-      <div className="absolute -left-[2px] top-0 bottom-0 hidden sm:flex flex-col justify-between py-2">
+      <div className="absolute -left-[2px] top-0 bottom-0 flex flex-col justify-between py-2">
         {Array.from({ length: 10 }).map((_, i) => (
           <div key={i} className="w-1 h-1 rounded-full bg-background" />
         ))}
       </div>
 
       {/* Voucher content */}
-      <div className="flex-1 flex flex-col p-3 px-4 bg-neutral-800">
+      <div className="flex-1 flex flex-col p-3 px-4 bg-neutral-50">
         <div className="flex items-center">
           <span
             className={`font-bold text-sm sm:text-base ${isMobile ? 'flex flex-col items-start' : 'flex items-center'}`}
@@ -114,9 +107,15 @@ const VoucherCard: React.FC<Props> = ({ voucher, onOpenChange }) => {
           </span>
         </div>
 
-        <div className="text-xs sm:text-sm text-red-500 mt-2 flex items-center truncate gap-1">
-          <span>-</span>
-          <span>{formatCurrency(voucher.voucherInPrice)}</span>
+        <div className="text-xs sm:text-sm text-red-500 mt-1 italic flex items-center truncate gap-1">
+          {(() => {
+            switch (voucher.valueType) {
+              case 'PERCENTAGE':
+                return `${voucher.value}% s/d ${formatCurrency(voucher.maxDiscount || 0)}`;
+              case 'FIXED_AMOUNT':
+                return `${formatCurrency(voucher.value)} Off`;
+            }
+          })()}
         </div>
 
         {/* Perforated edge on the right (desktop and mobile) - fixed to be visible in all layouts */}
@@ -131,12 +130,12 @@ const VoucherCard: React.FC<Props> = ({ voucher, onOpenChange }) => {
           <div>
             {/* Min purchase if available */}
             {voucher.minPurchase && (
-              <div className="text-[10px] sm:text-xs text-neutral-400 truncate">
+              <div className="text-[10px] sm:text-xs text-neutral-500 truncate">
                 Min. Order: {formatCurrency(voucher.minPurchase)}
               </div>
             )}
             {/* Validity period */}
-            <div className="text-[10px] sm:text-xs text-neutral-400 mt-2 flex flex-wrap items-center">
+            <div className="text-[10px] sm:text-xs text-neutral-500 mt-2 flex flex-wrap items-center">
               <span className="mr-1">
                 {format(voucher.endDate, 'dd MMMM, yyyy')}
               </span>
@@ -155,7 +154,7 @@ const VoucherCard: React.FC<Props> = ({ voucher, onOpenChange }) => {
                 }}
                 variant="ghost"
                 size="sm"
-                className="text-[10px] sm:text-xs flex items-center p-0 hover:bg-transparent text-neutral-300 hover:text-neutral-400"
+                className="text-[10px] sm:text-xs flex items-center p-0 hover:bg-transparent text-neutral-700 hover:text-neutral-700/90"
               >
                 <Info size={12} className="text-voucher-blue" />
                 <span className="text-voucher-blue underline">S&K</span>

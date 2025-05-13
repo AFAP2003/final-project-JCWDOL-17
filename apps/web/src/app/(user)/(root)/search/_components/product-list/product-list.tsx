@@ -81,7 +81,7 @@ export default function ProductList({ searchParams }: Props) {
           promo={searchParams.promo}
         />
         <div className="ml-3 text-neutral-400 block lg:hidden">|</div>
-        <OrderBy />
+        <OrderBy orderBy={searchParams.orderBy} />
       </div>
 
       <div className="w-full mt-3">
@@ -115,9 +115,17 @@ export default function ProductList({ searchParams }: Props) {
             )}
 
             {products.length <= 0 && (
-              <div className="flex justify-center items-center h-[calc(85vh-220px)]">
-                <div className="italic text-neutral-500">
-                  Tidak ada produk yang tersedia
+              <div className="w-full h-[calc(85vh-220px)] flex items-center justify-center text-neutral-400">
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <div className="text-base font-medium">🫢 Oops!</div>
+                  <div className="flex flex-col w-full justify-center items-center gap-1">
+                    <div className="text-base italic">
+                      Tidak ada produk yang ditemukan
+                    </div>
+                    <div className="text-xs text-neutral-500">
+                      Coba periksa kembali atau gunakan kata kunci lain.
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

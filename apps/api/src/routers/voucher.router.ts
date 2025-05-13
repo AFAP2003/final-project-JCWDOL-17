@@ -1,5 +1,7 @@
 import { VoucherController } from '@/controllers/voucher.controller';
+import { withAuthentication } from '@/middlewares/auth.middleware';
 import { Router } from 'express';
+import asynchandler from 'express-async-handler';
 
 export class VoucherRouter {
   private router: Router;
@@ -11,7 +13,13 @@ export class VoucherRouter {
     this.initializeRoutes();
   }
 
-  private initializeRoutes(): void {}
+  private initializeRoutes(): void {
+    this.router.get(
+      '/me',
+      withAuthentication,
+      asynchandler(this.controller.getAllMyVoucher),
+    );
+  }
 
   getRouter(): Router {
     return this.router;

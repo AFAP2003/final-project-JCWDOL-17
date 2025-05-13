@@ -24,8 +24,7 @@ export class VoucherService {
         ? Prisma.sql`AND (
                 to_tsvector('simple', v."name") @@ to_tsquery('simple', ${term}) OR
                 to_tsvector('simple', v."description") @@ to_tsquery('simple', ${term}) OR
-                to_tsvector('simple', v."code") @@ to_tsquery('simple', ${term}) OR
-                to_tsvector('simple', v."value") @@ to_tsquery('simple', ${term})
+                to_tsvector('simple', v."code") @@ to_tsquery('simple', ${term})
             )`
         : Prisma.empty;
     })();
@@ -44,11 +43,13 @@ export class VoucherService {
           return Prisma.sql`"endDate" ASC`;
         case '-endDate':
           return Prisma.sql`"endDate" DESC`;
+        default:
+          return Prisma.sql`"createdAt" DESC`; // Default ordering
       }
     })();
 
     const filterType = (() => {
-      if (!dto.type) return Prisma.empty;
+      if (!dto.type || dto.type.length === 0) return Prisma.empty;
 
       const types = dto.type.map((type) => {
         switch (type) {
@@ -58,27 +59,36 @@ export class VoucherService {
             return Prisma.sql`v."type" = 'PRODUCT_SPECIFIC'`;
           case 'shipping':
             return Prisma.sql`v."type" = 'SHIPPING'`;
+          default:
+            return Prisma.sql`1=0`; // False condition for unknown types
         }
       });
 
-      return Prisma.sql`AND ${Prisma.join(types, ' OR ')}`;
+      return Prisma.sql`AND (${Prisma.join(types, ' OR ')})`;
     })();
 
     const query = Prisma.sql`
         WITH filtered_vouchers AS (
-          SELECT v."id", v."type", v."createdAt", v."startDate", v."endDate"
+          SELECT DISTINCT v."id", v."type", v."createdAt", v."startDate", v."endDate"
           FROM "Voucher" v
           LEFT JOIN "_UserVoucher" uv ON uv."B" = v."id"
-          LEFT JOIN "User" u ON u."id" = uv."A"
-          LEFT JOIN "_ProductVoucher" pv ON pv."B" = v."id"
-          LEFT JOIN "Product" p ON p."id" = pv."A"
           WHERE
             v."isActive" = true AND
             v."endDate" >= ${currentDate()} AND
-            u."id" = ${user.id} AND
-            p."isActive" = true
+            uv."A" = ${user.id}
             ${searchterm}
             ${filterType}
+          AND (
+            -- For non-product-specific vouchers
+            v."type" != 'PRODUCT_SPECIFIC'
+            OR
+            -- For product-specific vouchers, ensure at least one active product exists
+            EXISTS (
+              SELECT 1 FROM "_ProductVoucher" pv 
+              JOIN "Product" p ON p."id" = pv."A" AND p."isActive" = true
+              WHERE pv."B" = v."id"
+            )
+          )
         ),
         voucher_page AS (
           SELECT fv."id"
@@ -88,9 +98,7 @@ export class VoucherService {
           LIMIT ${dto.pageSize}
         ),
         total_count AS (
-          SELECT COUNT(*)::int AS "result_count" FROM (
-            SELECT DISTINCT fv."id" FROM filtered_vouchers fv
-          ) AS count_table
+          SELECT COUNT(*)::int AS "result_count" FROM filtered_vouchers
         )
         SELECT
           v."id" as "id",
@@ -109,30 +117,36 @@ export class VoucherService {
           v."maxUsage" as "maxUsage",
           v."usageCount" as "usageCount",
           v."createdAt" as "createdAt",
-
           p."id" as "product_id",
-          u."id" as "user_id",
           tc."result_count"
-
-        FROM voucher_page vp;
+        FROM voucher_page vp
         JOIN "Voucher" v ON vp."id" = v."id"
-        LEFT JOIN "_UserVoucher" uv ON uv."B" = v."id"
-        LEFT JOIN "User" u ON u."id" = uv."A"
         LEFT JOIN "_ProductVoucher" pv ON pv."B" = v."id"
-        LEFT JOIN "Product" p ON p."id" = pv."A"
-        JOIN total_count tc ON true
-        ORDER BY ${orderBy}
-
+        LEFT JOIN "Product" p ON p."id" = pv."A" AND p."isActive" = true
+        CROSS JOIN total_count tc
+        ORDER BY ${orderBy};
     `;
 
     const result: any[] = await prismaclient.$queryRaw(query);
 
     const voucherMap = new Map<
       string,
-      Voucher & { products: { id: string }[]; users: { id: string }[] }
+      Voucher & { products: { id: string }[] }
     >();
 
-    let resultCount = result.at(0)?.result_count || 0;
+    // If no results, return empty array with correct pagination
+    if (result.length === 0) {
+      return {
+        vouchers: [],
+        metadata: calculateMetadataPagination({
+          page: dto.page,
+          pageSize: dto.pageSize,
+          totalRecord: 0,
+        }),
+      };
+    }
+
+    let resultCount = result[0]?.result_count || 0;
 
     for (const row of result) {
       if (!voucherMap.has(row.id)) {
@@ -154,43 +168,25 @@ export class VoucherService {
           usageCount: row.usageCount,
           createdAt: row.createdAt,
           products: [],
-          users: [],
         });
       }
 
-      if (row.user_id) {
-        const voucher = voucherMap.get(row.id);
-        if (!voucher) {
-          throw new InternalSeverError(`Missing voucher id ${row.id}`);
-        }
-        const notAdded = !voucher.users.some((user) => user.id === row.user_id);
-        if (notAdded) {
-          voucher.users.push({
-            id: row.user_id,
-          });
-        }
-      }
+      const voucher = voucherMap.get(row.id);
+      if (!voucher)
+        throw new InternalSeverError(`Missing voucher id ${row.id}`);
 
-      if (row.product_id) {
-        const voucher = voucherMap.get(row.id);
-        if (!voucher) {
-          throw new InternalSeverError(`Missing voucher id ${row.id}`);
-        }
-        const notAdded = !voucher.products.some(
-          (product) => product.id === row.product_id,
-        );
-        if (notAdded) {
-          voucher.products.push({
-            id: row.product_id,
-          });
-        }
+      if (
+        row.product_id &&
+        !voucher.products.some((p) => p.id === row.product_id)
+      ) {
+        voucher.products.push({ id: row.product_id });
       }
     }
 
     const metadata = calculateMetadataPagination({
       page: dto.page,
       pageSize: dto.pageSize,
-      totalRecord: resultCount > 0 ? resultCount : 0,
+      totalRecord: resultCount,
     });
 
     return {

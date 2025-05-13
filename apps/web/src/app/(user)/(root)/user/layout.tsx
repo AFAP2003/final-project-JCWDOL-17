@@ -8,8 +8,8 @@ type Props = {
 
 export default function UserLayout({ children }: Props) {
   return (
-    <MaxWidthWrapper className="relative flex flex-col">
-      <div className="flex gap-12 grow">
+    <MaxWidthWrapper className="">
+      <div className="grid grid-rows-1 grid-cols-[20%_1fr] gap-12">
         <UserSidebar />
         {children}
       </div>

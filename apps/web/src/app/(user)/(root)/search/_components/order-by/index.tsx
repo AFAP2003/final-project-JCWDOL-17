@@ -13,12 +13,20 @@ import { useEffect, useState } from 'react';
 
 const safeSelect = ['createdAt', '-createdAt', 'price', '-price'] as const;
 
-export default function OrderBy() {
+type Props = {
+  orderBy?: string;
+};
+
+export default function OrderBy(props: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [orderBy, setOrderBy] = useState<
     'createdAt' | '-createdAt' | 'price' | '-price' | null
-  >(null);
+  >(() => {
+    const ok = safeSelect.includes(props.orderBy as any);
+    if (ok) return props.orderBy as any;
+    return null;
+  });
 
   useEffect(() => {
     const param = qs.parse(searchParams.toString());
@@ -31,7 +39,10 @@ export default function OrderBy() {
   }, [orderBy]);
 
   return (
-    <Select onValueChange={(value) => setOrderBy(value as any)}>
+    <Select
+      value={orderBy as any}
+      onValueChange={(value) => setOrderBy(value as any)}
+    >
       <SelectTrigger
         chevronClass="text-neutral-950 font-medium shrink-0"
         className={cn(
