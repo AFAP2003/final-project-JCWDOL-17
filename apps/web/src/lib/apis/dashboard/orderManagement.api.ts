@@ -1,10 +1,10 @@
 import { toast } from '@/hooks/use-toast';
-import { API_BASE_URL } from '@/lib/constant';
+import { apiclient } from '@/lib/apiclient'; // Import apiclient instead
 import { OrderStatus, PaymentStatus } from '@/lib/enums';
 import { format } from 'date-fns';
 import { useState } from 'react';
 
-export default function ordertManagementAPI() {
+export default function orderManagementAPI() {
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [orderDetails, setOrderDetails] = useState<any>(null);
@@ -24,6 +24,8 @@ export default function ordertManagementAPI() {
     try {
       const page = pageIndex + 1;
       const queryParams = new URLSearchParams();
+      queryParams.append('page', page.toString());
+      queryParams.append('limit', pageSize.toString());
 
       if (filters) {
         if (filters.status && filters.status !== 'all') {
@@ -50,23 +52,20 @@ export default function ordertManagementAPI() {
         }
       }
 
-      const orderRes = await fetch(
-        `${API_BASE_URL}/dashborad/orders?${queryParams.toString()}`,
+      // Updated to use apiclient and the correct dashboard path
+      const response = await apiclient.get(
+        `/dashboard/orders?${queryParams.toString()}`,
       );
+      const orderData = response.data;
 
-      const orderData = await orderRes.json();
-
-      if (orderRes.ok) {
-        setOrders(orderData.data || []);
-        return orderData;
-      } else {
-        console.error(
-          'Failed to fetch orders:',
-          orderData.message || 'Unknown Error',
-        );
-      }
+      setOrders(orderData.data || []);
+      return orderData;
     } catch (error) {
-      console.log('Error fetching orders: ', error);
+      console.error('Failed to fetch orders:', error);
+      toast({
+        variant: 'destructive',
+        description: 'Failed to load orders. Please try again.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -75,12 +74,11 @@ export default function ordertManagementAPI() {
   const fetchOrderById = async (orderId: string) => {
     setIsLoading(true);
     try {
-      const orderRes = await fetch(
-        `${API_BASE_URL}/dashboard/orders/${orderId}`,
-      );
-      const orderData = await orderRes.json();
+      // Updated to use apiclient and the correct dashboard path
+      const response = await apiclient.get(`/dashboard/orders/${orderId}`);
+      const orderData = response.data;
 
-      if (orderRes.ok) {
+      if (response.status === 200) {
         setOrderDetails(orderData.data);
         console.log('Order details fetched successfully: ', orderData);
         return orderData.data;
@@ -92,7 +90,11 @@ export default function ordertManagementAPI() {
         return null;
       }
     } catch (error) {
-      console.log('Error fetching order details: ', error);
+      console.error('Error fetching order details: ', error);
+      toast({
+        variant: 'destructive',
+        description: 'Failed to load order details. Please try again.',
+      });
       return null;
     } finally {
       setIsLoading(false);
@@ -106,25 +108,20 @@ export default function ordertManagementAPI() {
     notes?: string,
   ) => {
     try {
-      const verifyRes = await fetch(
-        `${API_BASE_URL}/dashboard/orders/verify-payment`,
+      // Updated to use apiclient and the correct dashboard path
+      const response = await apiclient.post(
+        '/dashboard/orders/verify-payment',
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            orderId,
-            paymentProofId,
-            approved,
-            notes: notes || '',
-          }),
+          orderId,
+          paymentProofId,
+          approved,
+          notes: notes || '',
         },
       );
 
-      const verifyData = await verifyRes.json();
+      const verifyData = response.data;
 
-      if (verifyRes.ok) {
+      if (response.status === 200) {
         toast({
           description: approved
             ? 'Pembayaran berhasil dikonfirmasi'
@@ -160,25 +157,17 @@ export default function ordertManagementAPI() {
     notes?: string,
   ) => {
     try {
-      const processRes = await fetch(
-        `${API_BASE_URL}/dashboard/orders/process`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            orderId,
-            paymentProofId,
-            verifyPayment,
-            notes: notes || '',
-          }),
-        },
-      );
+      // Updated to use apiclient and the correct dashboard path
+      const response = await apiclient.post('/dashboard/orders/process', {
+        orderId,
+        paymentProofId,
+        verifyPayment,
+        notes: notes || '',
+      });
 
-      const processData = await processRes.json();
+      const processData = response.data;
 
-      if (processRes.ok) {
+      if (response.status === 200) {
         toast({
           description: 'Pesanan berhasil diproses',
         });
@@ -211,21 +200,16 @@ export default function ordertManagementAPI() {
     notes?: string,
   ) => {
     try {
-      const shipRes = await fetch(`${API_BASE_URL}/dashboard/orders/ship`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId,
-          trackingNumber,
-          notes: notes || '',
-        }),
+      // Updated to use apiclient and the correct dashboard path
+      const response = await apiclient.post('/dashboard/orders/ship', {
+        orderId,
+        trackingNumber,
+        notes: notes || '',
       });
 
-      const shipData = await shipRes.json();
+      const shipData = response.data;
 
-      if (shipRes.ok) {
+      if (response.status === 200) {
         toast({
           description: 'Pesanan berhasil dikirim',
         });
@@ -257,20 +241,15 @@ export default function ordertManagementAPI() {
    */
   const handleCancelOrder = async (orderId: string, reason: string) => {
     try {
-      const cancelRes = await fetch(`${API_BASE_URL}/dashboard/orders/cancel`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId,
-          reason,
-        }),
+      // Updated to use apiclient and the correct dashboard path
+      const response = await apiclient.post('/dashboard/orders/cancel', {
+        orderId,
+        reason,
       });
 
-      const cancelData = await cancelRes.json();
+      const cancelData = response.data;
 
-      if (cancelRes.ok) {
+      if (response.status === 200) {
         toast({
           description: 'Pesanan berhasil dibatalkan',
         });
@@ -299,12 +278,13 @@ export default function ordertManagementAPI() {
 
   const checkOrderStock = async (orderId: string) => {
     try {
-      const stockRes = await fetch(
-        `${API_BASE_URL}/dashboard/orders/check-stock/${orderId}`,
+      // Updated to use apiclient and the correct dashboard path
+      const response = await apiclient.get(
+        `/dashboard/orders/check-stock/${orderId}`,
       );
-      const stockData = await stockRes.json();
+      const stockData = response.data;
 
-      if (stockRes.ok) {
+      if (response.status === 200) {
         console.log('Stock check successful: ', stockData);
         return stockData.data;
       } else {
