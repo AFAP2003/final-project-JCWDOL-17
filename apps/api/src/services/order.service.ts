@@ -1155,14 +1155,14 @@ export class OrderService {
 
   async checkOrdersForAutoConfirmation() {
     try {
-      const twoDaysAgo = new Date();
-      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const ordersToConfirm = await prismaclient.order.findMany({
         where: {
           status: OrderStatus.SHIPPED,
           lastStatusChange: {
-            lt: twoDaysAgo,
+            lt: sevenDaysAgo,
           },
         },
       });
