@@ -87,12 +87,6 @@ export async function middleware(request: NextRequest) {
 
       const { user } = session as unknown as Session;
 
-      console.log('AAAAAA');
-      console.log({
-        currentPath,
-        role: user?.role,
-      });
-
       const role = user?.role;
       switch (role) {
         case 'USER': {
