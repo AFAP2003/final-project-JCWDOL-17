@@ -1158,14 +1158,14 @@ export class OrderService {
 
   async checkOrdersForAutoConfirmation() {
     try {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
       const ordersToConfirm = await prismaclient.order.findMany({
         where: {
           status: OrderStatus.SHIPPED,
           lastStatusChange: {
-            lt: sevenDaysAgo,
+            lt: twoDaysAgo,
           },
         },
       });
@@ -1254,7 +1254,7 @@ export class OrderService {
         include: {
           items: true,
           appliedVouchers: true,
-          address: true, // FIX: Include address relationship
+          address: true,
         },
       });
 
@@ -1285,7 +1285,6 @@ export class OrderService {
         throw new BadRequestError('Voucher usage limit reached');
       }
 
-      // FIX: Convert Decimal to Number for comparison
       if (
         voucher.minPurchase &&
         Number(order.subtotal) < Number(voucher.minPurchase)
@@ -1312,7 +1311,6 @@ export class OrderService {
         discountAmount = Number(voucher.value);
       }
 
-      // FIX: Convert all Decimal values to Number before arithmetic
       const newTotal =
         Number(order.subtotal) +
         Number(order.shippingCost) -
@@ -1354,21 +1352,32 @@ export class OrderService {
   async searchOrders(userId: string, query: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
-    // FIX: Fix the Prisma query structure
-    const searchQuery = {
-      OR: [
-        { orderNumber: { contains: query, mode: 'insensitive' as const } },
-        { status: query as OrderStatus },
-      ],
+    const where: any = {
       userId,
+      OR: [
+        { orderNumber: { contains: query, mode: 'insensitive' } },
+        {
+          items: {
+            some: {
+              product: {
+                name: { contains: query, mode: 'insensitive' },
+              },
+            },
+          },
+        },
+      ],
     };
 
+    if (Object.values(OrderStatus).includes(query as OrderStatus)) {
+      where.OR.push({ status: query as OrderStatus });
+    }
+
     const total = await prismaclient.order.count({
-      where: searchQuery,
+      where,
     });
 
     const orders = await prismaclient.order.findMany({
-      where: searchQuery,
+      where,
       orderBy: { createdAt: 'desc' },
       skip,
       take: limit,
@@ -1387,7 +1396,7 @@ export class OrderService {
         },
         store: true,
         paymentProofs: true,
-        address: true, // FIX: Include address relationship
+        address: true,
       },
     });
 

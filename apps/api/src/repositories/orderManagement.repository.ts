@@ -340,14 +340,14 @@ class OrderManagementRepository {
   }
 
   async checkAutoConfirmOrders() {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
     const ordersToConfirm = await prismaclient.order.findMany({
       where: {
         status: OrderStatus.SHIPPED,
         lastStatusChange: {
-          lt: sevenDaysAgo,
+          lt: twoDaysAgo,
         },
       },
     });
