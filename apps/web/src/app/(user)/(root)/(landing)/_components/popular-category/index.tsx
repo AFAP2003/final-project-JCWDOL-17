@@ -8,6 +8,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import 'swiper/css/bundle';
+<<<<<<< HEAD
+=======
+// import 'swiper/css/scrollbar';
+>>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
 import { Mousewheel, Scrollbar } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
@@ -70,6 +74,7 @@ export default function PopularCategory() {
         >
           {data.categories.map((category, idx) => (
             <SwiperSlide key={idx} className="mb-9">
+<<<<<<< HEAD
               <div className="w-full flex items-center justify-center">
                 <div
                   onClick={(e) => {
@@ -79,6 +84,13 @@ export default function PopularCategory() {
                   }}
                   className="relative aspect-square size-32 flex items-center justify-center bg-neutral-200 rounded-full cursor-pointer"
                 >
+=======
+              <div
+                onClick={() => router.push(`/search?category=${category.name}`)}
+                className="w-full flex items-center justify-center cursor-pointer"
+              >
+                <div className="relative aspect-square size-32 flex items-center justify-center bg-neutral-200 rounded-full">
+>>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
                   <Image
                     src={category.image || '/product-categories/fallback.png'}
                     alt="Category Image"
@@ -87,11 +99,7 @@ export default function PopularCategory() {
                 </div>
               </div>
               <div
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  router.push(`/search?category=${category.name}`);
-                }}
+                onClick={() => router.push(`/search?category=${category.name}`)}
                 className="flex flex-col w-full items-center justify-center text-neutral-700 mt-1 gap-1 cursor-pointer"
               >
                 <p className="whitespace-nowrap line-clamp-1">

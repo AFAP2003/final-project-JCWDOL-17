@@ -1,6 +1,7 @@
 import { AddToCartDTO } from '@/dtos/add-to-cart.dto';
 import { UpdateCartItemDTO } from '@/dtos/update-cart-item.dto';
 import { BadRequestError, ForbiddenError, UnauthorizedError } from '@/errors';
+import { currentDate } from '@/helpers/datetime';
 import { prismaclient } from '@/prisma';
 import { z } from 'zod';
 
@@ -8,6 +9,14 @@ const productInclude = {
   product: {
     include: {
       images: { where: { isMain: true }, take: 1 },
+      discounts: {
+        where: {
+          isActive: true,
+          endDate: {
+            gt: currentDate(),
+          },
+        },
+      },
     },
   },
 };
@@ -116,5 +125,18 @@ export class CartService {
     return await prismaclient.cartItem.deleteMany({
       where: { cartId: cart.id },
     });
+  };
+
+  getCartTotalQuantity = async (userId: string): Promise<number> => {
+    const cart = await prismaclient.cart.findUnique({
+      where: { userId },
+      include: {
+        items: true,
+      },
+    });
+
+    if (!cart) return 0;
+
+    return cart.items.reduce((total, item) => total + item.quantity, 0);
   };
 }

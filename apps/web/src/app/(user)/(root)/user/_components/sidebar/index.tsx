@@ -11,21 +11,22 @@ import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useLocation } from '@/context/location-provider';
 import { signOut, useSession } from '@/lib/auth/client';
-import { LogOut, Settings, Ticket } from 'lucide-react';
+import { Code2, LogOut, Settings, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import LoadingSkeleton from './loading-skeleton';
 
 export default function UserSidebar() {
   const { data, isPending } = useSession();
   const { mutate: setLocation } = useLocation();
 
-  if (isPending) return null;
+  if (isPending) return <LoadingSkeleton />;
   if (!data) redirect('/auth/signin');
 
   const { user } = data;
 
   return (
-    <Card className="w-full max-w-64 max-h-[720px] top-0 sticky flex flex-col rounded-lg overflow-hidden border border-neutral-200 bg-white shadow-sm">
+    <Card className="w-full min-w-[254px] h-[700px] hidden lg:flex shrink-0 flex-col rounded-lg overflow-hidden border border-neutral-200 bg-white/80 shadow-sm">
       {/* User Profile Section */}
       <div className="bg-neutral-50 p-6">
         <div className="flex gap-4 items-center">
@@ -66,10 +67,17 @@ export default function UserSidebar() {
                 </div>
               </Link>
 
-              <Link href={'#'} passHref>
+              <Link href={`/user/my-vouchers`} passHref>
                 <div className="flex items-center gap-3 rounded-md px-3 py-2.5 cursor-pointer font-medium transition-all hover:bg-neutral-100 text-neutral-700 hover:text-neutral-900">
                   <Ticket className="size-4" />
                   <span>Voucher Saya</span>
+                </div>
+              </Link>
+
+              <Link href={`/user/referral-code`} passHref>
+                <div className="flex items-center gap-3 rounded-md px-3 py-2.5 cursor-pointer font-medium transition-all hover:bg-neutral-100 text-neutral-700 hover:text-neutral-900">
+                  <Code2 className="size-4" />
+                  <span>Kode Referral</span>
                 </div>
               </Link>
             </AccordionContent>

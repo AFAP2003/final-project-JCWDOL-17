@@ -1,5 +1,4 @@
 import { ProductController } from '@/controllers/product.controller';
-import { withAuthentication } from '@/middlewares/auth.middleware';
 import { Router } from 'express';
 import asynchandler from 'express-async-handler';
 
@@ -19,11 +18,6 @@ export class ProductRouter {
     this.router.get(
       '/:productId/category/similar',
       asynchandler(this.controller.getSimilarByCategory),
-    );
-    this.router.get(
-      '/cart/similar',
-      withAuthentication,
-      asynchandler(this.controller.getSimilarByCart),
     );
   }
 

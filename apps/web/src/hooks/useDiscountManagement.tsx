@@ -50,7 +50,9 @@ export default function UseDiscountManagement() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingDiscountId, setEditingDiscountId] = useState<string | null>(null);
+  const [editingDiscountId, setEditingDiscountId] = useState<string | null>(
+    null,
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
   const [isDetailMode,setIsDetailMode] = useState(false)
@@ -71,21 +73,21 @@ export default function UseDiscountManagement() {
      fetchDiscounts(pagination.pageIndex, pagination.pageSize);
    }, [pagination.pageIndex, pagination.pageSize]);
 
-   useEffect(()=>{
-    fetchStores()
-  },[])
+  useEffect(() => {
+    fetchStores();
+  }, []);
 
   function toDateOnly(d: Date) {
     const x = new Date(d);
     x.setHours(0, 0, 0, 0);
     return x;
   }
-  
+
   function getStatus(start: string, end?: string) {
     const today = toDateOnly(new Date());
     const s = toDateOnly(new Date(start));
     const e = end ? toDateOnly(new Date(end)) : null;
-  
+
     if (s > today) return 'Inaktif';
     if (e && e < today) return 'Kadaluwarsa';
     return 'Aktif';
@@ -305,7 +307,7 @@ const columns: ColumnDef<Discount>[] = [
       toko:'',
       deskripsi:'',
       tipe_diskon: '',
-      tipe_nilai_diskon:'',
+      tipe_nilai_diskon: '',
       nilai_diskon: '',
       min_pembelian: '',
       potongan_maks: '',
@@ -349,12 +351,12 @@ const columns: ColumnDef<Discount>[] = [
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: (row, _col, filterValue) => {
-      const q = String(filterValue).toLowerCase()
+      const q = String(filterValue).toLowerCase();
       const colsToSearch = [
         'name',
         'description',
-        'tipe_diskon',          
-        'tipe_nilai_diskon',   
+        'tipe_diskon',
+        'tipe_nilai_diskon',
         'value',
         'minPurchase',
         'maxDiscount',
@@ -363,14 +365,14 @@ const columns: ColumnDef<Discount>[] = [
         'status',
         'kode_voucher',
         'batas_penggunaan',
-      ]
-    
-      return colsToSearch.some(colId => {
-        const cell = row.getValue(colId)
+      ];
+
+      return colsToSearch.some((colId) => {
+        const cell = row.getValue(colId);
         return String(cell ?? '')
           .toLowerCase()
-          .includes(q)
-      })
+          .includes(q);
+      });
     },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -387,10 +389,11 @@ const columns: ColumnDef<Discount>[] = [
   };
 
   const handleTypeFilter = (value: string) => {
-    if (value === 'all') table.getColumn('tipe_diskon')?.setFilterValue(undefined)
-    else table.getColumn('tipe_diskon')?.setFilterValue(value)
-  }
-  
+    if (value === 'all')
+      table.getColumn('tipe_diskon')?.setFilterValue(undefined);
+    else table.getColumn('tipe_diskon')?.setFilterValue(value);
+  };
+
   const handleTypeValueFilter = (value: string) => {
     if (value === 'all') table.getColumn('tipe_nilai_diskon')?.setFilterValue(undefined)
     else table.getColumn('tipe_nilai_diskon')?.setFilterValue(value)

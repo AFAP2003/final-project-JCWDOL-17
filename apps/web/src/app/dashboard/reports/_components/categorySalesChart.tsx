@@ -55,7 +55,7 @@ export default function CategorySalesChart({
 
   useEffect(() => {
     fetchCategorySales(year, month);
-  }, [year,month]);
+  }, [year, month]);
   if (isLoading) {
     return <CategorySalesChartSkeleton />;
   }

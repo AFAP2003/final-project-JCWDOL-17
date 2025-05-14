@@ -21,25 +21,24 @@ class DiscountManagementRepository {
         })
     }
 
-    async updateDiscount(id:string,discountData:Discount){
-        return await prismaclient.discount.update({
-            where:{
-                id
-            },
-            data:{
-                ...discountData
-            }
-        })
-    }
+  async updateDiscount(id: string, discountData: Discount) {
+    return await prismaclient.discount.update({
+      where: {
+        id,
+      },
+      data: {
+        ...discountData,
+      },
+    });
+  }
 
-    async deleteDiscount(id:string){
-        return await prismaclient.discount.delete({
-            where:{
-                id
-            }
-        })
-    }
-
+  async deleteDiscount(id: string) {
+    return await prismaclient.discount.delete({
+      where: {
+        id,
+      },
+    });
+  }
 }
 
-export default new DiscountManagementRepository()
+export default new DiscountManagementRepository();

@@ -73,7 +73,7 @@ export default function Inventory() {
         setIsEditMode(true);
           setEditingInventoryId(inv.id);
           setDialogOpen(true);
-      }}
+        }}
       />
 
       {/* Pagination */}

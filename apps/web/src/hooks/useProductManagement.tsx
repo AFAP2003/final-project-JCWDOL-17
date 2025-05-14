@@ -57,6 +57,7 @@ export default function UseProductManagement() {
     handleCreateProduct,
     handleUpdateProduct,
     handleDeleteProduct: apiDeleteProduct,
+    handleDeleteProduct: apiDeleteProduct,
   } = productManagementAPI();
 
   const { categories, fetchCategories } = categoryManagementAPI();
@@ -77,6 +78,9 @@ export default function UseProductManagement() {
     fetchProducts(pagination.pageIndex, pagination.pageSize);
   }, [pagination.pageIndex, pagination.pageSize]);
 
+  useEffect(() => {
+    fetchCategories(0, 50);
+  }, []);
   useEffect(() => {
     fetchCategories(0, 50);
   }, []);
@@ -162,7 +166,9 @@ export default function UseProductManagement() {
           const inventoryArray = row.original.inventory;
 
           const quantity = inventoryArray?.[0]?.quantity ?? 0;
+          const quantity = inventoryArray?.[0]?.quantity ?? 0;
 
+          return quantity;
           return quantity;
         },
       },
@@ -406,9 +412,13 @@ export default function UseProductManagement() {
 
   const handleDeleteProduct = async (id: string) => {
     const ok = await apiDeleteProduct(id);
+    const ok = await apiDeleteProduct(id);
     if (ok) {
       await fetchProducts(pagination.pageIndex, pagination.pageSize);
+      await fetchProducts(pagination.pageIndex, pagination.pageSize);
     }
+    return ok;
+  };
     return ok;
   };
   return {

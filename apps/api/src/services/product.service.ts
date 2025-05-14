@@ -40,15 +40,13 @@ export class ProductService {
     const orderBy = (() => {
       switch (dto.orderBy) {
         case 'createdAt':
-          return Prisma.sql`fp."createdAt" ASC`;
+          return Prisma.sql`"createdAt" ASC`;
         case '-createdAt':
-          return Prisma.sql`fp."createdAt" DESC`;
+          return Prisma.sql`"createdAt" DESC`;
         case 'price':
-          return Prisma.sql`fp."price" ASC`;
+          return Prisma.sql`"price" ASC`;
         case '-price':
-          return Prisma.sql`fp."price" DESC`;
-        default:
-          return Prisma.sql`fp."createdAt" DESC`;
+          return Prisma.sql`"price" DESC`;
       }
     })();
 
@@ -133,7 +131,6 @@ export class ProductService {
           ${filterPromo}
           ${filterCategory}
           ${exclude}
-
       ),
       product_page AS (
         SELECT fp."id"
@@ -196,7 +193,9 @@ export class ProductService {
       LEFT JOIN "ProductImage" pi ON pi."productId" = p.id
       LEFT JOIN "_ProductDiscount" pd ON pd."B" = p.id
       LEFT JOIN "Discount" d ON d.id = pd."A"
-      JOIN total_count tc ON true`;
+      JOIN total_count tc ON true
+      ORDER BY ${orderBy}
+      `;
 
     const result: any[] = await prismaclient.$queryRaw(query);
 
@@ -208,11 +207,9 @@ export class ProductService {
         discounts: Discount[];
       }
     >();
-    let resultCount = 0;
+    let resultCount = result.at(0)?.result_count || 0;
 
     for (const row of result) {
-      resultCount = row.result_count;
-
       if (!productsMap.has(row.id)) {
         productsMap.set(row.id, {
           id: row.id,

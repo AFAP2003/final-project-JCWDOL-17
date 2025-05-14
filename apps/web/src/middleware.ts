@@ -15,19 +15,19 @@ const publicRoutes = [
   '/admin/auth/signin',
   '/admin/auth/signin/confirm',
   // Wajib Delete Before merge
-  '/admin',
-  '/admin/*',
-  '/orders',
-  '/orders/*',
-  '/cart',
-  '/checkout',
+  // '/admin',
+  // '/admin/*',
+  // '/orders',
+  // '/orders/*',
+  // '/cart',
+  // '/checkout',
 ];
 
 export async function middleware(request: NextRequest) {
   // Add this
-  if (process.env.NODE_ENV === 'development') {
-    return NextResponse.next();
-  }
+  // if (process.env.NODE_ENV === 'development') {
+  //   return NextResponse.next();
+  // }
 
   const sessionCookie = getSessionCookie(request, {});
   const currentPath = request.nextUrl.pathname;
@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
 
   if (!isAuthenticated && !pathIsPublic) {
     const url = request.nextUrl.clone();
-    if (currentPath.startsWith('/admin')) {
+    if (currentPath.startsWith('/dashboard')) {
       url.pathname = '/admin/auth/signin';
     } else {
       url.pathname = '/auth/signin';
@@ -72,7 +72,7 @@ export async function middleware(request: NextRequest) {
       // Posible case when user revoke other session, or reset password
       if (!session) {
         const url = request.nextUrl.clone();
-        if (currentPath.startsWith('/admin')) {
+        if (currentPath.startsWith('/dashboard')) {
           url.pathname = '/admin/auth/signin';
         } else {
           url.pathname = '/auth/signin';
@@ -90,7 +90,7 @@ export async function middleware(request: NextRequest) {
       const role = user?.role;
       switch (role) {
         case 'USER': {
-          if (currentPath.startsWith('/admin') && !pathIsPublic) {
+          if (currentPath.startsWith('/dashboard') && !pathIsPublic) {
             const url = request.nextUrl.clone();
             url.pathname = '/admin/auth/signin';
             return NextResponse.redirect(url);
@@ -99,7 +99,7 @@ export async function middleware(request: NextRequest) {
         }
 
         default: {
-          if (!currentPath.startsWith('/admin') && !pathIsPublic) {
+          if (!currentPath.startsWith('/dashboard') && !pathIsPublic) {
             const url = request.nextUrl.clone();
             url.pathname = '/auth/signin';
             return NextResponse.redirect(url);

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useEffect } from 'react'
 import Link from 'next/link'
@@ -6,9 +6,9 @@ import { User, ShoppingCart, Boxes, Package, Tag, BarChart3,Store } from 'lucide
 import Image from 'next/image'
 import { useSession } from '@/lib/auth/client'
 type SidebarProps = {
-  sidebarOpen: boolean
-  setSidebarOpen: (open: boolean) => void
-}
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+};
 
 // The sidebar items
 const sidebarItem = [
@@ -30,7 +30,7 @@ const sidebarItem = [
   {
     icon: ShoppingCart,
     title: 'Orders',
-    href: '/dashboard/shoppingcart',
+    href: '/dashboard/orders',
   },
   {
     icon: Tag,
@@ -111,5 +111,5 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         />
       )}
     </>
-  )
+  );
 }

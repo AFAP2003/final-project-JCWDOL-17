@@ -14,13 +14,13 @@ class DiscountManagementService{
 
     }
 
-    async updateDiscountById(id:string,discountData:Discount){
-        return await discountManagementRepository.updateDiscount(id,discountData)
-    }
+  async updateDiscountById(id: string, discountData: Discount) {
+    return await discountManagementRepository.updateDiscount(id, discountData);
+  }
 
-    async deleteDiscountById(id:string){
-        return await discountManagementRepository.deleteDiscount(id)
-    }
+  async deleteDiscountById(id: string) {
+    return await discountManagementRepository.deleteDiscount(id);
+  }
 }
 
-export default new DiscountManagementService()
+export default new DiscountManagementService();

@@ -22,12 +22,13 @@ import { currentDate } from '@/helpers/datetime';
 import { aesEncrypt } from '@/helpers/encrypt-decrypt';
 import { genRandomString } from '@/helpers/gen-random-string';
 import { genReferralCode } from '@/helpers/gen-referral-code';
+import { genVoucherCode } from '@/helpers/gen-voucher-code';
 import { prismaclient } from '@/prisma';
 import { UserSession } from '@/types/user-session.type';
 import { UserRole } from '@prisma/client';
 import { APIError } from 'better-auth/api';
 import { fromNodeHeaders } from 'better-auth/node';
-import { addHours, format } from 'date-fns';
+import { add, addHours, format } from 'date-fns';
 import { Request } from 'express';
 import { UAParser } from 'ua-parser-js';
 import { z } from 'zod';
@@ -128,14 +129,6 @@ export class AuthService {
             referralCode?: string;
           };
 
-          let referredById = undefined;
-          if (referralCode) {
-            // TODO:
-            // - find referred with this referral code
-            // - add voucher
-            // - assign referredById to the id of referred
-          }
-
           const { token, user } = await auth.api.signUpEmail({
             body: {
               role: dto.role,
@@ -144,10 +137,71 @@ export class AuthService {
               name: name,
               signupMethod: [dto.signupMethod],
               referralCode: await genReferralCode(),
-              referredById: referredById,
+              // referredById: referredById,
             },
             headers: fromNodeHeaders(req.headers),
           });
+
+          let referredById: string | undefined = undefined;
+          const nextMonth = add(currentDate(), { months: 1 });
+
+          if (referralCode) {
+            const referred =
+              await this.userService.getByReferralCode(referralCode);
+            if (!referred) {
+              throw new InternalSeverError('Referred should be exists!');
+            }
+            await prismaclient.voucher.create({
+              data: {
+                name: 'Bonus Teman Baru 10K',
+                description:
+                  'Ajak teman belanja dan dapatkan bonus Rp10.000 untuk pembelian pertama mereka. Berlaku untuk pembelian minimal Rp50.000.',
+                type: 'REFERRAL',
+                valueType: 'FIXED_AMOUNT',
+                maxDiscount: null,
+                value: 10000,
+                minPurchase: 50000,
+                startDate: currentDate(),
+                endDate: nextMonth,
+                isForShipping: false,
+                code: await genVoucherCode('REFERRAL'),
+                users: {
+                  connect: [
+                    {
+                      id: referred.id,
+                    },
+                  ],
+                },
+              },
+            });
+            referredById = referred.id;
+          }
+
+          if (referredById) {
+            await prismaclient.voucher.create({
+              data: {
+                name: 'Bonus Teman Baru 10K',
+                description:
+                  'Ajak teman belanja dan dapatkan bonus Rp10.000 untuk pembelian pertama mereka. Berlaku untuk pembelian minimal Rp50.000.',
+                type: 'REFERRAL',
+                valueType: 'FIXED_AMOUNT',
+                maxDiscount: null,
+                value: 10000,
+                minPurchase: 50000,
+                startDate: currentDate(),
+                endDate: nextMonth,
+                isForShipping: false,
+                code: await genVoucherCode('REFERRAL'),
+                users: {
+                  connect: [
+                    {
+                      id: user.id,
+                    },
+                  ],
+                },
+              },
+            });
+          }
 
           await prismaclient.user.update({
             where: {
@@ -155,6 +209,7 @@ export class AuthService {
             },
             data: {
               emailVerified: true,
+              referredById: referredById,
             },
           });
 
@@ -171,6 +226,18 @@ export class AuthService {
           const { redirect, url } = await auth.api.signInSocial({
             body: {
               provider: 'google',
+              callbackURL: dto.callbackURL,
+              errorCallbackURL: dto.errorCallback,
+            },
+            headers: fromNodeHeaders(req.headers),
+          });
+          return { redirect, url, signupMethod: 'SOCIAL' };
+        }
+
+        case 'DISCORD': {
+          const { redirect, url } = await auth.api.signInSocial({
+            body: {
+              provider: 'discord',
               callbackURL: dto.callbackURL,
               errorCallbackURL: dto.errorCallback,
             },
@@ -365,6 +432,18 @@ export class AuthService {
           headers: fromNodeHeaders(req.headers),
         });
         return { redirect, url, signinMethod: 'GOOGLE' as const };
+      }
+
+      case 'DISCORD': {
+        const { redirect, url } = await auth.api.signInSocial({
+          body: {
+            provider: 'discord',
+            callbackURL: dto.callbackURL,
+            errorCallbackURL: dto.errorCallback,
+          },
+          headers: fromNodeHeaders(req.headers),
+        });
+        return { redirect, url, signinMethod: 'FACEBOOK' as const };
       }
     }
   };
@@ -578,7 +657,7 @@ export class AuthService {
     switch (param.type) {
       case AuthEmailType.SignupConfirmation: {
         const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
+        const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
         const verifrecord = await prismaclient.verification.findMany({
@@ -641,7 +720,7 @@ export class AuthService {
         }
 
         const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
+        const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
         await prismaclient.verification.create({
@@ -684,7 +763,7 @@ export class AuthService {
 
         const uainfo = UAParser(session?.userAgent || '');
         const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
+        const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
         await prismaclient.verification.create({
@@ -737,7 +816,7 @@ export class AuthService {
         }
 
         const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
+        const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
         await prismaclient.verification.create({
@@ -788,7 +867,7 @@ export class AuthService {
         }
 
         const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString();
+        const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
         await prismaclient.verification.create({

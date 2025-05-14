@@ -138,14 +138,13 @@ class ProductManagementRepository {
       }
       
 
-    async deleteProduct(id:string){
-        return await prismaclient.product.delete({
-            where:{
-                id
-            }
-        })
-    }
-
+  async deleteProduct(id: string) {
+    return await prismaclient.product.delete({
+      where: {
+        id,
+      },
+    });
+  }
 }
 
-export default new ProductManagementRepository()
+export default new ProductManagementRepository();

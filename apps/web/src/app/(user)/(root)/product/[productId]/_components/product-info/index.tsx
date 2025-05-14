@@ -15,7 +15,7 @@ import { apiclient } from '@/lib/apiclient';
 import { useSession } from '@/lib/auth/client';
 import { dateFrom } from '@/lib/datetime';
 import { GetProductByIdResponse } from '@/lib/types/get-product-by-id-response';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { id as Indo } from 'date-fns/locale';
@@ -26,6 +26,7 @@ import { useEffect, useState } from 'react';
 import 'swiper/css/bundle';
 import { Mousewheel, Scrollbar } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
+import { useMediaQuery } from 'usehooks-ts';
 
 type Props = {
   productId: string;
@@ -61,6 +62,8 @@ export default function ProductInfo({ productId }: Props) {
     });
   };
 
+  const isSuperSmall = useMediaQuery('(max-width: 480px)');
+
   const {
     data,
     isPending: isGetProductPending,
@@ -93,7 +96,7 @@ export default function ProductInfo({ productId }: Props) {
         <div className="flex gap-12 w-full max-lg:flex-col">
           {/* Image */}
           <div className="w-full">
-            <div className="min-w-[480px] max-w-[580px] mx-auto">
+            <div className="md:min-w-[480px] max-w-[580px] mx-auto">
               <div className="relative w-full aspect-square rounded-md overflow-hidden bg-neutral-100 border border-neutral-200">
                 {selectedImage ? (
                   <Image src={selectedImage} alt="Produk Image" fill />
@@ -112,10 +115,12 @@ export default function ProductInfo({ productId }: Props) {
           {/* Detail */}
           <div className="text-neutral-700 w-full h-full">
             <div className="space-y-3">
-              <Badge className="text-sm bg-neutral-800 text-neutral-200 w-fit">
+              <Badge className="text-xs lg:text-sm bg-neutral-800 text-neutral-200 w-fit">
                 {data?.category.name}
               </Badge>
-              <h3 className="text-2xl font-semibold">{data?.name}</h3>
+              <h3 className="text-xl lg:text-2xl font-semibold">
+                {data?.name}
+              </h3>
             </div>
 
             <Separator className="my-6" />
@@ -187,7 +192,7 @@ export default function ProductInfo({ productId }: Props) {
             <Accordion type="single" collapsible className="w-full mb-12">
               {discount && (
                 <AccordionItem value="promo">
-                  <AccordionTrigger className="text-base">
+                  <AccordionTrigger className="text-sm sm:text-base">
                     Promo
                   </AccordionTrigger>
                   <AccordionContent className="space-y-3">
@@ -205,7 +210,7 @@ export default function ProductInfo({ productId }: Props) {
                 </AccordionItem>
               )}
               <AccordionItem value="description">
-                <AccordionTrigger className="text-base">
+                <AccordionTrigger className="text-sm sm:text-base">
                   Deskripsi Produk
                 </AccordionTrigger>
                 <AccordionContent>
@@ -213,7 +218,7 @@ export default function ProductInfo({ productId }: Props) {
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="info">
-                <AccordionTrigger className="text-base">
+                <AccordionTrigger className="text-sm sm:text-base">
                   Informasi Produk
                 </AccordionTrigger>
                 <AccordionContent>
@@ -227,20 +232,32 @@ export default function ProductInfo({ productId }: Props) {
 
             <div className="w-full space-y-4">
               <div className="flex items-center justify-between">
-                <span className="font-medium">Quantity</span>
-                <div className="flex items-center border border-neutral-300 rounded-md overflow-hidden">
+                <span
+                  className={cn(
+                    'font-medium sm:text-base text-sm',
+                    isSuperSmall && 'hidden',
+                  )}
+                >
+                  Quantity
+                </span>
+                <div
+                  className={cn(
+                    'flex items-center border border-neutral-300 rounded-md overflow-hidden',
+                    isSuperSmall && 'w-full justify-between',
+                  )}
+                >
                   <button
                     onClick={() => setCount((prev) => Math.max(1, prev - 1))}
-                    className="px-2 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors"
+                    className="p-1 sm:p-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors"
                   >
                     <MinusIcon className="size-full" />
                   </button>
-                  <span className="px-4 py-2 min-w-[50px] text-center">
+                  <span className="px-4 p-1 sm:py-2 min-w-[50px] text-center">
                     {count}
                   </span>
                   <button
                     onClick={() => setCount((prev) => prev + 1)}
-                    className="px-2 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors"
+                    className="p-1 sm:p-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors"
                   >
                     <PlusIcon />
                   </button>
@@ -248,7 +265,7 @@ export default function ProductInfo({ productId }: Props) {
               </div>
 
               <button
-                className="w-full flex items-center justify-center gap-3 bg-neutral-800 p-3 rounded-md text-neutral-200 disabled:opacity-90"
+                className="w-full flex items-center justify-center gap-3 bg-neutral-800 p-3 rounded-md text-neutral-200 disabled:opacity-90 sm:text-base text-sm"
                 disabled={count <= 0 || isSessionPending || cartLoading}
                 onClick={() => {
                   if (count > 0) {
@@ -256,7 +273,8 @@ export default function ProductInfo({ productId }: Props) {
                   }
                 }}
               >
-                <ShoppingBasket /> Tambahkan Keranjang {`(${count})`}
+                <ShoppingBasket className="max-[480px]:hidden" />{' '}
+                {isSuperSmall ? 'Tambahkan' : `Tambahkan Keranjang (${count})}`}
               </button>
             </div>
           </div>
@@ -313,7 +331,7 @@ function Price(prop: PriceProps) {
   if (!prop.discount) {
     return (
       <div className="flex gap-3 items-center">
-        <div className="flex items-center sm:text-2xl">
+        <div className="flex items-center text-xl lg:text-2xl">
           <span className="font-semibold">{formatCurrency(prop.price)}</span>
         </div>
       </div>
@@ -323,13 +341,13 @@ function Price(prop: PriceProps) {
   switch (prop.discount.type) {
     case 'BUY_X_GET_Y': {
       return (
-        <div className="flex gap-3 items-center h-full">
+        <div className="flex flex-col min-[480px]:flex-row gap-1 min-[480px]:gap-3 items-center h-full">
           <div className="flex items-center">
-            <span className="font-semibold text-2xl">
+            <span className="font-semibold text-xl lg:text-2xl">
               {formatCurrency(prop.price)}
             </span>
           </div>
-          <div className="text-red-500 text-sm">
+          <div className="text-red-500 text-xs min-[480px]:text-sm">
             +{prop.discount.getQuantity} Free
           </div>
         </div>
@@ -337,13 +355,15 @@ function Price(prop: PriceProps) {
     }
     case 'WITH_MAX_PRICE': {
       return (
-        <div className="flex gap-3 items-center h-full">
+        <div className="flex flex-col min-[480px]:flex-row gap-1 min-[480px]:gap-3 items-center h-full">
           <div className="flex items-center">
-            <span className="font-semibold text-2xl">
+            <span className="font-semibold text-xl lg:text-2xl">
               {formatCurrency(prop.price)}
             </span>
           </div>
-          <div className="text-red-500 text-sm">Special Offer</div>
+          <div className="text-red-500 text-xs min-[480px]:text-sm">
+            Special Offer
+          </div>
         </div>
       );
     }
@@ -353,16 +373,16 @@ function Price(prop: PriceProps) {
         : prop.price - prop.discount.value!;
 
       return (
-        <div className="flex max-[480px]:flex-col gap-3 max-[480px]:items-start items-center h-full">
-          <div className="flex max-[380px]:flex-col items-center gap-3">
-            <span className="font-semibold text-xl md:text-2xl">
+        <div className="flex flex-col min-[480px]:flex-row gap-1 min-[480px]:gap-3 items-center h-full">
+          <div className="flex flex-col min-[480px]:flex-row items-center gap-1 min-[480px]:gap-3">
+            <span className="font-semibold text-xl lg:text-2xl">
               {formatCurrency(priceAfter)}
             </span>
-            <span className="font-semibold line-through text-neutral-400 text-xl md:text-2xl">
+            <span className="font-semibold text-xl lg:text-2xl line-through text-neutral-400">
               {formatCurrency(prop.price)}
             </span>
           </div>
-          <div className="text-red-500 text-sm">
+          <div className="text-red-500 text-xs min-[480px]:text-sm">
             {prop.discount.isPercentage
               ? `-${prop.discount.value}% Off`
               : `-${formatCurrency(prop.discount.value!)}`}

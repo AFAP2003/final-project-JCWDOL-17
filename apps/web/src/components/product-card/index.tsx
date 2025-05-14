@@ -1,6 +1,7 @@
 import { useCart } from '@/context/cart-provider';
 import { toast } from '@/hooks/use-toast';
 import { useSession } from '@/lib/auth/client';
+import { GetAllProductResponse } from '@/lib/types/get-all-product-response';
 import { formatCurrency } from '@/lib/utils';
 import { ShoppingBasket } from 'lucide-react';
 import Image from 'next/image';
@@ -11,52 +12,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 
 type Props = {
-  product: {
-    id: string;
-    name: string;
-    description?: string;
-    price: number;
-    weight?: number;
-    sku: string;
-    categoryId: string;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
-    category: {
-      id: string;
-      name: string;
-      description?: string;
-      image?: string;
-      isActive: boolean;
-      createdAt: string;
-      updatedAt: string;
-    };
-    images: {
-      id: string;
-      productId: string;
-      imageUrl: string;
-      isMain: boolean;
-      createdAt: string;
-    }[];
-    discounts: {
-      id: string;
-      storeId: string;
-      name: string;
-      description?: string;
-      type: 'NO_RULES_DISCOUNT' | 'WITH_MAX_PRICE' | 'BUY_X_GET_Y';
-      value?: number; // WITH_MAX_PRICE / BUY_X_GET_X
-      isPercentage?: boolean; // WITH_MAX_PRICE / BUY_X_GET_X
-      maxDiscount?: number; // requeired if value is percentage
-      minPurchase?: number; // WITH_MAX_PRICE
-      buyQuantity?: number; // BUY_X_GET_X
-      getQuantity?: number; // BUY_X_GET_X
-      startDate: string;
-      endDate: string;
-      isActive: boolean;
-      createdAt: string;
-      updatedAt: string;
-    }[];
-  };
+  product: GetAllProductResponse['products'][number];
 };
 
 export default function ProductCard({ product }: Props) {

@@ -9,13 +9,13 @@ export default function AuthButton() {
           <Button
             className="border-primary border "
             variant={'ghost'}
-            size={'default'}
+            size={'sm'}
           >
             Sign In
           </Button>
         </Link>
         <Link href={'/auth/signup'} passHref>
-          <Button className="" size={'default'}>
+          <Button className="" size={'sm'}>
             Sign Up
           </Button>
         </Link>

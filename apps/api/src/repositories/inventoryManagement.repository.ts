@@ -2,8 +2,8 @@ import { prismaclient } from '@/prisma';
 import { Inventory } from '@/interfaces/inventoryManagement.interface';
 import { pagination } from '@/helpers/pagination';
 class InventoryManagementRepository {
-    async getInventories(page=1,take=10){
-        const total = await prismaclient.inventory.count()
+  async getInventories(page = 1, take = 10) {
+    const total = await prismaclient.inventory.count();
 
         const {skip,take:realTake} =  pagination(page,take)
         const data = await prismaclient.inventory.findMany({
@@ -100,4 +100,4 @@ class InventoryManagementRepository {
 
 }}
 
-export default new InventoryManagementRepository()
+export default new InventoryManagementRepository();

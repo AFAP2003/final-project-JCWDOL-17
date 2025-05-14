@@ -38,7 +38,6 @@ export default function LinkAccount({ session }: Props) {
   const { cooldownTime, rawCooldownTime, restartCooldown } = useCooldown(120);
   const [openDialog, setOpenDialog] = useState(false);
 
-  // TODO: handle query.error
   const query = useQuery({
     queryKey: ['user/settings', 'list-account'],
     queryFn: async () => {
@@ -59,7 +58,6 @@ export default function LinkAccount({ session }: Props) {
         ...param,
       });
     },
-
     onError: (error: AxiosError) => {
       const body = error.response?.data as { error: { message: string } };
       const msg = body.error.message;
@@ -70,7 +68,6 @@ export default function LinkAccount({ session }: Props) {
         });
         return;
       }
-
       toast({
         description:
           'Sorry we have problem in our server, please try again later',
@@ -81,7 +78,7 @@ export default function LinkAccount({ session }: Props) {
 
   const items = [
     {
-      label: 'Change / Set Password',
+      label: 'Ubah Password',
       icon: <Key className="size-4 text-yellow-500" />,
       isLinked: isCredentialLinked,
       canToogle: true,
@@ -90,7 +87,7 @@ export default function LinkAccount({ session }: Props) {
     },
     {
       label: 'Google',
-      icon: <FcGoogle className="size-4 text-yellow-500" />,
+      icon: <FcGoogle className="size-4" />,
       isLinked: isGoogleLinked,
       canToogle: false,
       onClick: () =>
@@ -112,7 +109,9 @@ export default function LinkAccount({ session }: Props) {
       icon: <SiFacebook className="size-4 text-blue-500" />,
       isLinked: isFacebookLinked,
       canToogle: false,
-      onClick: () => {},
+      onClick: () => {
+        toast({ description: 'Coming soon!', variant: 'default' });
+      },
       isPending: isPending,
     },
   ];
@@ -142,20 +141,20 @@ export default function LinkAccount({ session }: Props) {
       />
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-sm bg-neutral-800 text-neutral-200 border-neutral-500">
+        <DialogContent className="w-[90vw] max-w-sm bg-neutral-800 text-neutral-200 border-neutral-500 overflow-auto max-h-[90vh]">
           <DialogTitle className="text-lg font-semibold">
-            Confirm Password Change
+            Konfirmasi Ubah Password
           </DialogTitle>
           <DialogDescription className="text-sm text-neutral-300 mt-2">
-            For security reasons, changing or creating new password will sign
-            you out of all sessions. Please confirm to proceed.
+            Demi keamanan, membuat atau mengubah password akan mengeluarkanmu
+            dari semua sesi aktif. Lanjutkan?
           </DialogDescription>
           <DialogFooter className="mt-6 flex w-full gap-3">
             <button
               onClick={() => setOpenDialog(false)}
-              className="text-sm font-medium border border-neutral-500 text-neutral-700 bg-neutral-50 rounded-lg px-4 py-2 hover:bg-neutral-50 hover:text-neutral-800 transition-colors duration-200"
+              className="text-sm font-medium border border-neutral-500 text-neutral-700 bg-neutral-50 rounded-lg px-4 py-2 hover:bg-neutral-100 transition-colors duration-200"
             >
-              Cancel
+              Batal
             </button>
             <button
               onClick={() => {
@@ -173,19 +172,19 @@ export default function LinkAccount({ session }: Props) {
                 );
                 setOpenDialog(false);
               }}
-              className="text-sm font-medium bg-neutral-700 text-neutral-200 rounded-lg px-4 py-2 hover:bg-neutral-700 hover:text-neutral-300 transition-colors duration-200"
+              className="text-sm font-medium bg-neutral-700 text-neutral-200 rounded-lg px-4 py-2 hover:bg-neutral-600 transition-colors duration-200"
             >
-              Continue
+              Lanjutkan
             </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <div className="mb-12 w-full">
+      <div className="w-full h-full">
         <SectionHeading>Account Linking</SectionHeading>
-        <div className="flex flex-col space-y-2 w-full justify-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
           {items.map((item, idx) => (
-            <Button
+            <AccountLinkButton
               key={idx}
               label={item.label}
               icon={item.icon}
@@ -210,53 +209,49 @@ type ButtonProps = {
   isPending: boolean;
 };
 
-function Button(props: ButtonProps) {
+function AccountLinkButton({
+  label,
+  icon,
+  isLinked,
+  canToogle,
+  onClick,
+  isPending,
+}: ButtonProps) {
+  const disabled = isPending || (!canToogle && isLinked);
   return (
     <button
-      onClick={props.onClick}
-      disabled={(() => {
-        if (props.isPending) return true;
-        if (!props.canToogle && props.isLinked) return true;
-      })()}
+      onClick={onClick}
+      disabled={disabled}
       className={cn(
-        'border rounded-xl text-sm w-full disabled:opacity-70 transition-all duration-150 group',
-        props.canToogle &&
-          !props.isPending &&
-          'hover:border-neutral-500/20 hover:bg-neutral-100',
-        !props.canToogle &&
-          !props.isLinked &&
-          !props.isPending &&
-          'hover:border-neutral-500/20 hover:bg-neutral-100 ',
+        'flex items-center justify-between w-full px-4 py-3 border rounded-xl text-sm transition-all duration-150 group bg-white disabled:opacity-60',
+        canToogle &&
+          !isPending &&
+          'hover:border-neutral-400 hover:bg-neutral-100',
+        !canToogle &&
+          !isLinked &&
+          !isPending &&
+          'hover:border-neutral-400 hover:bg-neutral-100',
       )}
     >
-      <div className="flex items-center">
-        <span
-          className={cn(
-            'border-r py-2 px-3 transition-all',
-            props.canToogle && !props.isPending && 'group-hover:scale-[110%]',
-            !props.canToogle &&
-              !props.isLinked &&
-              !props.isPending &&
-              'group-hover:scale-[110%]',
-          )}
-        >
-          {props.icon}
+      <div className="flex items-center gap-3">
+        <span className="transition-transform group-hover:scale-110">
+          {icon}
         </span>
-        <p className="w-full font-medium text-neutral-600">{props.label}</p>
-        <span className="py-2 px-3 w-28">
-          {props.isLinked ? (
-            <div className="text-xs flex flex-row items-center text-neutral-700 gap-2 font-medium">
-              <Link2 className="size-4 shrink-0" />
-              <span className="w-full text-center">Linked</span>
-            </div>
-          ) : (
-            <div className="text-xs flex flex-row items-center text-neutral-700 gap-2 font-medium">
-              <Link2Off className="size-4" />
-              <span>Unlinked</span>
-            </div>
-          )}
-        </span>
+        <span className="font-medium text-neutral-700">{label}</span>
       </div>
+      <span className="text-xs flex items-center gap-1 text-neutral-600 font-medium">
+        {isLinked ? (
+          <>
+            <Link2 className="size-4" />
+            <span className="hidden sm:inline">Terhubung</span>
+          </>
+        ) : (
+          <>
+            <Link2Off className="size-4" />
+            <span className="hidden sm:inline">Belum Terhubung</span>
+          </>
+        )}
+      </span>
     </button>
   );
 }

@@ -56,7 +56,9 @@ export default function UseInventoryManagement() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingInventoryId, setEditingInventoryId] = useState<string | null>(null);
+  const [editingInventoryId, setEditingInventoryId] = useState<string | null>(
+    null,
+  );
   const [pageCount, setPageCount] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDetailMode,setIsDetailMode] = useState(false)
@@ -264,11 +266,11 @@ export default function UseInventoryManagement() {
     fetchInventories(pagination.pageIndex, pagination.pageSize);
   }, [pagination.pageIndex, pagination.pageSize]);
 
-  useEffect(()=>{
-    fetchStores()
-    fetchCategories(0,50)
-    fetchProducts(0,50)
-  },[])
+  useEffect(() => {
+    fetchStores();
+    fetchCategories(0, 50);
+    fetchProducts(0, 50);
+  }, []);
 
   const formik = useFormik({
     initialValues: {
@@ -276,7 +278,7 @@ export default function UseInventoryManagement() {
       toko: '',
       mode:     'tambah' as 'tambah' | 'kurangi',
       tambah: '',
-      kurangi:'',
+      kurangi: '',
       minimal: '',
     },
 
@@ -291,12 +293,11 @@ export default function UseInventoryManagement() {
         success = await handleCreateInventory(values);
       }
 
-      if(success){
+      if (success) {
         resetForm();
         setDialogOpen(false)
         fetchInventories(pagination.pageIndex, pagination.pageSize)
       }
-
     },
   });
 

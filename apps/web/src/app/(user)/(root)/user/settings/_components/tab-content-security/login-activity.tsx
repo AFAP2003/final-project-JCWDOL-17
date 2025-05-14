@@ -1,6 +1,5 @@
 'use client';
 
-import { Separator } from '@/components/ui/separator';
 import { useCooldown } from '@/hooks/use-cooldown';
 import { toast } from '@/hooks/use-toast';
 import { apiclient } from '@/lib/apiclient';
@@ -13,6 +12,7 @@ import { Lightbulb } from 'lucide-react';
 import { useState } from 'react';
 import EmailVerification from '../email-verification';
 import SectionHeading from '../section-heading';
+import LoginActivitySkeleton from './login-activiy-skeleton';
 
 type Props = {
   current: Session | null;
@@ -22,8 +22,11 @@ export default function LoginActivity({ current }: Props) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { cooldownTime, rawCooldownTime, restartCooldown } = useCooldown(120);
 
-  // TODO: handle errror
-  const { data: sessions, refetch: refetchSession } = useQuery({
+  const {
+    data: sessions,
+    refetch: refetchSession,
+    isPending,
+  } = useQuery({
     queryKey: ['user/settings', 'list-session'],
     queryFn: async () => {
       const { data } = await apiclient.get('/auth/sessions');
@@ -38,7 +41,6 @@ export default function LoginActivity({ current }: Props) {
           email: current?.user.email,
         });
       },
-
       onError: (error: AxiosError) => {
         const response = error.response?.data as { error: { message: string } };
         const message = response?.error?.message;
@@ -69,11 +71,10 @@ export default function LoginActivity({ current }: Props) {
           variant: 'destructive',
         });
       },
-
       onSuccess: () => {
         setIsSubmitted(true);
         toast({
-          description: `Email was send to ${current?.user.email}`,
+          description: `Email was sent to ${current?.user.email}`,
         });
         restartCooldown();
       },
@@ -81,11 +82,8 @@ export default function LoginActivity({ current }: Props) {
 
   const { mutate: revokeSession } = useMutation({
     mutationFn: async (sessionToken: string) => {
-      return await apiclient.post('/auth/sessions/revoke', {
-        sessionToken,
-      });
+      return await apiclient.post('/auth/sessions/revoke', { sessionToken });
     },
-
     onError: () => {
       toast({
         description:
@@ -93,11 +91,14 @@ export default function LoginActivity({ current }: Props) {
         variant: 'destructive',
       });
     },
-
     onSuccess: async () => {
       await refetchSession();
     },
   });
+
+  if (isPending) {
+    return <LoginActivitySkeleton />;
+  }
 
   return (
     <>
@@ -113,14 +114,14 @@ export default function LoginActivity({ current }: Props) {
       <div className="mb-12 w-full">
         <SectionHeading>Login Activity</SectionHeading>
 
-        <div className="flex items-center text-sm gap-3 mb-6">
-          <Lightbulb className="size-6 text-red-500" />
-          <p className="text-neutral-500">
-            If there is any unfamiliar activity, immediately click &quot;Sign
-            Out&quot; and{' '}
+        <div className="flex items-start sm:items-center text-sm gap-3 mb-6 flex-col sm:flex-row">
+          <Lightbulb className="size-6 text-red-500 shrink-0" />
+          <p className="text-neutral-500 max-w-xl leading-snug">
+            If there is any unfamiliar activity, immediately click{' '}
+            <span className="font-semibold">&quot;Sign Out&quot;</span> and{' '}
             <span
               onClick={() => resetPassword()}
-              className="underline underline-offset-4 cursor-pointer text-red-500 hover:text-red-500"
+              className="underline underline-offset-4 cursor-pointer text-red-500 hover:text-red-600"
             >
               change your password
             </span>
@@ -128,38 +129,37 @@ export default function LoginActivity({ current }: Props) {
           </p>
         </div>
 
-        <div className="bg-neutral-50 rounded-lg p-6 border shadow-sm">
+        <div className="bg-neutral-50 rounded-lg p-4 sm:p-6 border shadow-sm divide-y divide-neutral-200">
           {sessions?.map((session) => {
             const ua = parseUserAgent(session.userAgent, session.createdAt);
+            const isCurrentSession = session.id === current?.session.id;
+
             return (
-              <div key={session.id}>
-                <div className="flex justify-between items-center px-3">
-                  <div className="flex gap-3 items-center">
-                    <ua.icon className="size-12 text-neutral-600" />
-                    <div className="flex flex-col">
-                      <p className="text-sm font-semibold text-neutral-700">
+              <div key={session.id} className="py-4 px-2 sm:px-3">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+                  <div className="flex gap-4 items-center w-full max-w-full">
+                    <ua.icon className="size-10 text-neutral-600 shrink-0" />
+                    <div className="flex flex-col overflow-hidden">
+                      <p className="text-sm font-medium text-neutral-800 truncate">
                         {ua.browser} at {ua.os}
                       </p>
-                      <p className="text-xs text-neutral-500 mb-1">
-                        {ua.timeAgo}
-                      </p>
+                      <p className="text-xs text-neutral-500">{ua.timeAgo}</p>
                     </div>
                   </div>
 
-                  {session.id === current?.session.id ? (
-                    <div className="text-xs font-semibold bg-neutral-800 text-neutral-100 rounded-full text-center w-fit px-2 py-0.5">
+                  {isCurrentSession ? (
+                    <span className="text-xs font-semibold bg-green-700 text-white rounded-full px-2 py-0.5">
                       Active
-                    </div>
+                    </span>
                   ) : (
-                    <div
+                    <button
                       onClick={() => revokeSession(session.token)}
-                      className="text-xs font-semibold text-neutral-700 hover:underline cursor-pointer underline-offset-4"
+                      className="text-xs font-medium text-red-500 hover:underline underline-offset-4 transition-colors"
                     >
                       Sign Out
-                    </div>
+                    </button>
                   )}
                 </div>
-                <Separator orientation="horizontal" className="my-4" />
               </div>
             );
           })}

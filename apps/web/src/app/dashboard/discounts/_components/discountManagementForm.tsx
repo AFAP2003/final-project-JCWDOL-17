@@ -27,8 +27,8 @@ interface DiscountManagementFormProps{
   formik: FormikProps<any>
   stores:Store[]
   setDialogOpen: (open: boolean) => void;
-  isEditMode:boolean
-  dialogOpen:boolean
+  isEditMode: boolean;
+  dialogOpen: boolean;
   setIsEditMode: (edit: boolean) => void;
   setEditingDiscountId: (id: string | null) => void;
   isDetailMode:boolean
@@ -109,9 +109,7 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               disabled={disabled}
             />
             {formik.touched.nama && formik.errors.nama && (
-              <p className="text-xs text-red-600">
-                {formik.errors.nama}
-              </p>
+              <p className="text-xs text-red-600">{formik.errors.nama}</p>
             )}
           </div>
 
@@ -135,9 +133,7 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
-              Toko
-            </label>
+            <label className="mb-1 block text-sm font-medium">Toko</label>
             <Select
               value={formik.values.toko}
               onValueChange={(v) => formik.setFieldValue('toko', v)}
@@ -183,7 +179,9 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
                 <SelectGroup>
                   <SelectLabel>Tipe Diskon</SelectLabel>
                   <SelectItem value="diskon_normal">Diskon Normal</SelectItem>
-                  <SelectItem value="diskon_syarat">Diskon dengan Minimal Perbelanjaan dan Limitasi Nilai</SelectItem>
+                  <SelectItem value="diskon_syarat">
+                    Diskon dengan Minimal Perbelanjaan dan Limitasi Nilai
+                  </SelectItem>
                   <SelectItem value="bogo">Beli 1 Gratis 1</SelectItem>
                 </SelectGroup>
               </SelectContent>
@@ -216,11 +214,12 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
                 </SelectGroup>
               </SelectContent>
             </Select>
-            {formik.touched.tipe_nilai_diskon && formik.errors.tipe_nilai_diskon && (
-              <p className="text-xs text-red-600">
-                {formik.errors.tipe_nilai_diskon}
-              </p>
-            )}
+            {formik.touched.tipe_nilai_diskon &&
+              formik.errors.tipe_nilai_diskon && (
+                <p className="text-xs text-red-600">
+                  {formik.errors.tipe_nilai_diskon}
+                </p>
+              )}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">
@@ -314,7 +313,7 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
                 </p>
               )}
           </div> */}
-            
+
           <div>
             <label className="mb-1 block text-sm font-medium">
               Tanggal Mulai
@@ -361,8 +360,8 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
               variant="outline"
               type="button"
               onClick={() => {
-                formik.resetForm()
-                setDialogOpen(false)
+                formik.resetForm();
+                setDialogOpen(false);
               }}
               className={isDetailMode?'hidden':'block'}
             >

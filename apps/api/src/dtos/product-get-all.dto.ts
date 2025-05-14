@@ -56,13 +56,11 @@ export const ProductGetAllDTO = z.object({
     .refine(
       (val): val is [number, number] => {
         if (val === undefined) return true;
-        return (
-          val.length === 2 &&
-          val.every((n) => typeof n === 'number' && !isNaN(n))
-        );
+        return val.every((n) => typeof n === 'number' && !isNaN(n));
       },
       {
-        message: 'price must be two comma-separated numbers like "100,500"',
+        message:
+          'price range must be number or comma separated numbers like "100,500"',
       },
     )
     .transform((val) => {

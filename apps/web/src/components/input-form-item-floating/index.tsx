@@ -84,7 +84,7 @@ export default function InputFormItemFloating<
           id={props.id}
           placeholder=" "
           className={cn(
-            'peer px-5 py-6 focus-visible:ring-0 text-sm text-neutral-700 font-medium focus:border-neutral-500 bg-neutral-50',
+            'peer px-5 py-3 sm:py-6 focus-visible:ring-0 text-sm text-neutral-700 font-medium focus:border-neutral-500 bg-neutral-50',
             props.inputClass,
           )}
           {...props.field}
@@ -100,7 +100,7 @@ export default function InputFormItemFloating<
           className={cn(
             'absolute z-10 transition-all duration-150 top-0 left-0 px-1 -translate-y-6 translate-x-0',
             'peer-focus:text-neutral-200 peer-focus:-translate-y-6 peer-focus:translate-x-0',
-            'peer-placeholder-shown:translate-y-4 peer-placeholder-shown:text-neutral-500 peer-placeholder-shown:translate-x-4',
+            'peer-placeholder-shown:translate-y-3 sm:peer-placeholder-shown:translate-y-4 peer-placeholder-shown:text-neutral-500 peer-placeholder-shown:translate-x-4',
           )}
         >
           {props.label}

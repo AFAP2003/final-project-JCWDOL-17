@@ -70,7 +70,7 @@ export default function Confirm({ token }: Props) {
     },
 
     onSuccess: () => {
-      router.push('/'); // TODO: change this later
+      router.push('/dashboard');
     },
   });
 

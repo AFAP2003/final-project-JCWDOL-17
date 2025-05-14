@@ -9,7 +9,7 @@ import { inventoryManagementRouter } from './inventoryManagemen.router'
 import { discountManagementRouter } from './discountManagement.router'
 import { reportManagementRouter } from './reportManagement.router'
 
-const apiRouter = Router()
+const apiRouter = Router();
 
 apiRouter.use('/',storeManagementRouter())
 apiRouter.use('/',userManagementRouter())

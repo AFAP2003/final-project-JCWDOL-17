@@ -12,7 +12,7 @@ export default function TabContentSecurity({}: Props) {
 
   return (
     <Card className="p-6">
-      <div className="w-full">
+      <div className="w-full min-h-[485px]">
         <LoginActivity current={session} />
         <LinkAccount session={session!} />
       </div>

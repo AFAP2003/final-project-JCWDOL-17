@@ -56,16 +56,20 @@ export default function StockReport({
   const [selectedStore, setSelectedStore] = useState('all')
 
   useEffect(() => {
-    fetchStockReport(year, month,selectedStore);
-    fetchStores()
-  }, [year, month,selectedStore]);
+    fetchStockReport(year, month, selectedStore);
+    fetchStores();
+  }, [year, month, selectedStore]);
 
-  if(isLoading){
+  if (isLoading) {
     return <StockReportSkeleton />;
   }
 
   // Extract summary and details from stockReport
-  const summary = stockReport?.summary || { totalProducts: 0, stockAdded: 0, stockRemoved: 0 };
+  const summary = stockReport?.summary || {
+    totalProducts: 0,
+    stockAdded: 0,
+    stockRemoved: 0,
+  };
   const details = stockReport?.details || [];
 
   return (
@@ -82,18 +86,17 @@ export default function StockReport({
           onValueChange={setSelectedStore}
             >
               <SelectTrigger className="w-[130px]">
-                <SelectValue  />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>Pilih Toko</SelectLabel>
-                  <SelectItem value='all'>Semua Toko</SelectItem>
-                  {
-                    stores.map((store)=>(
-                      <SelectItem value={store.id} key={store.id}>{store.name}</SelectItem>
-
-                    ))
-                  }
+                  <SelectItem value="all">Semua Toko</SelectItem>
+                  {stores.map((store) => (
+                    <SelectItem value={store.id} key={store.id}>
+                      {store.name}
+                    </SelectItem>
+                  ))}
                 </SelectGroup>
               </SelectContent>
             </Select>

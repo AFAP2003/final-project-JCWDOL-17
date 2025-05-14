@@ -357,8 +357,9 @@ export default function ProductManagementForm({
               variant="outline"
               type="button"
               onClick={() => {
-                formik.resetForm()
-                setDialogOpen(false)}}
+                formik.resetForm();
+                setDialogOpen(false);
+              }}
             >
               Cancel
             </Button>

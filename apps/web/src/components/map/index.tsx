@@ -1,12 +1,12 @@
 'use client';
 
-/* eslint-disable react-hooks/exhaustive-deps */
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { apiclient } from '@/lib/apiclient';
 import { IDN_LATLONG_BOUND } from '@/lib/constants/indonesian-latlong-bounds';
 import { GeocodingResponse } from '@/lib/types/geocoding-response';
+import { cn } from '@/lib/utils';
 import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import {
@@ -18,7 +18,11 @@ import {
 import 'leaflet/dist/leaflet.css';
 import { Loader2, Search } from 'lucide-react';
 import qs from 'query-string';
+<<<<<<< HEAD
 import { useEffect, useState } from 'react';
+=======
+import { useCallback, useEffect, useMemo, useState } from 'react';
+>>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
 import {
   MapContainer,
   Marker,
@@ -35,25 +39,34 @@ type Props = {
     lat: number;
     lng: number;
   };
+<<<<<<< HEAD
   onLocationChange: (loc: GeocodingResponse[number] | null) => void;
   onLocationChangePending: (pending: boolean) => void;
+=======
+  onLocationChange: (
+    loc: GeocodingResponse[number] | null,
+    isInitial: boolean,
+  ) => void;
+  onLocationChangePending: (pending: boolean) => void;
+  className?: string;
+>>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
 };
 
 export default function Map(props: Props) {
   const [map, setMap] = useState<LeafletMap | null>(null);
-
   const [markerPosition, setMarkerPosition] = useState(props.initialPosition);
   const [dbMarkerPosition] = useDebounceValue(markerPosition, 1500);
-
   const [inputSearch, setInputSearch] = useState('');
   const [dbInputSearch] = useDebounceValue(inputSearch.trim(), 500);
   const [resultSearch, setResultSearch] = useState<GeocodingResponse>([]);
   const [searchPending, setSearchPending] = useState(false);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
   const [pinnedLocation, setPinnedLocation] = useState<
     GeocodingResponse[number] | null
   >(null);
-
   const [isInitial, setIsInitial] = useState(true);
   const [isAfterSearch, setIsAfterSearch] = useState(false);
 
@@ -71,7 +84,6 @@ export default function Map(props: Props) {
       const { data } = await apiclient.get(`/location/geocoding?${query}`);
       return data as GeocodingResponse;
     },
-
     onError: (error: AxiosError) => {
       toast({
         description:
@@ -80,6 +92,31 @@ export default function Map(props: Props) {
       });
     },
   });
+
+  const updateMarkerPosition = useCallback(
+    (newPos: typeof markerPosition) => {
+      if (
+        newPos.lat !== markerPosition.lat ||
+        newPos.lng !== markerPosition.lng
+      ) {
+        setMarkerPosition(newPos);
+      }
+    },
+    [markerPosition],
+  );
+
+  const markerIcon = useMemo(() => MarkerIcon(), []);
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setInputSearch(e.target.value);
+    },
+    [],
+  );
+
+  const handleMapRef = useCallback((map: LeafletMap) => {
+    setMap(map);
+  }, []);
 
   useEffect(() => {
     if (isAfterSearch) return;
@@ -96,7 +133,17 @@ export default function Map(props: Props) {
           if (data.length > 0) {
             setPinnedLocation(data[0]);
           }
+<<<<<<< HEAD
           if (isInitial) setIsInitial(false);
+=======
+          if (
+            props.initialPosition.lat !== dbMarkerPosition.lat &&
+            props.initialPosition.lng !== dbMarkerPosition.lng &&
+            isInitial
+          ) {
+            setIsInitial(false);
+          }
+>>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
           props.onLocationChangePending(false);
         },
       },
@@ -109,7 +156,11 @@ export default function Map(props: Props) {
     setSearchPending(true);
     fetchLocation(
       {
+<<<<<<< HEAD
         name: inputSearch.trim(),
+=======
+        name: dbInputSearch,
+>>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
         resultSize: 5,
       },
       {
@@ -122,11 +173,16 @@ export default function Map(props: Props) {
   }, [dbInputSearch]);
 
   useEffect(() => {
-    props.onLocationChange(pinnedLocation);
+    props.onLocationChange(pinnedLocation, isInitial);
   }, [pinnedLocation]);
 
   return (
-    <div className="overflow-hidden rounded-lg relative w-full aspect-video">
+    <div
+      className={cn(
+        'overflow-hidden rounded-lg relative w-full aspect-video',
+        props.className,
+      )}
+    >
       <MapContainer
         center={props.initialPosition}
         zoom={16}
@@ -141,51 +197,51 @@ export default function Map(props: Props) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <Marker position={markerPosition} icon={MarkerIcon()} />
+        <Marker position={markerPosition} icon={markerIcon} />
 
         <MapEvent
           onDrag={(e) => {
             const center = e.target.getCenter();
-            setMarkerPosition({
+            updateMarkerPosition({
               lat: center.lat,
               lng: center.lng,
             });
-            if (isAfterSearch === true) setIsAfterSearch(false);
+            if (isAfterSearch) setIsAfterSearch(false);
           }}
         />
+
         <ScrollWheelToggleOnHover />
         <FullscreenControl />
-        <MapRefSetter setMapRef={setMap} />
+        <MapRefSetter setMapRef={handleMapRef} />
       </MapContainer>
 
-      {/* Search */}
+      {/* Search UI */}
       <div
-        className="absolute right-6 top-3 bg-neutral-50 w-full max-w-sm overflow-hidden border-[1.8px] rounded-lg shadow-sm group border-neutral-500"
+        className="absolute right-6 top-3 bg-neutral-50 w-full max-w-sm overflow-hidden border-[1.8px] rounded-lg shadow-sm group border-neutral-500 max-[660px]:hidden"
         style={{ zIndex: 1000 }}
       >
         <div className="relative flex items-center w-full px-2 py-1">
           <Search className="text-neutral-500 shrink-0" />
           <Input
             value={inputSearch}
-            onChange={(e) => setInputSearch(e.target.value)}
+            onChange={handleInputChange}
             className="focus-visible:ring-0 shadow-none border-none text-neutral-700"
             placeholder="Cari alamat..."
           />
         </div>
 
         {searchPending ? (
-          <div>
+          <>
             <Separator className="bg-neutral-300" />
             <div className="flex justify-center items-center h-[70px] w-full">
               <Loader2 className="size-8 animate-spin text-neutral-400" />
             </div>
-          </div>
+          </>
         ) : (
-          <div>
+          <>
             {dbInputSearch && resultSearch.length > 0 && (
               <>
                 <Separator className="my-2" />
-
                 <div className="px-2 my-2">
                   {resultSearch.map((loc, idx) => (
                     <div key={idx} className="w-full">
@@ -195,7 +251,7 @@ export default function Map(props: Props) {
                           e.preventDefault();
                           e.stopPropagation();
 
-                          setMarkerPosition({
+                          updateMarkerPosition({
                             lat: loc.latitude,
                             lng: loc.longitude,
                           });
@@ -226,24 +282,29 @@ export default function Map(props: Props) {
                 </div>
               </>
             )}
-            {dbInputSearch && resultSearch.length <= 0 && (
-              <div className="">
+
+            {dbInputSearch && resultSearch.length === 0 && (
+              <>
                 <Separator className="bg-neutral-300" />
                 <div className="flex justify-center items-center h-[70px] w-full">
                   <p className="text-sm text-neutral-400 italic">
                     No result found
                   </p>
                 </div>
-              </div>
+              </>
             )}
+<<<<<<< HEAD
           </div>
+=======
+          </>
+>>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
         )}
       </div>
     </div>
   );
 }
 
-// Custom Marker Icon
+// Memoized static marker icon
 function MarkerIcon() {
   return divIcon({
     className: 'marker-icon',
@@ -252,6 +313,7 @@ function MarkerIcon() {
   });
 }
 
+// Set map reference to parent
 function MapRefSetter({ setMapRef }: { setMapRef: (map: LeafletMap) => void }) {
   const map = useMap();
   useEffect(() => {
@@ -260,20 +322,17 @@ function MapRefSetter({ setMapRef }: { setMapRef: (map: LeafletMap) => void }) {
   return null;
 }
 
-// Enable scroll zoom only on hover
+// Enable scroll zoom on hover
 function ScrollWheelToggleOnHover() {
   const map = useMap();
-
   useEffect(() => {
     const container = map.getContainer();
-
     const enableZoom = () => map.scrollWheelZoom.enable();
     const disableZoom = () => map.scrollWheelZoom.disable();
 
     container.addEventListener('mouseenter', enableZoom);
     container.addEventListener('mouseleave', disableZoom);
-
-    map.scrollWheelZoom.disable(); // Disable initially
+    map.scrollWheelZoom.disable();
 
     return () => {
       container.removeEventListener('mouseenter', enableZoom);
@@ -284,7 +343,7 @@ function ScrollWheelToggleOnHover() {
   return null;
 }
 
-// Track center position on map move
+// Track map drag events
 type CenterTrackerProps = {
   onDrag?: (e: LeafletEvent) => void;
   onDragEnd?: (e: DragEndEvent) => void;
@@ -292,53 +351,8 @@ type CenterTrackerProps = {
 
 function MapEvent(props: CenterTrackerProps) {
   useMapEvents({
-    dragend: (e) => {
-      if (props.onDragEnd) props.onDragEnd(e);
-    },
-    drag: (e) => {
-      if (props.onDrag) props.onDrag(e);
-    },
+    dragend: (e) => props.onDragEnd?.(e),
+    drag: (e) => props.onDrag?.(e),
   });
-
   return null;
-}
-
-function DummyFetch(param: {
-  name?: string;
-  lat?: number;
-  lng?: number;
-  resultSize: number;
-}) {
-  if (!param.name && !param.lat && !param.lng) return [];
-  const places = [
-    {
-      name: 'Jalan Karangrejo Tengah',
-      address:
-        'Jl. Karangrejo Tengah, Karangrejo, Kec. Gajahmungkur, Kota Semarang, Jawa Tengah 50231, Indonesia',
-      latitude: -7.027455,
-      longitude: 110.4134411,
-    },
-    {
-      name: 'Karangrejo',
-      address:
-        'Karangrejo, Kec. Gajahmungkur, Kota Semarang, Jawa Tengah, Indonesia',
-      latitude: -7.025345799999999,
-      longitude: 110.4128027,
-    },
-    {
-      name: 'Karangrejo',
-      address:
-        'Karangrejo, Kec. Grobogan, Kabupaten Grobogan, Jawa Tengah, Indonesia',
-      latitude: -7.010573,
-      longitude: 110.9298005,
-    },
-    {
-      name: 'Karangrejo',
-      address:
-        'Karangrejo, Kecamatan Gabus, Kabupaten Grobogan, Jawa Tengah, Indonesia',
-      latitude: -7.1273304,
-      longitude: 111.1950767,
-    },
-  ];
-  return places;
 }

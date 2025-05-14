@@ -99,7 +99,8 @@ export function inventoryManagementAPI() {
         minStock: Number(values.minimal),
         // These fields control the stock adjustment
         addQuantity: values.mode === 'tambah' ? Number(values.tambah || 0) : 0,
-        subtractQuantity: values.mode === 'kurangi' ? Number(values.kurangi || 0) : 0
+        subtractQuantity:
+          values.mode === 'kurangi' ? Number(values.kurangi || 0) : 0,
       };
       const inventoryRes = await fetch(
         `${API_BASE_URL}/dashboard/inventories/${id}`,

@@ -1,37 +1,39 @@
-'use client'
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { Category } from "@/lib/interfaces/categoryManagement.interface";
-import { API_BASE_URL } from "@/lib/constant";
+import { Category } from '@/lib/interfaces/categoryManagement.interface';
+import { API_BASE_URL } from '@/lib/constant';
 
-export function categoryManagementAPI(){
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export function categoryManagementAPI() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-      const fetchCategories = async (pageIndex:number,pageSize:number) => {
-        setIsLoading(true)  
-        try {
-          const page = pageIndex + 1
-          const categoryRes = await fetch(`${API_BASE_URL}/dashboard/categories?page=${page}&take=${pageSize}`);
-          const categoryData = await categoryRes.json();
-    
-          if (categoryRes.ok) {
-            setCategories(categoryData.data);
-            console.log('Categories fetched successfully: ', categoryData);
-            return categoryData
-          } else {
-            console.error(
-              'Failed to fetch Categories:',
-              categoryData.message || 'Unknown Error',
-            );
-          }
-        } catch (error) {
-          console.log('Error fetching data: ', error);
-        } finally{
-          setIsLoading(false)
-        }
-      };
+  const fetchCategories = async (pageIndex: number, pageSize: number) => {
+    setIsLoading(true);
+    try {
+      const page = pageIndex + 1;
+      const categoryRes = await fetch(
+        `${API_BASE_URL}/dashboard/categories?page=${page}&take=${pageSize}`,
+      );
+      const categoryData = await categoryRes.json();
+
+      if (categoryRes.ok) {
+        setCategories(categoryData.data);
+        console.log('Categories fetched successfully: ', categoryData);
+        return categoryData;
+      } else {
+        console.error(
+          'Failed to fetch Categories:',
+          categoryData.message || 'Unknown Error',
+        );
+      }
+    } catch (error) {
+      console.log('Error fetching data: ', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
       const handleCreateCategory = async (values) => {
         try {
@@ -172,4 +174,3 @@ export function categoryManagementAPI(){
       return { categories, isLoading, fetchCategories,handleCreateCategory,handleUpdateCategory,handleDeleteCategory }
 
 }
- 

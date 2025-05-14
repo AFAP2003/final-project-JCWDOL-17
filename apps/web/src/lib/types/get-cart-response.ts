@@ -24,6 +24,24 @@ export type GetCartResponse = {
         isMain: boolean;
         createdAt: string;
       }[];
+      discounts: {
+        id: string;
+        storeId: string;
+        name: string;
+        description?: string;
+        type: 'NO_RULES_DISCOUNT' | 'WITH_MAX_PRICE' | 'BUY_X_GET_Y';
+        value?: number;
+        isPercentage?: boolean;
+        minPurchase?: number;
+        maxDiscount?: number;
+        startDate: string;
+        endDate: string;
+        isActive: boolean;
+        createdAt: string;
+        updatedAt: string;
+        buyQuantity?: number;
+        getQuantity?: number;
+      }[];
     };
   }[];
   id: string;

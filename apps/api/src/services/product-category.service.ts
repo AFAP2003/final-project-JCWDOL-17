@@ -71,14 +71,4 @@ export class ProductCategoryService {
       metadata,
     };
   };
-
-  getFromIds = async (ids: string[]) => {
-    return await prismaclient.category.findMany({
-      where: {
-        id: {
-          in: ids,
-        },
-      },
-    });
-  };
 }

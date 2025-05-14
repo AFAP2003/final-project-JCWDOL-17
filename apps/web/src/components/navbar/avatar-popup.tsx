@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { useLocation } from '@/context/location-provider';
 import { signOut } from '@/lib/auth/client';
 import type { Session } from '@/lib/types/session';
-import { LogOut, Settings, Ticket } from 'lucide-react';
+import { CalendarArrowUp, Code2, LogOut, Settings, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -36,11 +36,11 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
               src={user.image || '/placeholder.svg'}
               alt={`${user.name}'s profile`}
             />
-            <AvatarFallback className="bg-neutral-100 text-neutral-700   font-medium">
+            <AvatarFallback className="bg-neutral-100 text-neutral-700 font-medium">
               {`${user.name.at(0)?.toUpperCase()}`}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium text-neutral-700  hidden sm:block">
+          <span className="text-sm font-medium text-neutral-700 hidden lg:block">
             {user.name.split(' ').at(0)}
           </span>
         </button>
@@ -85,12 +85,31 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
               </Link>
 
               <Link
-                href="/user/settings"
+                href="/user/my-vouchers"
                 onClick={() => setOpenPopup(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-700  hover:bg-neutral-100 transition-colors"
               >
-                <Ticket className="size-4 text-neutral-700 " />
+                <Ticket className="size-4 text-neutral-700" />
                 <span className="text-sm font-medium">Voucher Saya</span>
+              </Link>
+
+              <Link
+                href="/user/referral-code"
+                onClick={() => setOpenPopup(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-700  hover:bg-neutral-100 transition-colors"
+              >
+                <Code2 className="size-4 text-neutral-700" />
+                <span className="text-sm font-medium">Kode Referral</span>
+              </Link>
+
+              <Link
+                href={'/orders'}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-700  hover:bg-neutral-100 transition-colors"
+                onClick={() => setOpenPopup(false)}
+                passHref
+              >
+                <CalendarArrowUp className="size-4 text-neutral-700" />
+                <span className="text-sm font-medium">Orders</span>
               </Link>
             </div>
           </div>

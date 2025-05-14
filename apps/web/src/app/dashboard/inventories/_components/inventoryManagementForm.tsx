@@ -51,28 +51,28 @@ export default function InventoryManagementForm({
   isDetailMode,
   setIsDetailMode
 }: InventoryManagementFormProps) {
-  const {inventories} = UseInventoryManagement()
+  const { inventories } = UseInventoryManagement();
   const [activeTab, setActiveTab] = useState<'tambah' | 'kurangi'>('tambah');
 
   useEffect(() => {
     const add = Number(formik.values.tambah || 0);
     const reduce = Number(formik.values.kurangi || 0);
-  
+
     const matchedInventory = inventories.find(
       (inv) =>
         inv.productId === formik.values.produk &&
-        inv.storeId === formik.values.toko
+        inv.storeId === formik.values.toko,
     );
-  
+
     const stokSekarang = matchedInventory ? matchedInventory.quantity : 0;
-  
+
     let stokBaru = stokSekarang;
     if (activeTab === 'tambah') {
       stokBaru = stokSekarang + add;
     } else {
       stokBaru = Math.max(stokSekarang - reduce, 0);
     }
-  
+
     formik.setFieldValue('sekarang', stokSekarang);
     formik.setFieldValue('baru', stokBaru);
   }, [
@@ -118,7 +118,6 @@ export default function InventoryManagementForm({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={formik.handleSubmit}>
-
           <div className="grid gap-4 py-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -253,11 +252,12 @@ export default function InventoryManagementForm({
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Stok Baru
               </label>
-              <Input type="number" 
-               value={formik.values.baru}
+              <Input
+                type="number"
+                value={formik.values.baru}
                 readOnly
                 disabled
-                 />
+              />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -307,9 +307,7 @@ export default function InventoryManagementForm({
           >{isEditMode?'Simpan Perubahan':'Perbarui Stok'}</Button>
         </DialogFooter>
         </form>
-
       </DialogContent>
     </Dialog>
-
   );
 }

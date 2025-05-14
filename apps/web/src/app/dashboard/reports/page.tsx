@@ -18,7 +18,9 @@ import ProductSalesChart from './_components/productSalesChart';
 import StockReport from './_components/stockReport';
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState<'all'|'category'|'product'|'stock'>('all');
+  const [activeTab, setActiveTab] = useState<
+    'all' | 'category' | 'product' | 'stock'
+  >('all');
   const [selectedYear, setSelectedYear] = useState('2025');
   const [selectedMonth, setSelectedMonth] = useState('1');
   const [isSmallScreen, setIsSmallScreen] = useState(false);
@@ -32,7 +34,11 @@ export default function Page() {
 
   return (
     <div className="w-full p-6 sm:p-0">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full mb-4"
+      >
         {/* Tab navigation */}
         <div className="mb-4">
           {/* small‐screen dropdown */}
@@ -55,20 +61,25 @@ export default function Page() {
           {/* large‐screen tabs */}
           <div className="hidden sm:flex">
             <TabsList className="w-full">
-              <TabsTrigger value="all" className="flex-1">Penjualan Keseluruhan</TabsTrigger>
-              <TabsTrigger value="category" className="flex-1">Per Kategori</TabsTrigger>
-              <TabsTrigger value="product" className="flex-1">Per Produk</TabsTrigger>
-              <TabsTrigger value="stock" className="flex-1">Stok</TabsTrigger>
+              <TabsTrigger value="all" className="flex-1">
+                Penjualan Keseluruhan
+              </TabsTrigger>
+              <TabsTrigger value="category" className="flex-1">
+                Per Kategori
+              </TabsTrigger>
+              <TabsTrigger value="product" className="flex-1">
+                Per Produk
+              </TabsTrigger>
+              <TabsTrigger value="stock" className="flex-1">
+                Stok
+              </TabsTrigger>
             </TabsList>
           </div>
         </div>
 
         {/* ----------- CONTENT PANES ----------- */}
         <TabsContent value="all">
-          <AllSalesChart
-            year={selectedYear}
-            onYearChange={setSelectedYear}
-          />
+          <AllSalesChart year={selectedYear} onYearChange={setSelectedYear} />
         </TabsContent>
 
         <TabsContent value="category">

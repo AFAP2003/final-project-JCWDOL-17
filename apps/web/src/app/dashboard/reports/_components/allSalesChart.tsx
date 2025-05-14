@@ -50,11 +50,11 @@ export default function AllSalesChart({
   
   const {fetchMonthlySales,isLoading,monthlySales} = reportManagementAPI()
 
-  useEffect(()=>{
-    fetchMonthlySales(year)
-  },[year])
-  if(isLoading){
-    return <AllSalesChartSkeleton/>
+  useEffect(() => {
+    fetchMonthlySales(year);
+  }, [year]);
+  if (isLoading) {
+    return <AllSalesChartSkeleton />;
   }
   return (
     <ChartContainer
@@ -93,7 +93,12 @@ export default function AllSalesChart({
         margin={{ top: 10, right: 30, left: 0, bottom: 40 }}
       >
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} />
+        <XAxis
+          dataKey="month"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={10}
+        />
         <YAxis
           tickLine={false}
           axisLine={false}

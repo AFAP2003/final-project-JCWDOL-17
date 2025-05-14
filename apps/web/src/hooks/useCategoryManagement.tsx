@@ -220,9 +220,9 @@ export function useCategoryManagement() {
   };
 
   const handleDeleteCategory = async (id: string) => {
-    const ok = await apiDeleteCategory(id)
+    const ok = await apiDeleteCategory(id);
     if (ok) {
-      await fetchCategories(pagination.pageIndex, pagination.pageSize)
+      await fetchCategories(pagination.pageIndex, pagination.pageSize);
     }
     return ok
   }

@@ -1,6 +1,5 @@
 import { ProductGetAllDTO } from '@/dtos/product-get-all.dto';
 import { ProductGetByIdDTO } from '@/dtos/product-get-by-id.dto';
-import { ProductSimilarByCartDTO } from '@/dtos/product-similar-by-cart.dto';
 import { ProductSimilarCategoryDTO } from '@/dtos/product-similar-category.dto';
 import {
   ApiError,
@@ -8,7 +7,6 @@ import {
   UnprocessableEntityError,
 } from '@/errors';
 import { formatZodError } from '@/helpers/format-zod-error';
-import { getSessionUser } from '@/helpers/session-helper';
 import { CartService } from '@/services/cart.service';
 import { ProductCategoryService } from '@/services/product-category.service';
 import { ProductService } from '@/services/product.service';
@@ -77,42 +75,6 @@ export class ProductController {
         },
         {
           excludeIds: [product.id],
-        },
-      );
-      res.json(products);
-    } catch (error) {
-      if (!(error instanceof ApiError)) {
-        const err = error as Error;
-        throw new InternalSeverError(err);
-      }
-      throw error;
-    }
-  };
-
-  getSimilarByCart = async (req: Request, res: Response) => {
-    const { data: dto, error } = ProductSimilarByCartDTO.safeParse({
-      ...req.query,
-    });
-    if (error) {
-      throw new UnprocessableEntityError(formatZodError(error));
-    }
-
-    const user = getSessionUser(req);
-
-    try {
-      const cart = await this.cartService.getCart(user.session.id);
-      const categoryIds = cart.items.map((item) => item.product.categoryId);
-      const categories = await this.categoryService.getFromIds(categoryIds);
-
-      const products = await this.productService.getAll(
-        {
-          orderBy: dto.orderBy,
-          category: categories.map((c) => c.name),
-          page: dto.page,
-          pageSize: dto.pageSize,
-        },
-        {
-          excludeIds: cart.items.map((item) => item.productId),
         },
       );
       res.json(products);

@@ -46,6 +46,7 @@ export default function DiscountManagement() {
   if(isLoading){
     return <DiscountManagementskeleton/>
   }
+  
   return (
     <div className="min-h-screen w-full flex flex-col gap-6 p-4">
       {/* Header */}

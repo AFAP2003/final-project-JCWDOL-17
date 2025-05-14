@@ -4,9 +4,9 @@ export interface MyFormValues {
   deskripsi: string;
   kategoriId: string;
   harga: number;
-  berat:number
-  sku:string
-  isActive:boolean
+  berat: number;
+  sku: string;
+  isActive: boolean;
 }
 export const getValidationSchema = ()=>
     Yup.object<MyFormValues>().shape({

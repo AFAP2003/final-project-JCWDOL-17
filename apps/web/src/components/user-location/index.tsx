@@ -16,14 +16,15 @@ import SelectedLocation from './selected-location';
 
 type Props = {
   children: ReactNode;
+  modal?: boolean;
 };
 
-export default function UserLocation({ children }: Props) {
+export default function UserLocation({ children, modal = true }: Props) {
   const { data: location } = useLocation({ fallbackAddress: true });
   const [rootDialogHidden, setRootDialogHidden] = useState(false);
 
   return (
-    <Dialog>
+    <Dialog modal={modal}>
       <DialogTrigger>{children}</DialogTrigger>
       <DialogContent
         id="root:dialog"
