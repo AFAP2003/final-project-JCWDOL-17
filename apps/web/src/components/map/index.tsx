@@ -18,11 +18,7 @@ import {
 import 'leaflet/dist/leaflet.css';
 import { Loader2, Search } from 'lucide-react';
 import qs from 'query-string';
-<<<<<<< HEAD
-import { useEffect, useState } from 'react';
-=======
 import { useCallback, useEffect, useMemo, useState } from 'react';
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
 import {
   MapContainer,
   Marker,
@@ -39,17 +35,12 @@ type Props = {
     lat: number;
     lng: number;
   };
-<<<<<<< HEAD
-  onLocationChange: (loc: GeocodingResponse[number] | null) => void;
-  onLocationChangePending: (pending: boolean) => void;
-=======
   onLocationChange: (
     loc: GeocodingResponse[number] | null,
     isInitial: boolean,
   ) => void;
   onLocationChangePending: (pending: boolean) => void;
   className?: string;
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
 };
 
 export default function Map(props: Props) {
@@ -60,10 +51,6 @@ export default function Map(props: Props) {
   const [dbInputSearch] = useDebounceValue(inputSearch.trim(), 500);
   const [resultSearch, setResultSearch] = useState<GeocodingResponse>([]);
   const [searchPending, setSearchPending] = useState(false);
-<<<<<<< HEAD
-
-=======
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
   const [pinnedLocation, setPinnedLocation] = useState<
     GeocodingResponse[number] | null
   >(null);
@@ -133,9 +120,6 @@ export default function Map(props: Props) {
           if (data.length > 0) {
             setPinnedLocation(data[0]);
           }
-<<<<<<< HEAD
-          if (isInitial) setIsInitial(false);
-=======
           if (
             props.initialPosition.lat !== dbMarkerPosition.lat &&
             props.initialPosition.lng !== dbMarkerPosition.lng &&
@@ -143,7 +127,6 @@ export default function Map(props: Props) {
           ) {
             setIsInitial(false);
           }
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
           props.onLocationChangePending(false);
         },
       },
@@ -156,11 +139,7 @@ export default function Map(props: Props) {
     setSearchPending(true);
     fetchLocation(
       {
-<<<<<<< HEAD
-        name: inputSearch.trim(),
-=======
         name: dbInputSearch,
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
         resultSize: 5,
       },
       {
@@ -293,11 +272,7 @@ export default function Map(props: Props) {
                 </div>
               </>
             )}
-<<<<<<< HEAD
-          </div>
-=======
           </>
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
         )}
       </div>
     </div>
