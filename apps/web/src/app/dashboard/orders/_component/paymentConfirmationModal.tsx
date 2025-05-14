@@ -8,12 +8,12 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { formatRupiah } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,26 +24,56 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { apiclient } from '@/lib/apiclient';
 
 interface PaymentConfirmationModalProps {
   order: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onConfirm?: (
+    orderId: string,
+    paymentProofId: string,
+    approved: boolean,
+    notes: string,
+  ) => Promise<boolean>;
+  isPending?: boolean;
+  onSuccess?: () => void;
+}
+
+function getImageUrl(filepath: string) {
+  if (filepath.startsWith('http')) {
+    return filepath;
+  }
+
+  if (filepath.startsWith('/')) {
+    return filepath;
+  }
+
+  return `/${filepath}`;
 }
 
 export default function PaymentConfirmationModal({
   order,
   open,
   onOpenChange,
+  onConfirm,
+  isPending = false,
+  onSuccess,
 }: PaymentConfirmationModalProps) {
   const { toast } = useToast();
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [confirmReject, setConfirmReject] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    if (open && order) {
+      setNotes('');
+    }
+  }, [open, order]);
 
   if (!order) return null;
 
-  // Get the latest payment proof
   const paymentProof =
     order.paymentProofs && order.paymentProofs.length > 0
       ? order.paymentProofs[order.paymentProofs.length - 1]
@@ -54,34 +84,55 @@ export default function PaymentConfirmationModal({
 
     setLoading(true);
     try {
-      // Call your API to approve payment
-      const response = await fetch(`/api/orders/${order.id}/verify-payment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          paymentProofId: paymentProof.id,
-          approved: true,
-          notes: notes,
-        }),
-      });
+      if (onConfirm) {
+        const success = await onConfirm(order.id, paymentProof.id, true, notes);
+        if (success) {
+          toast({
+            title: 'Pembayaran Dikonfirmasi',
+            description:
+              'Pembayaran telah berhasil dikonfirmasi dan pesanan diproses.',
+            variant: 'default',
+          });
+          onOpenChange(false);
+          if (onSuccess) onSuccess();
+        } else {
+          throw new Error('Failed to approve payment');
+        }
+      } else {
+        // Use the correct path
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/dashboard/orders/verify-payment`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderId: order.id,
+              paymentProofId: paymentProof.id,
+              approved: true,
+              notes: notes,
+            }),
+            credentials: 'include',
+          },
+        );
 
-      if (!response.ok) {
-        throw new Error('Failed to approve payment');
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          throw new Error('Failed to approve payment');
+        }
+
+        toast({
+          title: 'Pembayaran Dikonfirmasi',
+          description:
+            'Pembayaran telah berhasil dikonfirmasi dan pesanan diproses.',
+          variant: 'default',
+        });
+
+        onOpenChange(false);
+        if (onSuccess) onSuccess();
       }
-
-      toast({
-        title: 'Pembayaran Dikonfirmasi',
-        description:
-          'Pembayaran telah berhasil dikonfirmasi dan pesanan diproses.',
-        variant: 'default',
-      });
-
-      // Close the modal
-      onOpenChange(false);
-
-      // You might want to refresh the order data here or redirect
     } catch (error) {
       console.error('Error approving payment:', error);
       toast({
@@ -100,33 +151,60 @@ export default function PaymentConfirmationModal({
 
     setLoading(true);
     try {
-      // Call your API to reject payment
-      const response = await fetch(`/api/orders/${order.id}/verify-payment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          paymentProofId: paymentProof.id,
-          approved: false,
-          notes: notes,
-        }),
-      });
+      if (onConfirm) {
+        const success = await onConfirm(
+          order.id,
+          paymentProof.id,
+          false,
+          notes,
+        );
+        if (success) {
+          toast({
+            title: 'Pembayaran Ditolak',
+            description:
+              'Pembayaran telah ditolak dan status pesanan diubah ke Menunggu Pembayaran.',
+            variant: 'default',
+          });
+          onOpenChange(false);
+          if (onSuccess) onSuccess();
+        } else {
+          throw new Error('Failed to reject payment');
+        }
+      } else {
+        // Use the correct path
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/dashboard/orders/verify-payment`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderId: order.id,
+              paymentProofId: paymentProof.id,
+              approved: false,
+              notes: notes,
+            }),
+            credentials: 'include',
+          },
+        );
 
-      if (!response.ok) {
-        throw new Error('Failed to reject payment');
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          throw new Error('Failed to reject payment');
+        }
+
+        toast({
+          title: 'Pembayaran Ditolak',
+          description:
+            'Pembayaran telah ditolak dan status pesanan diubah ke Menunggu Pembayaran.',
+          variant: 'default',
+        });
+
+        onOpenChange(false);
+        if (onSuccess) onSuccess();
       }
-
-      toast({
-        title: 'Pembayaran Ditolak',
-        description: 'Pembayaran telah ditolak dan status pesanan diubah.',
-        variant: 'default',
-      });
-
-      // Close the modal
-      onOpenChange(false);
-
-      // You might want to refresh the order data here or redirect
     } catch (error) {
       console.error('Error rejecting payment:', error);
       toast({
@@ -166,7 +244,7 @@ export default function PaymentConfirmationModal({
                   </p>
                   <p>
                     <span className="font-medium">Total Pesanan:</span>{' '}
-                    {formatRupiah(order.total)}
+                    {formatCurrency(order.total)}
                   </p>
                 </div>
                 <div>
@@ -192,12 +270,22 @@ export default function PaymentConfirmationModal({
                 <div className="space-y-4">
                   <div className="flex justify-center">
                     <div className="relative h-80 w-full max-w-md border rounded-md overflow-hidden">
-                      <Image
-                        src={paymentProof.filePath}
-                        alt="Bukti Pembayaran"
-                        layout="fill"
-                        objectFit="contain"
-                      />
+                      {!imageError ? (
+                        <Image
+                          src={getImageUrl(paymentProof.filePath)}
+                          alt="Bukti Pembayaran"
+                          layout="fill"
+                          objectFit="contain"
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <Image
+                          src="/placeholder-image.png"
+                          alt="Placeholder Image"
+                          layout="fill"
+                          objectFit="contain"
+                        />
+                      )}
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground text-center">
@@ -234,19 +322,27 @@ export default function PaymentConfirmationModal({
               type="button"
               variant="destructive"
               onClick={() => setConfirmReject(true)}
-              disabled={loading || !paymentProof}
+              disabled={loading || isPending || !paymentProof}
               className="w-full sm:w-auto"
             >
-              <XCircle className="mr-2 h-4 w-4" />
+              {loading || isPending ? (
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <XCircle className="mr-2 h-4 w-4" />
+              )}
               Tolak Pembayaran
             </Button>
             <Button
               type="button"
               onClick={handleApprovePayment}
-              disabled={loading || !paymentProof}
+              disabled={loading || isPending || !paymentProof}
               className="w-full sm:w-auto"
             >
-              <CheckCircle className="mr-2 h-4 w-4" />
+              {loading || isPending ? (
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle className="mr-2 h-4 w-4" />
+              )}
               Konfirmasi Pembayaran
             </Button>
           </DialogFooter>

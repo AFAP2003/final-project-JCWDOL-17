@@ -11,6 +11,7 @@ class InventoryManagementRepository {
         product: {
           include: {
             category: true,
+            images: true,
           },
         },
         store: true,
@@ -46,10 +47,18 @@ class InventoryManagementRepository {
     addQuantity = 0,
     subtractQuantity = 0,
   ) {
+    const current = await prismaclient.inventory.findUnique({ where: { id } });
+    if (!current) throw new Error('Inventory not found');
+
+    let newQty = current.quantity + addQuantity - subtractQuantity;
+    if (newQty < 0) newQty = 0;
     // 1) overwrite everything in inventoryData (but this might not touch quantity!)
     const inv = await prismaclient.inventory.update({
       where: { id },
-      data: { ...inventoryData },
+      data: {
+        ...inventoryData,
+        quantity: newQty,
+      },
     });
 
     // 2) write ADDITION journal
@@ -80,10 +89,12 @@ class InventoryManagementRepository {
   }
 
   async deleteInventory(id: string) {
-    return await prismaclient.inventory.delete({
-      where: {
-        id,
-      },
+    return await prismaclient.$transaction(async (tx) => {
+      await tx.stockJournal.deleteMany({ where: { inventoryId: id } });
+
+      const inv = await tx.inventory.delete({ where: { id } });
+
+      return inv;
     });
   }
 }

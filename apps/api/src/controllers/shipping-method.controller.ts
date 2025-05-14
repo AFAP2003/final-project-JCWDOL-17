@@ -11,7 +11,6 @@ import { prismaclient } from '@/prisma';
 import { Request, Response } from 'express';
 import { z } from 'zod';
 
-// Define DTOs
 const ShippingMethodCreateUpdateDTO = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   description: z.string().optional(),
@@ -20,7 +19,6 @@ const ShippingMethodCreateUpdateDTO = z.object({
 });
 
 export class ShippingMethodController {
-  // Get all shipping methods
   getAll = async (req: Request, res: Response) => {
     try {
       const shippingMethods = await prismaclient.shippingMethod.findMany({
@@ -42,7 +40,6 @@ export class ShippingMethodController {
     }
   };
 
-  // Get shipping method by ID
   getById = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -65,7 +62,6 @@ export class ShippingMethodController {
     }
   };
 
-  // Create shipping method (Admin only)
   create = async (req: Request, res: Response) => {
     try {
       const { data: dto, error } = ShippingMethodCreateUpdateDTO.safeParse(
@@ -75,11 +71,7 @@ export class ShippingMethodController {
         throw new UnprocessableEntityError(formatZodError(error));
       }
 
-      // Admin check
       const { user } = getSessionUser(req);
-      if (user.role !== 'ADMIN' && user.role !== 'SUPER') {
-        throw new BadRequestError('Only admins can create shipping methods');
-      }
 
       const shippingMethod = await prismaclient.shippingMethod.create({
         data: {
@@ -100,7 +92,6 @@ export class ShippingMethodController {
     }
   };
 
-  // Update shipping method (Admin only)
   update = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -111,13 +102,11 @@ export class ShippingMethodController {
         throw new UnprocessableEntityError(formatZodError(error));
       }
 
-      // Admin check
       const { user } = getSessionUser(req);
       if (user.role !== 'ADMIN' && user.role !== 'SUPER') {
         throw new BadRequestError('Only admins can update shipping methods');
       }
 
-      // Check if exists
       const existingMethod = await prismaclient.shippingMethod.findUnique({
         where: { id },
       });
@@ -146,18 +135,15 @@ export class ShippingMethodController {
     }
   };
 
-  // Delete shipping method (Admin only)
   delete = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
-      // Admin check
       const { user } = getSessionUser(req);
       if (user.role !== 'ADMIN' && user.role !== 'SUPER') {
         throw new BadRequestError('Only admins can delete shipping methods');
       }
 
-      // Check if exists
       const existingMethod = await prismaclient.shippingMethod.findUnique({
         where: { id },
       });
@@ -166,7 +152,6 @@ export class ShippingMethodController {
         throw new NotFoundError('Shipping method not found');
       }
 
-      // Soft delete by marking as inactive
       await prismaclient.shippingMethod.update({
         where: { id },
         data: { isActive: false },

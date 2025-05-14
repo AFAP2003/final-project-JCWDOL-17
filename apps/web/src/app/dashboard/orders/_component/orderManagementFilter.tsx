@@ -27,6 +27,7 @@ import {
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { useState } from 'react';
+import { OrderStatus } from '@/lib/enums';
 
 interface OrderManagementFilterProps {
   globalFilter: string;
@@ -47,9 +48,9 @@ export default function OrderManagementFilter({
   table,
   warehouses,
 }: OrderManagementFilterProps) {
-  const [date, setDate] = useState<{ from: Date; to: Date }>({
-    from: new Date(),
-    to: new Date(),
+  const [date, setDate] = useState<{ from: Date | null; to: Date | null }>({
+    from: null,
+    to: null,
   });
 
   return (
@@ -88,16 +89,16 @@ export default function OrderManagementFilter({
             <SelectGroup>
               <SelectLabel>Pilih Status</SelectLabel>
               <SelectItem value="all">Semua Status</SelectItem>
-              <SelectItem value="WAITING_PAYMENT">
+              <SelectItem value={OrderStatus.WAITING_PAYMENT}>
                 Menunggu Pembayaran
               </SelectItem>
-              <SelectItem value="WAITING_PAYMENT_CONFIRMATION">
+              <SelectItem value={OrderStatus.WAITING_PAYMENT_CONFIRMATION}>
                 Menunggu Konfirmasi
               </SelectItem>
-              <SelectItem value="PROCESSING">Diproses</SelectItem>
-              <SelectItem value="SHIPPED">Dikirim</SelectItem>
-              <SelectItem value="CONFIRMED">Selesai</SelectItem>
-              <SelectItem value="CANCELLED">Dibatalkan</SelectItem>
+              <SelectItem value={OrderStatus.PROCESSING}>Diproses</SelectItem>
+              <SelectItem value={OrderStatus.SHIPPED}>Dikirim</SelectItem>
+              <SelectItem value={OrderStatus.CONFIRMED}>Selesai</SelectItem>
+              <SelectItem value={OrderStatus.CANCELLED}>Dibatalkan</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
@@ -126,11 +127,14 @@ export default function OrderManagementFilter({
             <CalendarComponent
               initialFocus
               mode="range"
-              defaultMonth={date.from}
-              selected={{ from: date.from, to: date.to }}
+              defaultMonth={date.from || undefined}
+              selected={{
+                from: date.from || undefined,
+                to: date.to || undefined,
+              }}
               onSelect={(selectedDate) => {
+                setDate(selectedDate);
                 if (selectedDate?.from && selectedDate?.to) {
-                  setDate({ from: selectedDate.from, to: selectedDate.to });
                   handleDateRangeFilter({
                     from: selectedDate.from,
                     to: selectedDate.to,
@@ -145,7 +149,7 @@ export default function OrderManagementFilter({
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              <Eye /> Lihat
+              <Eye className="h-4 w-4 mr-2" /> Lihat
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

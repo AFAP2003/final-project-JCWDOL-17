@@ -21,6 +21,7 @@ import { TokenRouter } from './routers/token.router';
 import { UserRouter } from './routers/user.router';
 import { VoucherRouter } from './routers/voucher.router';
 import { WebhookRouter } from './routers/webhook.router';
+import path from 'path';
 
 export default class App {
   static VERSION = '1.0.0';
@@ -30,6 +31,10 @@ export default class App {
     this.app = express();
     this.configure();
     this.routes();
+    this.app.use(
+      '/uploads',
+      express.static(path.join(__dirname, '../uploads')),
+    );
     this.handleError();
   }
 

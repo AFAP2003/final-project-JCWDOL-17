@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 
-// Status badge styling
 const statusStyles = {
   WAITING_PAYMENT: { variant: 'outline', label: 'Menunggu Pembayaran' },
   WAITING_PAYMENT_CONFIRMATION: {
@@ -34,7 +33,6 @@ const statusStyles = {
   CANCELLED: { variant: 'destructive', label: 'Dibatalkan' },
 };
 
-// Payment status badge styling
 const paymentStatusStyles = {
   PENDING: { variant: 'outline', label: 'Tertunda' },
   PAID: { variant: 'success', label: 'Lunas' },
@@ -59,13 +57,11 @@ export default function OrderManagementTable({
   onShipOrder,
   onCancelOrder,
 }: OrderManagementTableProps) {
-  // Helper to render status badge
   const renderStatusBadge = (status) => {
     const style = statusStyles[status] || { variant: 'default', label: status };
     return <Badge variant={style.variant}>{style.label}</Badge>;
   };
 
-  // Helper to render payment status badge
   const renderPaymentStatusBadge = (status) => {
     const style = paymentStatusStyles[status] || {
       variant: 'default',
@@ -74,11 +70,9 @@ export default function OrderManagementTable({
     return <Badge variant={style.variant}>{style.label}</Badge>;
   };
 
-  // Helper to determine which actions are available based on order status
   const getAvailableActions = (order) => {
     const actions = [];
 
-    // View details is always available
     actions.push({
       label: 'Lihat Detail',
       icon: Eye,
@@ -86,7 +80,6 @@ export default function OrderManagementTable({
       disabled: false,
     });
 
-    // Confirm payment action (only for WAITING_PAYMENT_CONFIRMATION status)
     if (order.status === 'WAITING_PAYMENT_CONFIRMATION') {
       actions.push({
         label: 'Konfirmasi Pembayaran',
@@ -96,7 +89,6 @@ export default function OrderManagementTable({
       });
     }
 
-    // Ship order action (only for PROCESSING status)
     if (order.status === 'PROCESSING') {
       actions.push({
         label: 'Kirim Pesanan',
@@ -106,7 +98,6 @@ export default function OrderManagementTable({
       });
     }
 
-    // Cancel order action (for statuses before SHIPPED)
     if (
       [
         'WAITING_PAYMENT',
@@ -159,7 +150,6 @@ export default function OrderManagementTable({
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => {
-                  // Special rendering for status cells
                   if (cell.column.id === 'status') {
                     return (
                       <TableCell key={cell.id}>
@@ -168,7 +158,6 @@ export default function OrderManagementTable({
                     );
                   }
 
-                  // Special rendering for payment status cells
                   if (cell.column.id === 'paymentStatus') {
                     return (
                       <TableCell key={cell.id}>
@@ -177,7 +166,6 @@ export default function OrderManagementTable({
                     );
                   }
 
-                  // Special rendering for action cell
                   if (cell.column.id === 'actions') {
                     const order = row.original;
                     const actions = getAvailableActions(order);
@@ -215,7 +203,6 @@ export default function OrderManagementTable({
                     );
                   }
 
-                  // Default cell rendering
                   return (
                     <TableCell key={cell.id}>
                       {flexRender(

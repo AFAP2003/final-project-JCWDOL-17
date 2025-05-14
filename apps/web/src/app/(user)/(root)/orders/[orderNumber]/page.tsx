@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -36,6 +36,8 @@ import MaxWidthWrapper from '@/components/max-width-wrapper';
 import { useSession } from '@/lib/auth/client';
 import { OrderStatus, PaymentMethod, PaymentStatus } from '@/lib/enums';
 import { OrderStatusBadge } from '@/components/order-status-badge';
+import { CancelOrderModal } from '@/components/modal/cancel-order-modal';
+import { ConfirmOrderModal } from '@/components/modal/confirm-order-modal';
 
 export default function OrderDetailsPage({
   params,
@@ -60,9 +62,12 @@ export default function OrderDetailsPage({
   } = useOrders();
 
   const [isPaymentProofDialogOpen, setIsPaymentProofDialogOpen] =
-    React.useState(false);
+    useState(false);
   const [isPaymentGatewayDialogOpen, setIsPaymentGatewayDialogOpen] =
-    React.useState(false);
+    useState(false);
+
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   useEffect(() => {
     if (session && params.orderNumber) {
@@ -70,31 +75,26 @@ export default function OrderDetailsPage({
     }
   }, [session, params.orderNumber]);
 
-  // Check if order is expired for payment
   const isOrderExpired = () => {
     if (!currentOrder?.expiresAt) return false;
     return new Date(currentOrder.expiresAt) < new Date();
   };
 
-  // Handle payment gateway
   const handlePaymentGateway = async () => {
     if (!currentOrder) return;
     await initializePayment(currentOrder.id);
   };
 
-  // Handle cancel order
   const handleCancelOrder = async () => {
     if (!currentOrder) return;
     await cancelOrder(currentOrder.id);
   };
 
-  // Handle confirm order
   const handleConfirmOrder = async () => {
     if (!currentOrder) return;
     await confirmOrder(currentOrder.id);
   };
 
-  // Handle upload payment proof
   const handleUploadPaymentProof = async () => {
     if (!currentOrder) return;
     await uploadPaymentProof(currentOrder.id);
@@ -139,7 +139,6 @@ export default function OrderDetailsPage({
         <OrderStatusBadge status={currentOrder.status} />
       </div>
 
-      {/* Payment Alerts */}
       {currentOrder.status === OrderStatus.WAITING_PAYMENT && (
         <Card className="mb-6">
           <CardContent className="flex flex-col md:flex-row justify-between items-center p-6 gap-4">
@@ -172,7 +171,10 @@ export default function OrderDetailsPage({
                   </Button>
                 )}
               {!isOrderExpired() && (
-                <Button variant="outline" onClick={() => handleCancelOrder()}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCancelModalOpen(true)}
+                >
                   Cancel Order
                 </Button>
               )}
@@ -181,7 +183,6 @@ export default function OrderDetailsPage({
         </Card>
       )}
 
-      {/* Tracking Info */}
       {(currentOrder.status === OrderStatus.SHIPPED ||
         currentOrder.status === OrderStatus.CONFIRMED) &&
         currentOrder.trackingNumber && (
@@ -196,7 +197,7 @@ export default function OrderDetailsPage({
                   </p>
                 </div>
               </div>
-              {/* In a real app, this might link to a tracking page */}
+
               <Button variant="outline" size="sm">
                 Track Shipment
               </Button>
@@ -204,7 +205,6 @@ export default function OrderDetailsPage({
           </Card>
         )}
 
-      {/* Confirmation Button for Shipped Orders */}
       {currentOrder.status === OrderStatus.SHIPPED && (
         <Card className="mb-6">
           <CardContent className="flex flex-col md:flex-row justify-between items-center p-6 gap-4">
@@ -214,14 +214,13 @@ export default function OrderDetailsPage({
                 Please confirm receipt when you receive your items.
               </p>
             </div>
-            <Button onClick={() => handleConfirmOrder()}>
+            <Button onClick={() => setIsConfirmModalOpen(true)}>
               Confirm Receipt
             </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Order Items */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>
@@ -230,7 +229,7 @@ export default function OrderDetailsPage({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {currentOrder.items?.map((item) => (
+            {currentOrder.items?.map((item: any) => (
               <div key={item.id} className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   {item.product?.images?.[0]?.imageUrl && (
@@ -264,7 +263,7 @@ export default function OrderDetailsPage({
               <span className="text-muted-foreground">Shipping</span>
               <span>{formatCurrency(currentOrder.shippingCost)}</span>
             </div>
-            {/* Show discount if applied */}
+
             {currentOrder.discount > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Discount</span>
@@ -279,9 +278,7 @@ export default function OrderDetailsPage({
         </CardContent>
       </Card>
 
-      {/* Order Details and Shipping Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Shipping Address */}
         <Card>
           <CardHeader>
             <CardTitle>Shipping Address</CardTitle>
@@ -308,7 +305,6 @@ export default function OrderDetailsPage({
           </CardContent>
         </Card>
 
-        {/* Order Details */}
         <Card>
           <CardHeader>
             <CardTitle>Order Details</CardTitle>
@@ -356,7 +352,6 @@ export default function OrderDetailsPage({
         </Card>
       </div>
 
-      {/* Payment Proof Dialog */}
       <Dialog
         open={isPaymentProofDialogOpen}
         onOpenChange={setIsPaymentProofDialogOpen}
@@ -371,7 +366,6 @@ export default function OrderDetailsPage({
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* File Input */}
             <div>
               <Label htmlFor="payment-proof">Payment Proof</Label>
               <Input
@@ -383,7 +377,6 @@ export default function OrderDetailsPage({
               />
             </div>
 
-            {/* Preview */}
             {paymentProofPreview && (
               <div className="relative w-full aspect-video">
                 <Image
@@ -410,7 +403,20 @@ export default function OrderDetailsPage({
         </DialogContent>
       </Dialog>
 
-      {/* Back to Orders Button */}
+      <CancelOrderModal
+        order={currentOrder}
+        open={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirmCancel={cancelOrder}
+      />
+
+      <ConfirmOrderModal
+        order={currentOrder}
+        open={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={confirmOrder}
+      />
+
       <div className="mt-6">
         <Button variant="outline" onClick={() => router.push('/orders')}>
           Back to All Orders

@@ -23,14 +23,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { formatRupiah } from '@/lib/utils';
 import { apiclient } from '@/lib/apiclient';
+import { formatCurrency } from '@/lib/utils';
 
 interface CancelOrderModalProps {
   order: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCanceled?: () => void; // Callback for after successful cancellation
+  onCanceled?: () => void;
 }
 
 export default function CancelOrderModal({
@@ -46,12 +46,10 @@ export default function CancelOrderModal({
   const [stockImpacts, setStockImpacts] = useState<any[]>([]);
   const [checkingStockImpact, setCheckingStockImpact] = useState(false);
 
-  // Reset state when modal opens with a new order
   useEffect(() => {
     if (open && order) {
       setReason('');
       if (canCancelOrder()) {
-        // Check stock impact for this order
         getStockImpact();
       }
     }
@@ -72,7 +70,6 @@ export default function CancelOrderModal({
   const getStockImpact = async () => {
     if (!order) return;
 
-    // Only check stock impact for PROCESSING orders
     if (order.status !== 'PROCESSING') {
       setStockImpacts([]);
       return;
@@ -81,9 +78,9 @@ export default function CancelOrderModal({
     setCheckingStockImpact(true);
     try {
       const response = await apiclient.get(
-        `/order/admin/check-stock/${order.id}`,
+        `/dashboard/orders/check-stock/${order.id}`,
       );
-      setStockImpacts(response.data.items || []);
+      setStockImpacts(response.data.stockChecks || []);
     } catch (error) {
       console.error('Error checking stock impact:', error);
       toast({
@@ -96,7 +93,7 @@ export default function CancelOrderModal({
     }
   };
 
-  const handleCancelOrder = () => {
+  const handleCancelOrder = async () => {
     if (!reason.trim()) {
       toast({
         title: 'Alasan Diperlukan',
@@ -114,7 +111,7 @@ export default function CancelOrderModal({
     setLoading(true);
 
     try {
-      const response = await apiclient.post(`/order/admin/cancel`, {
+      const response = await apiclient.post(`/dashboard/orders/cancel`, {
         orderId: order.id,
         reason: reason.trim(),
       });
@@ -130,7 +127,6 @@ export default function CancelOrderModal({
         variant: 'default',
       });
 
-      // Close the modal and trigger callback
       onOpenChange(false);
       if (onCanceled) {
         onCanceled();
@@ -188,7 +184,7 @@ export default function CancelOrderModal({
               </div>
               <div className="flex justify-between mt-2">
                 <span className="font-medium">Total:</span>
-                <span>{formatRupiah(order.total)}</span>
+                <span>{formatCurrency(order.total)}</span>
               </div>
             </div>
 
