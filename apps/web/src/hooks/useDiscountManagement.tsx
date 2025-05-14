@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -29,11 +30,12 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { MoreHorizontal } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormik } from 'formik';
 import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 import { getValidationSchema } from '@/validations/discount.validation';
 import { Badge } from '@/components/ui/badge';
+import { useSession } from '@/lib/auth/client';
 export default function UseDiscountManagement() {
   const {
     discounts,
@@ -56,6 +58,8 @@ export default function UseDiscountManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
   const [isDetailMode,setIsDetailMode] = useState(false)
+     const { data: session, isPending: isSessionLoading } = useSession()
+   const user = session?.user
 
  const fetchDiscounts = useCallback(
      (pageIndex: number, pageSize: number) => {
@@ -92,7 +96,39 @@ export default function UseDiscountManagement() {
     if (e && e < today) return 'Kadaluwarsa';
     return 'Aktif';
   }
-const columns: ColumnDef<Discount>[] = [
+
+   const formik = useFormik({
+    initialValues: {
+      nama: '',
+      toko:'',
+      deskripsi:'',
+      tipe_diskon: '',
+      tipe_nilai_diskon: '',
+      nilai_diskon: '',
+      min_pembelian: '',
+      potongan_maks: '',
+      tanggal_mulai: '',
+      kadaluwarsa: '',
+
+    },
+    validationSchema: getValidationSchema() ,
+    onSubmit: async  (values, { resetForm }) => {
+      let success = false;
+
+      if (isEditMode && editingDiscountId) {
+        success = await handleUpdateDiscount(editingDiscountId, values);
+      } else {
+        success = await handleCreateDiscount(values);
+      }
+
+      if(success){
+        resetForm();
+        setDialogOpen(false)
+        fetchDiscounts(pagination.pageIndex, pagination.pageSize)
+      }
+    },
+  });
+const columns = useMemo<ColumnDef<Discount>[]>(() => [
   {
     accessorKey: 'name',
     header: 'Nama',
@@ -213,7 +249,9 @@ const columns: ColumnDef<Discount>[] = [
           <MoreHorizontal />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuCheckboxItem onClick={() => {
+          {user.role=='ADMIN'&&(
+
+             <DropdownMenuCheckboxItem onClick={() => {
               setIsEditMode(true);
               setEditingDiscountId(discount.id);
               setDialogOpen(true);
@@ -237,7 +275,9 @@ const columns: ColumnDef<Discount>[] = [
           }}>
             Edit
           </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem onCheckedChange={() => {
+          )}
+         
+          <DropdownMenuItem onSelect={(e) => {
                                          setIsEditMode(false)
                                          setIsDetailMode(true)
                                          formik.setValues({
@@ -261,8 +301,9 @@ const columns: ColumnDef<Discount>[] = [
                                          setDialogOpen(true)
                                        }}>
                                          Lihat Detail
-                                       </DropdownMenuCheckboxItem>
-         <DropdownMenuCheckboxItem 
+                                       </DropdownMenuItem>
+         {user.role=='ADMIN'&&(
+          <DropdownMenuCheckboxItem 
             className="text-red-600"
             onCheckedChange={(checked) => {
               if (checked) {
@@ -273,6 +314,7 @@ const columns: ColumnDef<Discount>[] = [
           >
             Delete
           </DropdownMenuCheckboxItem>
+         )}
         </DropdownMenuContent>
       </DropdownMenu>
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
@@ -299,39 +341,9 @@ const columns: ColumnDef<Discount>[] = [
       </>
     )}
   },
-];
+],[user,formik,setIsEditMode,setEditingDiscountId,setIsDetailMode,setDialogOpen,apiDeleteDiscount])
 
-  const formik = useFormik({
-    initialValues: {
-      nama: '',
-      toko:'',
-      deskripsi:'',
-      tipe_diskon: '',
-      tipe_nilai_diskon: '',
-      nilai_diskon: '',
-      min_pembelian: '',
-      potongan_maks: '',
-      tanggal_mulai: '',
-      kadaluwarsa: '',
-
-    },
-    validationSchema: getValidationSchema() ,
-    onSubmit: async  (values, { resetForm }) => {
-      let success = false;
-
-      if (isEditMode && editingDiscountId) {
-        success = await handleUpdateDiscount(editingDiscountId, values);
-      } else {
-        success = await handleCreateDiscount(values);
-      }
-
-      if(success){
-        resetForm();
-        setDialogOpen(false)
-        fetchDiscounts(pagination.pageIndex, pagination.pageSize)
-      }
-    },
-  });
+ 
 
   const table = useReactTable({
     data: discounts,
@@ -437,6 +449,8 @@ const columns: ColumnDef<Discount>[] = [
     setIsEditMode,
     setEditingDiscountId,
     isDetailMode,
-    setIsDetailMode
+    setIsDetailMode,
+    isSessionLoading,
+    session
   };
 }

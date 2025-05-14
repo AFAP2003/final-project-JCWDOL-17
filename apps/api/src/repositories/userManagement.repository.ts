@@ -64,11 +64,7 @@ class UserManagementRepository {
         signupMethod: {
           set: ['CREDENTIAL'],
         },
-<<<<<<< HEAD
         storeId:data.storeId
-=======
-        storeId: data.storeId,
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
       },
     });
 

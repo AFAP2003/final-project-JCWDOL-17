@@ -23,6 +23,10 @@ import {  Plus } from 'lucide-react';
 import { FormikProps } from 'formik';
 import { Badge } from '@/components/ui/badge';
 import UploadImageLoadingOverlay from '@/components/dashboard/uploadImageLoadingOverlay';
+import { userManagementAPI } from '@/lib/apis/dashboard/userManagement.api';
+import { useUserManagement } from '@/hooks/useUserManagement';
+import { Skeleton } from '@/components/ui/skeleton';
+import UseProductManagement from '@/hooks/useProductManagement';
 
 interface ProductManagementFormProps {
   dialogOpen: boolean;
@@ -96,6 +100,13 @@ export default function ProductManagementForm({
     };
     
     const disabled = isDetailMode
+    const {      isSessionLoading,user}=UseProductManagement()
+
+    if (isSessionLoading) {
+      return <Skeleton className="h-9 w-36"/>;
+    }
+    
+    if (!user)            return <div></div>;
     
   return (
      <Dialog
@@ -120,14 +131,17 @@ export default function ProductManagementForm({
 
     setDialogOpen(open);
    }}
->
-      <DialogTrigger asChild>
+>     {user.role =='SUPER'&&(
+
+  <DialogTrigger asChild>
         <Button className="w-[150px]">
           <Plus className="w-4 h-4 mr-1" />
           {isDetailMode?'Lihat Produk':isEditMode ? 'Edit Produk' : 'Tambah Produk'}
         </Button>
       </DialogTrigger>
+)}
 
+      
       <DialogContent className="max-h-[90vh] sm:max-h-full overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditMode?'Edit Produk':'Tambah Produk Baru'}</DialogTitle>

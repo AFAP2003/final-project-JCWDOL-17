@@ -37,6 +37,8 @@ import { MoreHorizontal, ImageOff } from 'lucide-react';
 import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
 import { getValidationSchema } from '@/validations/product.validation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useSession } from '@/lib/auth/client';
+import { Skeleton } from '@/components/ui/skeleton';
 export default function UseProductManagement() {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -50,6 +52,9 @@ export default function UseProductManagement() {
   const [previews, setPreviews] = useState<string[]>([]); // ✅ typed
   const [mainIndex, setMainIndex] = useState<number>(0); // ✅ typed
   const [isDetailMode,setIsDetailMode] = useState(false)
+   const { data: session, isPending: isSessionLoading } = useSession()
+ const user = session?.user
+
   const {
     products,
     isLoading,
@@ -57,9 +62,9 @@ export default function UseProductManagement() {
     handleCreateProduct,
     handleUpdateProduct,
     handleDeleteProduct: apiDeleteProduct,
-    handleDeleteProduct: apiDeleteProduct,
   } = productManagementAPI();
-
+ 
+  
   const { categories, fetchCategories } = categoryManagementAPI();
 
   const fetchProducts = useCallback(
@@ -166,9 +171,7 @@ export default function UseProductManagement() {
           const inventoryArray = row.original.inventory;
 
           const quantity = inventoryArray?.[0]?.quantity ?? 0;
-          const quantity = inventoryArray?.[0]?.quantity ?? 0;
 
-          return quantity;
           return quantity;
         },
       },
@@ -220,7 +223,8 @@ export default function UseProductManagement() {
                   <MoreHorizontal className="w-5 h-5" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
-                  <DropdownMenuCheckboxItem
+                 { user.role =='SUPER'&& (
+                   <DropdownMenuCheckboxItem
                     onCheckedChange={() => {
                       setDialogOpen(true);
                       setEditingProductId(product.id);
@@ -253,39 +257,47 @@ export default function UseProductManagement() {
                   >
                     Edit
                   </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem onCheckedChange={() => {
-                               setIsEditMode(false)
-                               setIsDetailMode(true)
-                               formik.setValues({
-                                nama: product.name || '',
-                                deskripsi: product.description || '',
-                                harga: product.price || 0,
-                                berat: product.weight || 0,
-                                isActive: product.isActive || '',
-                                sku: product.sku || '',
-                                kategoriId: product.categoryId || '',
-                                image: [],
-                                keptImages: product.images.map(
-                                  (img: any) => img.imageUrl,
-                                ), // ✅ include this
-                                mainIndex:
-                                  product.images.findIndex((img: any) => img.isMain) ||
-                                  0, // ✅ optional
-                              });
-        
-                              setPreviews(
-                                product.images.map((img: any) => img.imageUrl),
-                              );
-                              const mainIdx = product.images.findIndex(
-                                (img: any) => img.isMain,
-                              );
-                              setMainIndex(mainIdx >= 0 ? mainIdx : 0);
-                              setDialogOpen(true);
+                 )
 
-                            }}
-                              >
-                               Lihat Detail
-                             </DropdownMenuCheckboxItem>
+                 }
+                    <DropdownMenuCheckboxItem 
+              onSelect={(e) => {
+                    console.log('Detail handler fired');
+
+                setIsEditMode(false);
+                setIsDetailMode(true);
+                setEditingProductId(product.id);
+                formik.setValues({
+                  nama: product.name || '',
+                  deskripsi: product.description || '',
+                  harga: product.price || 0,
+                  berat: product.weight || 0,
+                  isActive: product.isActive || '',
+                  sku: product.sku || '',
+                  kategoriId: product.categoryId || '',
+                  image: [],
+                  keptImages: product.images.map(
+                    (img: any) => img.imageUrl,
+                  ),
+                  mainIndex:
+                    product.images.findIndex((img: any) => img.isMain) ||
+                    0,
+                });
+
+                setPreviews(
+                  product.images.map((img: any) => img.imageUrl),
+                );
+                const mainIdx = product.images.findIndex(
+                  (img: any) => img.isMain,
+                );
+                setMainIndex(mainIdx >= 0 ? mainIdx : 0);
+                setDialogOpen(true);
+              }}
+            >
+              Lihat Detail
+            </DropdownMenuCheckboxItem>
+                             { user.role =='SUPER'&& (
+
                   <DropdownMenuCheckboxItem
                     className="text-red-600"
                     onCheckedChange={(checked) => {
@@ -296,7 +308,7 @@ export default function UseProductManagement() {
                     }}
                   >
                     Delete
-                  </DropdownMenuCheckboxItem>
+                  </DropdownMenuCheckboxItem>)}
                 </DropdownMenuContent>
               </DropdownMenu>
               <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
@@ -324,7 +336,7 @@ export default function UseProductManagement() {
         },
       },
     ],
-    [],
+    [user, formik, previews, mainIndex],
   );
 
   const table = useReactTable({
@@ -412,15 +424,13 @@ export default function UseProductManagement() {
 
   const handleDeleteProduct = async (id: string) => {
     const ok = await apiDeleteProduct(id);
-    const ok = await apiDeleteProduct(id);
     if (ok) {
-      await fetchProducts(pagination.pageIndex, pagination.pageSize);
       await fetchProducts(pagination.pageIndex, pagination.pageSize);
     }
     return ok;
   };
-    return ok;
-  };
+  
+
   return {
     formik,
     columns,
@@ -451,6 +461,9 @@ export default function UseProductManagement() {
     mainIndex,
     setMainIndex,
     isDetailMode,
-    setIsDetailMode
+    setIsDetailMode,
+    isSessionLoading,
+    user
   };
+
 }

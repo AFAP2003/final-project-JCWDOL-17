@@ -8,6 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
+  DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import {
   ColumnDef,
@@ -33,6 +34,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { getValidationSchema } from '@/validations/category.validation';
 import { toast } from '@/hooks/use-toast';
+import { useSession } from '@/lib/auth/client';
 export function useCategoryManagement() {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -44,6 +46,9 @@ export function useCategoryManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
   const [isDetailMode,setIsDetailMode] = useState(false)
+     const { data: session, isPending: isSessionLoading } = useSession()
+   const user = session?.user
+  
   const {
     categories,
     isLoading,
@@ -111,6 +116,7 @@ export function useCategoryManagement() {
                 <MoreHorizontal className="w-5 h-5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
+                {user.role=='SUPER'&&(
                 <DropdownMenuCheckboxItem
                   onCheckedChange={() => {
                     setIsEditMode(true);
@@ -126,7 +132,9 @@ export function useCategoryManagement() {
                 >
                   Edit
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem onCheckedChange={() => {
+                )}
+                
+                <DropdownMenuItem onSelect={(e) => {
                                setIsEditMode(false)
                                setIsDetailMode(true)
                                formik.setValues({
@@ -139,8 +147,10 @@ export function useCategoryManagement() {
                                setDialogOpen(true)
                              }}>
                                Lihat Detail
-                             </DropdownMenuCheckboxItem>
-                   <DropdownMenuCheckboxItem 
+                             </DropdownMenuItem>
+                          
+                {user.role == 'SUPER'&&(
+            <DropdownMenuCheckboxItem 
             className="text-red-600"
             onCheckedChange={(checked) => {
               if (checked) {
@@ -151,6 +161,8 @@ export function useCategoryManagement() {
           >
             Delete
           </DropdownMenuCheckboxItem>
+                )}
+                   
               </DropdownMenuContent>
 
             </DropdownMenu>
@@ -180,7 +192,7 @@ export function useCategoryManagement() {
         },
       },
     ],
-    [],
+    [user,formik,setIsEditMode,setEditingCategoryId,setIsDetailMode,setDialogOpen],
   );
 
   const table = useReactTable({
@@ -247,6 +259,8 @@ export function useCategoryManagement() {
     isEditMode,
     setDialogOpen,
     isDetailMode,
-    setIsDetailMode
+    setIsDetailMode,
+    isSessionLoading,
+    session
   };
 }

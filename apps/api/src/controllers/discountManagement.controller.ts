@@ -1,3 +1,4 @@
+import { getSession } from '@/helpers/session-helper';
 import discountManagementService from '@/services/discountManagement.service'
 import inventoryManagementService from '@/services/inventoryManagement.service'
 import { Request, Response, NextFunction } from 'express'
@@ -7,7 +8,7 @@ class DiscountManagementController{
         try {
             const page = parseInt(req.query.page as string, 10) || 1;
             const take = parseInt(req.query.take as string, 10) || 10;
-
+            const { user } = getSession(req)
             const {total,data} = await discountManagementService.listAllDiscounts(page,take)
 
             res.status(200).send({

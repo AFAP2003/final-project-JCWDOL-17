@@ -174,11 +174,7 @@ formData.append('emailVerified', String(values.verifikasi));
           description: 'User Deleted Successfully !',
         });
         console.log('User deleted successfully:', userData);
-<<<<<<< HEAD
         return true
-=======
-        return true;
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
       } else {
         toast({
           variant: 'destructive',

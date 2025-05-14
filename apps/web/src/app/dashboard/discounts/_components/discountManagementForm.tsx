@@ -18,6 +18,8 @@ import {
   SelectLabel,
   SelectItem,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import UseDiscountManagement from '@/hooks/useDiscountManagement';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
 import { formatDistanceToNow } from 'date-fns';
 import { FormikProps } from 'formik';
@@ -42,6 +44,14 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
   const [disableMinPembelian,setDisableMinPembelian] = useState(false)
   const [disablePotonganMaks,setDisablePotonganMaks] = useState(false)
   const [disableTipeNilaiDiskon,setDisableTipeNilaiDiskon] = useState(false)
+   const {      isSessionLoading,user}=UseDiscountManagement()
+  
+      if (isSessionLoading) {
+        return <Skeleton className="h-9 w-36"/>;
+      }
+      
+      if (!user)            return <div></div>;
+  
   useEffect(()=>{
     if(type=='diskon_normal' ){
       formik.setFieldValue('min_pembelian','')
@@ -82,12 +92,15 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
       }
       setDialogOpen(open);
     }}>
-      <DialogTrigger asChild>
+      {user.role=='ADMIN'&&(
+   <DialogTrigger asChild>
         <Button className="w-[150px]">
           <Plus className="w-4 h-4 mr-1" />
           Tambah Diskon
         </Button>
       </DialogTrigger>
+      )}
+   
 
       <DialogContent className="max-h-[90vh] bg-white overflow-y-auto">
         <DialogHeader>

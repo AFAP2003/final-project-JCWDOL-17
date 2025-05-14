@@ -9,6 +9,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCategoryManagement } from '@/hooks/useCategoryManagement';
 import { MyFormValues } from '@/validations/user.validation';
 import { FormikProps } from 'formik';
 import { Plus } from 'lucide-react';
@@ -34,6 +36,14 @@ export default function CategoryManagementForm({
   setIsDetailMode
 }: CategoryManagementFormProps) {
   const disabled = isDetailMode
+ const {      isSessionLoading,user}=useCategoryManagement()
+
+    if (isSessionLoading) {
+      return <Skeleton className="h-9 w-36"/>;
+    }
+    
+    if (!user)            return <div></div>;
+
   return (
     <Dialog
       open={dialogOpen}
@@ -56,11 +66,15 @@ export default function CategoryManagementForm({
         }
       }}
     >
-      <DialogTrigger asChild>
+      {user.role=='SUPER'&&(
+
+ <DialogTrigger asChild>
         <Button className="w-[150px]">
           <Plus className="w-4 h-4 mr-1" /> Tambah Kategori
         </Button>
       </DialogTrigger>
+      )}
+     
       <DialogContent>
         <DialogHeader>
           <DialogTitle>

@@ -44,14 +44,10 @@ export function useUserManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-<<<<<<< HEAD
   const [pageCount,setPageCount] = useState(1)
   const [previews, setPreviews] = useState<string[]>([]); 
   const [mainIndex, setMainIndex] = useState<number>(0);  
   const [isDetailMode, setIsDetailMode] = useState(false);
-=======
-  const [pageCount, setPageCount] = useState(1);
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
 
   const {
     users,
@@ -59,11 +55,7 @@ export function useUserManagement() {
     fetchUsers: apiFetchUsers,
     handleCreateUser,
     handleUpdateUser,
-<<<<<<< HEAD
     handleDeleteUser:apiDeleteUser,
-=======
-    handleDeleteUser: apiDeleteUser,
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
   } = userManagementAPI();
   const { stores, fetchStores } = storeManagementAPI();
 
@@ -110,10 +102,6 @@ export function useUserManagement() {
         resetForm();
         setDialogOpen(false);
         fetchUsers(pagination.pageIndex, pagination.pageSize);
-<<<<<<< HEAD
-
-=======
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
       }
     },
   });
@@ -132,22 +120,12 @@ export function useUserManagement() {
     },
     { accessorKey: 'name', header: 'Nama' },
     { accessorKey: 'email', header: 'Email' },
-<<<<<<< HEAD
     // {  header: 'Alamat (Utama)' ,
 
     //   accessorFn: (row: any) => {
     //     return row.addresses?.length > 0 ? row.addresses[0].address : '-';
     //   }
     // },
-=======
-    {
-      header: 'Alamat (Utama)',
-
-      accessorFn: (row: any) => {
-        return row.addresses?.length > 0 ? row.addresses[0].address : 'NA';
-      },
-    },
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
     { accessorKey: 'role', header: 'Role' },
     // {
     //   accessorKey: 'gender',
@@ -181,7 +159,6 @@ export function useUserManagement() {
     // },
     {
       header: 'Toko',
-<<<<<<< HEAD
      
       cell: ({ row }) => {
         return row.original.managedStore?.name ?? '-';
@@ -194,13 +171,6 @@ export function useUserManagement() {
     //     return getValue() || '-'}
     //   },
     {id: 'verifikasi',
-=======
-      accessorFn: (row: any) => row.store?.name ?? 'NA',
-    },
-    { accessorKey: 'referralCode', header: 'Kode Rujukan' },
-    {
-      id: 'verifikasi',
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
       header: 'Verifikasi',
       accessorFn: (row: any) => row.emailVerified,
       cell: ({ getValue }) => {
@@ -284,7 +254,6 @@ export function useUserManagement() {
               }}>
                 Lihat Detail
               </DropdownMenuCheckboxItem>
-<<<<<<< HEAD
                       <DropdownMenuCheckboxItem 
             className="text-red-600"
             onCheckedChange={(checked) => {
@@ -296,16 +265,6 @@ export function useUserManagement() {
           >
             Delete
           </DropdownMenuCheckboxItem>
-=======
-              <DropdownMenuCheckboxItem
-                className="text-red-600"
-                onCheckedChange={() => {
-                  handleDeleteUser(user.id);
-                }}
-              >
-                Delete
-              </DropdownMenuCheckboxItem>
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
             </DropdownMenuContent>
           </DropdownMenu>
           <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
@@ -395,15 +354,9 @@ export function useUserManagement() {
     if (ok) {
       await fetchUsers(pagination.pageIndex, pagination.pageSize);
     }
-<<<<<<< HEAD
     return ok
   }
   
-=======
-    return ok;
-  };
-
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
   return {
     users,
     isLoading,
@@ -426,14 +379,11 @@ export function useUserManagement() {
     handleRoleFilter,
     formik,
     columns,
-<<<<<<< HEAD
     previews,
     setPreviews,
     mainIndex,
     setMainIndex,
     isDetailMode,
     setIsDetailMode
-=======
->>>>>>> 5fbb53ad0ab02c3b0f9a34d0a373ffaf2da7ebc7
   };
 }

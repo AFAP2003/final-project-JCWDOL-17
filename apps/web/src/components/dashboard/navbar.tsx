@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useSession } from '@/lib/auth/client';
+import { signOut, useSession } from '@/lib/auth/client';
 import { Skeleton } from '../ui/skeleton';
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
@@ -27,7 +27,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
 
     );
   }
-//  const { user } = session;
+ const { user } = session;
 
   return (
     <nav className="flex items-center h-[50px] px-4 sm:px-10 border-b bg-white justify-between sm:justify-end">
@@ -44,11 +44,11 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
 
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-gray-200 transition">
-          <Avatar className="h-8 w-8">
+          {/* <Avatar className="h-8 w-8">
             <AvatarImage src="" alt="Admin avatar" />
             <AvatarFallback>AU</AvatarFallback>
-          </Avatar>
-            {/* <Avatar className="h-8 w-8">
+          </Avatar> */}
+            <Avatar className="h-8 w-8">
             {user.image ? (
               <AvatarImage src={user.image} alt={user.name} />
             ) : (
@@ -60,12 +60,12 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                   .toUpperCase()}
               </AvatarFallback>
             )}
-          </Avatar> */}
+          </Avatar>
           <div className="text-left">
-            <div className="text-sm font-medium leading-none">Admin User</div>
-            <div className="text-xs text-muted-foreground">Super Admin</div>
-            {/* <div className="text-sm font-medium leading-none">{user.name}</div>
-            <div className="text-xs text-muted-foreground">{user.role == 'SUPER'?'Super Admin':user.role == 'ADMIN'?'Store Admin':user.role}</div> */}
+            {/* <div className="text-sm font-medium leading-none">Admin User</div>
+            <div className="text-xs text-muted-foreground">Super Admin</div> */}
+            <div className="text-sm font-medium leading-none">{user.name}</div>
+            <div className="text-xs text-muted-foreground">{user.role == 'SUPER'?'Super Admin':user.role == 'ADMIN'?'Store Admin':user.role}</div>
           </div>
           <ChevronDown className="h-4 w-4 text-muted-foreground ml-2" />
         </DropdownMenuTrigger>
@@ -74,7 +74,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           <DropdownMenuLabel>Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem className="text-[#ef4444]">
+          <DropdownMenuItem className="text-[#ef4444]" onClick={async()=>await signOut()}>
             Log out
           </DropdownMenuItem>
         </DropdownMenuContent>

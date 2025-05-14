@@ -2,11 +2,18 @@ import { prismaclient } from '@/prisma';
 import { Inventory } from '@/interfaces/inventoryManagement.interface';
 import { pagination } from '@/helpers/pagination';
 class InventoryManagementRepository {
-  async getInventories(page = 1, take = 10) {
-    const total = await prismaclient.inventory.count();
+  async getInventories(page = 1, take = 10,adminId?:string) {
 
+    const where = adminId ? {store:{adminId}}:{}
+    const total = await prismaclient.inventory.count({where});
+
+    
         const {skip,take:realTake} =  pagination(page,take)
         const data = await prismaclient.inventory.findMany({
+           where,
+
+              skip,
+              take:realTake,
             include: {
                 product: {
                   include: {
@@ -16,8 +23,7 @@ class InventoryManagementRepository {
                 },
                 store: true,
               },
-              skip,
-              take:realTake
+             
         })
 
         return {total,data}

@@ -9,6 +9,7 @@ import ProductManagementPagination from './_components/productManagementPaginati
 import ProductManagementForm from './_components/productManagementForm';
 import ProductManagementskeleton from './_components/productManagementSkeleton';
 import UseProductManagement from '@/hooks/useProductManagement';
+import { Skeleton } from '@/components/ui/skeleton';
 export default function Products() {
   const {
     formik,
@@ -30,13 +31,21 @@ export default function Products() {
     mainIndex,
     setMainIndex,
     isDetailMode,
-    setIsDetailMode
-    
+    setIsDetailMode,
+      isSessionLoading,
+      user
+
   } = UseProductManagement();
+ // Check if session exists after loading
+
+
 
   if (isLoading) {
     return <ProductManagementskeleton />;
   }
+
+ 
+
   return (
     <div className="min-h-screen w-full flex flex-col gap-6 p-4">
       <div className="flex justify-end">
@@ -46,7 +55,7 @@ export default function Products() {
       </div>
 
       {/* header + create dialog */}
-      <div className="flex justify-between items-center">
+ <div className="flex justify-between items-center">
         <h1 className="sm:text-4xl text-2xl font-bold">Produk</h1>
 
         <ProductManagementForm
@@ -65,6 +74,8 @@ export default function Products() {
           setIsDetailMode={setIsDetailMode}
         />  
       </div>
+      
+     
 
       {/* filter row */}
 

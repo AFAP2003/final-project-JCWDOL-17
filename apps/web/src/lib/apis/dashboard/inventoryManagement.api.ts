@@ -16,6 +16,12 @@ export function inventoryManagementAPI() {
 
       const inventoryRes = await fetch(
         `${API_BASE_URL}/dashboard/inventories?page=${page}&take=${pageSize}`,
+        {
+          method:'GET',
+        credentials:'include',
+        headers: { 'Content-Type': 'application/json' },
+
+        }
       );
       const inventoryData = await inventoryRes.json();
 

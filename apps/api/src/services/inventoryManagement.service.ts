@@ -4,8 +4,8 @@ import categoryManagementRepository from '@/repositories/categoryManagement.repo
 import inventoryManagementRepository from '@/repositories/inventoryManagement.repository';
 
 class InventoryManagementService {
-  async listAllInventories(page = 1, take = 10) {
-    return await inventoryManagementRepository.getInventories(page, take);
+  async listAllInventories(page = 1, take = 10,adminId?:string) {
+    return await inventoryManagementRepository.getInventories(page, take,adminId);
   }
 
   async createNewInventory(inventoryData: Inventory) {
