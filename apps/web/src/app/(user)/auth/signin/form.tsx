@@ -29,7 +29,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FcGoogle } from 'react-icons/fc';
-import { SiFacebook } from 'react-icons/si';
+import { SiDiscord } from 'react-icons/si';
 import { z } from 'zod';
 import AuthLogo from '../../../../components/auth-logo';
 
@@ -54,6 +54,9 @@ type SigninPayload =
     } & z.infer<typeof formSchema>)
   | {
       method: 'GOOGLE';
+    }
+  | {
+      method: 'DISCORD';
     };
 
 type Props = {
@@ -85,6 +88,15 @@ export default function SigninForm({ searchParams }: Props) {
       }
 
       if (payload.method === 'GOOGLE') {
+        return await apiclient.post('/auth/signin', {
+          signinMethod: payload.method,
+          role: 'USER',
+          callbackURL: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/`,
+          errorCallback: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/auth/signin`,
+        });
+      }
+
+      if (payload.method === 'DISCORD') {
         return await apiclient.post('/auth/signin', {
           signinMethod: payload.method,
           role: 'USER',
@@ -274,11 +286,16 @@ export default function SigninForm({ searchParams }: Props) {
               <span>Google</span>
             </Button>
             <Button
+              onClick={() =>
+                signin({
+                  method: 'DISCORD',
+                })
+              }
               variant="outline"
               className="group flex w-full items-center justify-center gap-2 border-slate-200 transition-all"
             >
-              <SiFacebook className="h-4 w-4 transition-transform group-hover:scale-110 text-blue-600" />
-              <span>Facebook</span>
+              <SiDiscord className="h-4 w-4 transition-transform group-hover:scale-110 text-blue-600" />
+              <span>Discord</span>
             </Button>
           </div>
         </CardContent>

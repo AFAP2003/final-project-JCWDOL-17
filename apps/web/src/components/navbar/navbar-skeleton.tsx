@@ -12,11 +12,13 @@ export default function NavbarSkeleton() {
           )}
         >
           <div className="w-full flex justify-center items-center gap-3">
-            <p className="italic relative">Fresh grocery store</p>
+            <p className="italic relative hidden lg:block">
+              Fresh grocery store
+            </p>
             <div className="relative w-56 h-[88px] cursor-pointer mb-6">
               <Skeleton className="absolute inset-0" />
             </div>
-            <p className="italic">from Indonesia</p>
+            <p className="italic hidden lg:block">from Indonesia</p>
           </div>
 
           <Separator className="bg-neutral-500 h-1 rounded-full" />

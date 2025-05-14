@@ -106,24 +106,26 @@ export default function DateOfBirthPicker(props: Props) {
           </Select>
         </div>
       </div>
-      <Calendar
-        mode="single"
-        selected={date}
-        onSelect={handleSelect}
-        month={calendarMonth}
-        onMonthChange={setCalendarMonth}
-        disabled={(date) => isAfter(date, currentDate())}
-        initialFocus
-        classNames={{
-          nav_button:
-            'bg-neutral-200 text-neutral-800 size-7 rounded-md flex items-center justify-center',
-          button: 'hover:bg-neutral-200',
-          day_today:
-            'bg-transparent aria-selected:text-neutral-800 aria-selected:bg-neutral-200',
-          day_selected: 'bg-neutral-200 text-neutral-800',
-        }}
-        className="p-3 border-none text-neutral-200"
-      />
+      <div>
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={handleSelect}
+          month={calendarMonth}
+          onMonthChange={setCalendarMonth}
+          disabled={(date) => isAfter(date, currentDate())}
+          initialFocus
+          classNames={{
+            nav_button:
+              'bg-neutral-200 text-neutral-800 size-7 rounded-md flex items-center justify-center',
+            button: 'hover:bg-neutral-200',
+            day_today:
+              'bg-transparent aria-selected:text-neutral-800 aria-selected:bg-neutral-200',
+            day_selected: 'bg-neutral-200 text-neutral-800',
+          }}
+          className="p-3 border-none text-neutral-200 w-full"
+        />
+      </div>
       <div className="p-3 border-t border-neutral-100 bg-neutral-50 rounded-b-lg">
         <p className="text-xs text-neutral-700 text-center">
           {date

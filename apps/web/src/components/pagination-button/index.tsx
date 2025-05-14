@@ -54,7 +54,7 @@ export default function PaginationButton({ metadata, className }: Props) {
               <PaginationLink
                 href={`${pathname}?${generateQuery(searchparams.toString(), page)}`}
                 isActive={currentPage === page}
-                className="hover:bg-neutral-50 hover:text-neutral-700 grainy-dark"
+                className="hover:bg-neutral-100 hover:text-neutral-700 bg-neutral-50"
               >
                 {page}
               </PaginationLink>

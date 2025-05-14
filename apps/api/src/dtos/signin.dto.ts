@@ -32,6 +32,13 @@ export const SigninDTO = z.union([
     callbackURL: z.string().url(),
     errorCallback: z.string().url(),
   }),
+
+  z.object({
+    signinMethod: z.literal('DISCORD'),
+    role: z.literal('USER'),
+    callbackURL: z.string().url(),
+    errorCallback: z.string().url(),
+  }),
 ]);
 
 export const SigninCredConfirmDTO = z.object({

@@ -196,7 +196,7 @@ export default function Map(props: Props) {
 
       {/* Search UI */}
       <div
-        className="absolute right-6 top-3 bg-neutral-50 w-full max-w-sm overflow-hidden border-[1.8px] rounded-lg shadow-sm group border-neutral-500"
+        className="absolute right-6 top-3 bg-neutral-50 w-full max-w-sm overflow-hidden border-[1.8px] rounded-lg shadow-sm group border-neutral-500 max-[660px]:hidden"
         style={{ zIndex: 1000 }}
       >
         <div className="relative flex items-center w-full px-2 py-1">

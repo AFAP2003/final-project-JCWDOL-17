@@ -40,8 +40,8 @@ export default function SettingsPage() {
                 key={idx}
                 value={tab.name.toLowerCase()}
               >
-                <div className="flex items-center justify-center gap-2">
-                  <Icon className="w-4 h-4" />
+                <div className="flex items-center justify-center gap-2 max-sm:text-sm">
+                  <Icon className="w-4 h-4 max-sm:hidden" />
                   <span>{tab.name}</span>
                 </div>
               </TabsTrigger>

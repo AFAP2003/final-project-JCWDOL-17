@@ -10,8 +10,8 @@ export default function LoadingSkeleton() {
   return (
     <>
       <Card className="p-6">
-        <div className="w-full">
-          <div className="flex w-full justify-between mb-8 gap-12">
+        <div className="w-full min-h-[485px]">
+          <div className="flex sm:flex-row flex-col-reverse w-full justify-between mb-8 gap-6 sm:gap-12">
             <SearchBox search={''} setSearch={() => {}} />
             <Button
               onClick={() => {}}
@@ -23,7 +23,7 @@ export default function LoadingSkeleton() {
           </div>
 
           <div className="space-y-6">
-            {[1].map((item, idx) => (
+            {[1, 2].map((item, idx) => (
               <Card
                 key={idx}
                 className="w-full overflow-hidden border shadow-sm transition-all"
@@ -32,32 +32,23 @@ export default function LoadingSkeleton() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Skeleton className="h-5 w-5 rounded-full" />
-                      <Skeleton className="h-4 w-24 rounded" />
+                      <Skeleton className="h-5 w-24" />
                     </div>
-                    <Skeleton className="h-5 w-16 rounded" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
                   </div>
                 </CardHeader>
                 <CardContent className="pt-4 bg-neutral-50">
                   <div className="space-y-3">
-                    {/* Recipient + Phone */}
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-28 rounded" />
+                    <div className="space-y-1">
+                      <Skeleton className="h-4 w-32" />
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-4 w-4 rounded-full" />
-                        <Skeleton className="h-3 w-24 rounded" />
+                        <Skeleton className="h-4 w-24" />
                       </div>
                     </div>
-
-                    {/* Address Text */}
-                    <div className="space-y-2 border-l-2 border-neutral-400 pl-3 text-sm">
-                      <Skeleton className="h-3 w-64 rounded" />
-                      <Skeleton className="h-3 w-48 rounded" />
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex justify-end gap-2 pt-3">
-                      <Skeleton className="h-8 w-20 rounded-md" />
-                      <Skeleton className="h-8 w-24 rounded-md" />
+                    <div className="space-y-1 border-l-2 border-neutral-400 pl-3">
+                      <Skeleton className="h-4 w-full max-w-xs" />
+                      <Skeleton className="h-4 w-40" />
                     </div>
                   </div>
                 </CardContent>

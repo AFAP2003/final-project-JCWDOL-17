@@ -16,7 +16,7 @@ export default function SearchBox({ search, setSearch }: Props) {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="focus-visible:ring-0 shadow-none border-none text-neutral-700"
+          className="focus-visible:ring-0 shadow-none border-none text-neutral-700 sm:text-sm text-sm"
           placeholder="Search address Label / Province / City / Street"
         />
       </div>

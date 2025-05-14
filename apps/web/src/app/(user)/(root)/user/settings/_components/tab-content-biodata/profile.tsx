@@ -59,7 +59,7 @@ export default function Profile({ user, refetchSession }: Props) {
 
   return (
     <>
-      <div className="relative aspect-square mb-6 w-60 mx-auto group">
+      <div className="relative aspect-square mb-6 w-full sm:w-60 mx-auto group">
         {!user.image ? (
           <div className="size-full bg-neutral-200 flex items-center justify-center rounded-lg overflow-hidden">
             <span className="text-8xl font-[300] text-neutral-600">{`${user.name.at(0)?.toUpperCase()}`}</span>
@@ -83,8 +83,8 @@ export default function Profile({ user, refetchSession }: Props) {
         onClick={() => fileInputRef.current?.click()}
         className="w-full max-w-60 mb-4 gap-2 bg-neutral-800/90 hover:bg-neutral-800/90 text-neutral-200 hover:text-neutral-300"
       >
-        <Camera className="w-4 h-4" />
-        Change Photo
+        <Camera className="w-4 h-4 max-[380px]:hidden" />
+        Ganti Photo
       </Button>
 
       <input
@@ -108,7 +108,7 @@ export default function Profile({ user, refetchSession }: Props) {
         hidden
       />
 
-      <p className="w-60 text-sm text-neutral-500 text-center">
+      <p className="w-60 text-sm text-neutral-500 text-center max-sm:text-xs">
         File size: maximum 1MB
         <br />
         Formats: JPG, JPEG, PNG

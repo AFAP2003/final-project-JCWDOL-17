@@ -25,14 +25,17 @@ export default function EmailVerification({
   return (
     <div className="fixed left-0 top-0 bg-white size-full z-50 flex flex-col gap-2 items-center justify-center rounded-md">
       <div className="size-[48px]">
-        <MailCheckIcon size="48px" className="animate-bounce text-green-500" />
+        <MailCheckIcon
+          size="48px"
+          className="animate-bounce text-neutral-500"
+        />
       </div>
       <h2 className="text-xl tracking-[-0.16px] font-bold text-neutral-700">
         Check your email
       </h2>
       <p className="text-center text-sm text-muted-foreground font-normal">
         We just sent a verification link to{' '}
-        <span className="font-semibold underline underline-offset-4 text-green-700">
+        <span className="font-semibold underline underline-offset-4 text-neutral-700">
           {email}
         </span>
         .
@@ -45,7 +48,7 @@ export default function EmailVerification({
           resend(email);
         }}
         disabled={rawCooldownTime > 0 || disabled}
-        className="h-[40px] bg-green-600 hover:bg-green-600/90 transition-all duration-300"
+        className="h-[40px] bg-neutral-600 hover:bg-neutral-600/90 transition-all duration-300"
       >
         {rawCooldownTime > 0 ? (
           <>

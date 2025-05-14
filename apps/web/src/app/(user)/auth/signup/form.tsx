@@ -39,7 +39,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FcGoogle } from 'react-icons/fc';
-import { SiFacebook } from 'react-icons/si';
+import { SiDiscord } from 'react-icons/si';
 import { z } from 'zod';
 import AuthLogo from '../../../../components/auth-logo';
 
@@ -54,12 +54,7 @@ const formSchema = z.object({
       /^[A-Za-z]+(?:[' -][A-Za-z]+)*$/,
       'Name can only contain letters, spaces, hyphens, and apostrophes',
     ),
-  referralCode: z
-    .string()
-    .trim()
-    .regex(/^REF-[A-Z0-9]{8}$|/, 'Invalid referral code format')
-    .or(z.literal(''))
-    .optional(),
+  referralCode: z.string().trim().optional(),
 });
 
 type SingupPayload =
@@ -68,6 +63,9 @@ type SingupPayload =
     } & z.infer<typeof formSchema>)
   | {
       method: 'GOOGLE';
+    }
+  | {
+      method: 'DISCORD';
     };
 
 type Props = {
@@ -96,6 +94,15 @@ export default function SignupForm({ searchParams }: Props) {
       }
 
       if (payload.method === 'GOOGLE') {
+        return await apiclient.post('/auth/signup', {
+          signupMethod: payload.method,
+          role: 'USER',
+          callbackURL: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/`,
+          errorCallback: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/auth/signup`,
+        });
+      }
+
+      if (payload.method === 'DISCORD') {
         return await apiclient.post('/auth/signup', {
           signupMethod: payload.method,
           role: 'USER',
@@ -303,11 +310,14 @@ export default function SignupForm({ searchParams }: Props) {
                   <span>Google</span>
                 </Button>
                 <Button
+                  onClick={() => {
+                    signup({ method: 'DISCORD' });
+                  }}
                   variant="outline"
                   className="group flex w-full items-center justify-center gap-2 border-slate-200 transition-all"
                 >
-                  <SiFacebook className="h-4 w-4 transition-transform group-hover:scale-110 text-blue-600" />
-                  <span>Facebook</span>
+                  <SiDiscord className="h-4 w-4 transition-transform group-hover:scale-110 text-blue-600" />
+                  <span>Discord</span>
                 </Button>
               </div>
             </CardContent>

@@ -6,6 +6,7 @@ import { signOut, useSession } from '@/lib/auth/client';
 import { cn } from '@/lib/utils';
 import {
   CalendarArrowUp,
+  Code2,
   LogOut,
   MapPin,
   Menu,
@@ -15,6 +16,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useIsClient, useMediaQuery } from 'usehooks-ts';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
@@ -128,6 +130,7 @@ function TabletNavbar() {
   const { data: location, mutate: setLocation } = useLocation();
   const { isFullNavbar } = useNavbar();
   const router = useRouter();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
     <nav className="relative text-neutral-800 overflow-hidden z-50">
@@ -173,7 +176,7 @@ function TabletNavbar() {
             <div className="flex items-center justify-center gap-2">
               <CartButton />
 
-              <Sheet>
+              <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetTrigger>
                   <Menu className="size-7" />
                 </SheetTrigger>
@@ -251,6 +254,7 @@ function TabletNavbar() {
                         {/* Link */}
                         <div className="flex flex-col gap-1">
                           <Link
+                            onClick={() => setSheetOpen(false)}
                             href="/user/settings"
                             className="flex items-center gap-3 p-2 rounded-md text-neutral-300  hover:bg-neutral-700 transition-colors"
                           >
@@ -261,7 +265,8 @@ function TabletNavbar() {
                           </Link>
 
                           <Link
-                            href="/user/settings"
+                            onClick={() => setSheetOpen(false)}
+                            href="/user/my-vouchers"
                             className="flex items-center gap-3 p-2 rounded-md text-neutral-300  hover:bg-neutral-700 transition-colors"
                           >
                             <Ticket className="size-4 text-neutral-300" />
@@ -271,6 +276,18 @@ function TabletNavbar() {
                           </Link>
 
                           <Link
+                            onClick={() => setSheetOpen(false)}
+                            href="/user/referral-code"
+                            className="flex items-center gap-3 p-2 rounded-md text-neutral-300  hover:bg-neutral-700 transition-colors"
+                          >
+                            <Code2 className="size-4 text-neutral-300" />
+                            <span className="text-sm font-medium">
+                              Kode Referral
+                            </span>
+                          </Link>
+
+                          <Link
+                            onClick={() => setSheetOpen(false)}
                             href={'/orders'}
                             className="flex items-center gap-3 p-2 rounded-md text-neutral-300  hover:bg-neutral-700 transition-colors"
                           >
@@ -283,6 +300,7 @@ function TabletNavbar() {
                             onClick={async () => {
                               await signOut();
                               setLocation(null);
+                              setSheetOpen(false);
                               window.location.reload();
                             }}
                             className="w-full flex items-center gap-3 p-2 rounded-md text-neutral-300  hover:bg-neutral-700 transition-colors"

@@ -30,7 +30,7 @@ export default function AddressMap(props: Props) {
   >(null);
 
   return (
-    <div className="relative border-neutral-500 border-2 px-6 py-6 rounded-lg shadow-md space-y-6">
+    <div className="relative border-neutral-500 border-2 px-3 sm:px-6 py-6 rounded-lg shadow-md space-y-6">
       <h3 className="font-medium">Pintpoint Your Address</h3>
 
       <div className="overflow-hidden rounded-lg relative space-y-6">

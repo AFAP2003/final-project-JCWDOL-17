@@ -11,10 +11,7 @@ export const SignupCredConfirmDTO = z.object({
       /^[A-Za-z]+(?:[' -][A-Za-z]+)*$/,
       'Name can only contain letters, spaces, hyphens, and apostrophes',
     ),
-  referralCode: z
-    .string()
-    .regex(new RegExp(`^REF-[A-Z0-9]{8}$`), 'Invalid referral code format')
-    .optional(),
+  referralCode: z.string().trim().optional(),
 });
 
 export const SignupDTO = z.union([
@@ -39,6 +36,13 @@ export const SignupDTO = z.union([
   }),
   z.object({
     signupMethod: z.literal('GOOGLE'),
+    role: z.literal('USER'),
+    callbackURL: z.string().url(),
+    errorCallback: z.string().url(),
+  }),
+
+  z.object({
+    signupMethod: z.literal('DISCORD'),
     role: z.literal('USER'),
     callbackURL: z.string().url(),
     errorCallback: z.string().url(),

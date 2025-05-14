@@ -205,7 +205,7 @@ export default function DialogForm(props: Props) {
 
         <Separator className="bg-neutral-500 mb-3" />
 
-        <ScrollArea className="max-h-[500px] px-12">
+        <ScrollArea className="sm:h-[500px] h-[360px] sm:px-12">
           <Form {...form}>
             <form
               ref={formRef}
@@ -343,7 +343,7 @@ export default function DialogForm(props: Props) {
                   )}
                 />
 
-                <div className="flex gap-8 lg:gap-16 items-center w-full">
+                <div className="flex  gap-8 lg:gap-16 items-center w-full">
                   <FormField
                     control={form.control}
                     name="postalCode"

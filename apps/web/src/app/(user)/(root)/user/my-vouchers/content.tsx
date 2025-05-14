@@ -53,10 +53,12 @@ export default function Content(props: Props) {
                 ))}
               </div>
             ) : (
-              <div className="size-full flex items-center justify-center text-neutral-400">
+              <div className="size-full flex items-center justify-center text-neutral-400 min-h-[calc(100vh-350px)]">
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <div className="text-base font-medium">🫢 Oops!</div>
-                  <div className="flex flex-col w-full justify-center items-center gap-1">
+                  <div className="text-base font-medium text-center">
+                    🫢 Oops!
+                  </div>
+                  <div className="flex flex-col w-full justify-center items-center gap-1 text-center">
                     <div className="text-sm italic">
                       Tidak ada voucher yang ditemukan
                     </div>
@@ -71,7 +73,7 @@ export default function Content(props: Props) {
         )}
 
         {!fetch.isError && fetch.isPending && (
-          <div className="size-full flex items-center justify-center text-neutral-400">
+          <div className="size-full flex items-center justify-center text-neutral-400 min-h-[calc(100vh-350px)]">
             <div className="flex flex-col items-center justify-center gap-1">
               <Loader2Icon className="animate-spin size-7" />
               <div className="text-sm italic">Tunggu sebentar ya...</div>

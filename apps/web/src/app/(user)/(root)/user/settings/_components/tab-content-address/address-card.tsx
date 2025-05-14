@@ -33,6 +33,28 @@ export default function AddressCard({
               Default
             </Badge>
           )}
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
+            <Button
+              disabled={disabled}
+              onClick={() => onEdit(address)}
+              variant="outline"
+              size="sm"
+              className="text-neutral-700 rounded-lg hover:bg-neutral-100 hover:text-neutral-700"
+            >
+              <Pencil className="mr-1 h-4 w-4" />
+              Edit
+            </Button>
+            <Button
+              disabled={disabled}
+              onClick={() => onDelete(address)}
+              variant="outline"
+              size="sm"
+              className="text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg"
+            >
+              <Trash2 className="mr-1 h-4 w-4" />
+              Remove
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-4 bg-neutral-50">
@@ -50,29 +72,6 @@ export default function AddressCard({
             <p className="text-neutral-500">
               {address.city}, {address.province} {address.postalCode}
             </p>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-3">
-            <Button
-              disabled={disabled}
-              onClick={() => onEdit(address)}
-              variant="outline"
-              size="sm"
-              className="text-neutral-700 hover:bg-neutral-100 hover:text-neutral-700"
-            >
-              <Pencil className="mr-1 h-4 w-4" />
-              Edit
-            </Button>
-            <Button
-              disabled={disabled}
-              onClick={() => onDelete(address)}
-              variant="outline"
-              size="sm"
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
-            >
-              <Trash2 className="mr-1 h-4 w-4" />
-              Remove
-            </Button>
           </div>
         </div>
       </CardContent>

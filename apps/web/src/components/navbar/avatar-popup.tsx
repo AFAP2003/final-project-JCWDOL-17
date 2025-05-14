@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { useLocation } from '@/context/location-provider';
 import { signOut } from '@/lib/auth/client';
 import type { Session } from '@/lib/types/session';
-import { CalendarArrowUp, LogOut, Settings, Ticket } from 'lucide-react';
+import { CalendarArrowUp, Code2, LogOut, Settings, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -85,12 +85,21 @@ export default function AvatarPopup({ session: { session, user } }: Props) {
               </Link>
 
               <Link
-                href="/user/settings"
+                href="/user/my-vouchers"
                 onClick={() => setOpenPopup(false)}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-700  hover:bg-neutral-100 transition-colors"
               >
                 <Ticket className="size-4 text-neutral-700" />
                 <span className="text-sm font-medium">Voucher Saya</span>
+              </Link>
+
+              <Link
+                href="/user/referral-code"
+                onClick={() => setOpenPopup(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-700  hover:bg-neutral-100 transition-colors"
+              >
+                <Code2 className="size-4 text-neutral-700" />
+                <span className="text-sm font-medium">Kode Referral</span>
               </Link>
 
               <Link

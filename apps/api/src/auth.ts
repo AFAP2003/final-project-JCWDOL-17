@@ -7,6 +7,8 @@ import { User } from '@prisma/client';
 import {
   BASE_API_URL,
   BASE_FRONTEND_URL,
+  DISCORD_CLIENT_ID,
+  DISCORD_CLIENT_SECRET,
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
 } from './config';
@@ -83,6 +85,21 @@ export const auth = betterAuth({
         return {
           role: 'USER',
           name: profile.name,
+          email: profile.email,
+          emailVerified: true,
+          image: profile.picture,
+          signupMethod: ['SOCIAL'],
+          referralCode: await genReferralCode(),
+        };
+      },
+    },
+    discord: {
+      clientId: DISCORD_CLIENT_ID,
+      clientSecret: DISCORD_CLIENT_SECRET,
+      mapProfileToUser: async (profile) => {
+        return {
+          role: 'USER',
+          name: profile.username,
           email: profile.email,
           emailVerified: true,
           image: profile.picture,

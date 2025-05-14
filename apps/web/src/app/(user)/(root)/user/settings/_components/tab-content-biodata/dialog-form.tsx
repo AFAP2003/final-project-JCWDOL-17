@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -10,11 +11,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
 import { apiclient } from '@/lib/apiclient';
@@ -181,8 +177,8 @@ export default function DialogForm(props: Props) {
   }, [open, form]);
 
   return (
-    <Popover defaultOpen={open} open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Dialog defaultOpen={open} open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <Button
           disabled={isPending}
           variant="ghost"
@@ -191,10 +187,10 @@ export default function DialogForm(props: Props) {
         >
           <Edit2 className="w-3.5 h-3.5" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="center"
-        className="rounded-lg border border-neutral-500 shadow-md bg-neutral-800 fixed top-[50%] -translate-y-[50%] sm:-translate-x-[105%] -translate-x-[95%] z-50"
+      </DialogTrigger>
+      <DialogContent
+        closeClass="hidden"
+        className="rounded-lg border border-neutral-500 shadow-md bg-neutral-800"
         style={{
           position: 'fixed',
           margin: 0,
@@ -202,7 +198,7 @@ export default function DialogForm(props: Props) {
       >
         <div className="w-full relative px-2">
           <div className="flex w-full justify-between items-center mb-6">
-            <h2 className="text-neutral-200 font-semibold">{props.label}</h2>
+            <h2 className="text-neutral-200 font-semibold ">{props.label}</h2>
             <X
               onClick={() => setOpen(false)}
               className="size-4 text-neutral-200 cursor-pointer"
@@ -219,7 +215,7 @@ export default function DialogForm(props: Props) {
                     <FormItem>
                       <FormControl>
                         <Input
-                          className="bg-neutral-50 text-neutral-800 font-medium"
+                          className="bg-neutral-50 text-neutral-800 font-medium max-sm:text-sm"
                           {...field}
                         />
                       </FormControl>
@@ -233,7 +229,7 @@ export default function DialogForm(props: Props) {
                   control={form.control}
                   name={props.field}
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="mx-auto">
                       <DateOfBirthPicker
                         value={field.value || currentDate()}
                         onChange={field.onChange}
@@ -284,7 +280,7 @@ export default function DialogForm(props: Props) {
             </form>
           </Form>
         </div>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }

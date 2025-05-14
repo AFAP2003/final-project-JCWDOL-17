@@ -97,8 +97,8 @@ export default function TabContentAddress() {
       )}
 
       <Card className="p-6">
-        <div className="w-full">
-          <div className="flex w-full justify-between mb-8 gap-12">
+        <div className="w-full min-h-[485px]">
+          <div className="flex sm:flex-row flex-col-reverse w-full justify-between mb-8 gap-6 sm:gap-12">
             <SearchBox search={search} setSearch={setSearch} />
             <Button
               onClick={() => {
