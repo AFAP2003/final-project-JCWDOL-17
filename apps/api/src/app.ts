@@ -16,6 +16,7 @@ import { ProductCategoryRouter } from './routers/product-category.router';
 import { ProductRouter } from './routers/product.router';
 import { ShippingMethodRouter } from './routers/shipping-method.router';
 import { ShippingRouter } from './routers/shipping.router';
+import { StoreRouter } from './routers/store.router';
 import { TokenRouter } from './routers/token.router';
 import { UserRouter } from './routers/user.router';
 import { VoucherRouter } from './routers/voucher.router';
@@ -65,6 +66,7 @@ export default class App {
     const paymentRouter = new PaymentRouter();
     const webhookRouter = new WebhookRouter();
     const shippingRouter = new ShippingRouter();
+    const storeRuter = new StoreRouter();
 
     this.app.use('/api', healthRouter.getRouter());
     this.app.use('/api/auth', authRouter.getRouter());
@@ -81,6 +83,7 @@ export default class App {
     this.app.use('/api/orders', orderRouter.getRouter());
     this.app.use('/api/payment', paymentRouter.getRouter());
     this.app.use('/api/webhooks', webhookRouter.getRouter());
+    this.app.use('/api/store', storeRuter.getRouter());
   }
 
   public start(): void {
