@@ -1,27 +1,26 @@
 'use client';
-
-import React, { useEffect, useState } from 'react';
-import { ChartContainer, ChartConfig } from '@/components/ui/chart';
+import { ChartConfig, ChartContainer } from '@/components/ui/chart';
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectGroup,
-  SelectLabel,
   SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableRow,
-  TableHead,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
 import reportManagementAPI from '@/lib/apis/dashboard/reportManagement.api';
-import StockReportSkeleton from './stockReportSkeleton';
 import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
+import { useEffect, useState } from 'react';
+import StockReportSkeleton from './stockReportSkeleton';
 
 interface StockRecord {
   product: string;

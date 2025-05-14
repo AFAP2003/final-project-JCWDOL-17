@@ -2,13 +2,15 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCategoryManagement } from '@/hooks/useCategoryManagement';
 import { MyFormValues } from '@/validations/user.validation';
 import { FormikProps } from 'formik';
 import { Plus } from 'lucide-react';
@@ -20,6 +22,8 @@ interface CategoryManagementFormProps {
   isEditMode: boolean;
   setIsEditMode: (edit: boolean) => void;
   setEditingUserId: (id: string | null) => void;
+  isDetailMode: boolean;
+  setIsDetailMode: (detail: boolean) => void;
 }
 export default function CategoryManagementForm({
   formik,
@@ -28,7 +32,18 @@ export default function CategoryManagementForm({
   isEditMode,
   setIsEditMode,
   setEditingUserId,
+  isDetailMode,
+  setIsDetailMode,
 }: CategoryManagementFormProps) {
+  const disabled = isDetailMode;
+  const { isSessionLoading, user } = useCategoryManagement();
+
+  if (isSessionLoading) {
+    return <Skeleton className="h-9 w-36" />;
+  }
+
+  if (!user) return <div></div>;
+
   return (
     <Dialog
       open={dialogOpen}
@@ -39,26 +54,35 @@ export default function CategoryManagementForm({
         if (open && !isEditMode) {
           // fresh “Add User” → clear the form
           formik.resetForm();
+          setIsDetailMode(false);
         }
 
         if (!open) {
           // dialog closed → clear edit flags
           setIsEditMode(false);
           setEditingUserId(null);
+          setIsDetailMode(false);
         }
       }}
     >
-      <DialogTrigger asChild>
-        <Button className="w-[150px]">
-          <Plus className="w-4 h-4 mr-1" /> Tambah Kategori
-        </Button>
-      </DialogTrigger>
+      {user.role == 'SUPER' && (
+        <DialogTrigger asChild>
+          <Button className="w-[150px]">
+            <Plus className="w-4 h-4 mr-1" /> Tambah Kategori
+          </Button>
+        </DialogTrigger>
+      )}
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isEditMode ? 'Edit Kategori' : 'Tambah Kategori'}
+            {isDetailMode
+              ? 'Lihat Kategori'
+              : isEditMode
+                ? 'Edit Kategori'
+                : 'Tambah Kategori'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className={`${isDetailMode ? 'hidden' : 'block'}`}>
             {isEditMode ? 'Edit detail kategori' : 'Isi detail kategori baru.'}
           </DialogDescription>
         </DialogHeader>
@@ -74,6 +98,7 @@ export default function CategoryManagementForm({
               value={formik.values.nama}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              disabled={disabled}
             />
             {formik.touched.nama && formik.errors.nama && (
               <p className="text-xs text-red-600">{formik.errors.nama}</p>
@@ -93,6 +118,7 @@ export default function CategoryManagementForm({
                 onBlur={formik.handleBlur}
                 placeholder="Masukkan deskripsi diskon"
                 className="w-full bg-white rounded-md border  px-3 py-2 text-sm focus:outline-none "
+                disabled={disabled}
               />
               {formik.touched.deskripsi && formik.errors.deskripsi && (
                 <p className="text-xs text-red-600">
@@ -102,26 +128,7 @@ export default function CategoryManagementForm({
             </div>
           </div>
 
-          {/* <div className="space-y-2">
-            <label
-              htmlFor="gambar"
-              className="text-sm font-medium text-gray-700"
-            >
-              URL Gambar
-            </label>
-            <Input
-              id="gambar"
-              name="gambar"
-              placeholder="Masukkan URL gambar"
-              value={formik.values.gambar}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            />
-            {formik.touched.gambar && formik.errors.gambar && (
-              <p className="text-xs text-red-600">{formik.errors.gambar}</p>
-            )}
-          </div> */}
-          <DialogFooter>
+          <DialogFooter className={isDetailMode ? 'hidden' : 'block'}>
             <Button
               variant="outline"
               type="button"

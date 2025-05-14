@@ -10,13 +10,26 @@ class UserManagementRepository {
     const data = await prismaclient.user.findMany({
       include: {
         addresses: true,
-        stores: true,
+        managedStore: true,
       },
       skip,
       take: realTake,
     });
 
     return { total, data };
+  }
+
+  async getUserById(id: string) {
+    return await prismaclient.user.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        managedStore: true,
+        addresses: true,
+        image: true,
+      },
+    });
   }
 
   async createUser(userData: User) {
@@ -39,7 +52,7 @@ class UserManagementRepository {
     }
 
     const ctx = await auth.$context;
-    const { password, ...data } = userData;
+    const { password, image, ...data } = userData;
 
     const user = await prismaclient.user.create({
       data: {
@@ -47,6 +60,7 @@ class UserManagementRepository {
         emailVerified: true,
         name: data.name,
         role: 'ADMIN',
+        image,
         signupMethod: {
           set: ['CREDENTIAL'],
         },
@@ -64,6 +78,16 @@ class UserManagementRepository {
       },
     });
 
+    if (data.storeId) {
+      await prismaclient.store.update({
+        where: {
+          id: data.storeId,
+        },
+        data: {
+          adminId: user.id,
+        },
+      });
+    }
     return user;
   }
 
@@ -77,6 +101,7 @@ class UserManagementRepository {
       },
       data: {
         ...data,
+        emailVerified: true,
       },
     });
 

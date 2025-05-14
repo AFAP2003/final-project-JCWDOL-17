@@ -3,12 +3,12 @@
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
-import ProductManagementFilter from './_components/productManagementFilter';
-import ProductManagementTable from './_components/productManagementTable';
-import ProductManagementPagination from './_components/productManagementPagination';
-import ProductManagementForm from './_components/productManagementForm';
-import ProductManagementskeleton from './_components/productManagementSkeleton';
 import UseProductManagement from '@/hooks/useProductManagement';
+import ProductManagementFilter from './_components/productManagementFilter';
+import ProductManagementForm from './_components/productManagementForm';
+import ProductManagementPagination from './_components/productManagementPagination';
+import ProductManagementskeleton from './_components/productManagementSkeleton';
+import ProductManagementTable from './_components/productManagementTable';
 export default function Products() {
   const {
     formik,
@@ -25,11 +25,21 @@ export default function Products() {
     handleCategoryFilter,
     setIsEditMode,
     setEditingProductId,
+    previews,
+    setPreviews,
+    mainIndex,
+    setMainIndex,
+    isDetailMode,
+    setIsDetailMode,
+    isSessionLoading,
+    user,
   } = UseProductManagement();
+  // Check if session exists after loading
 
   if (isLoading) {
     return <ProductManagementskeleton />;
   }
+
   return (
     <div className="min-h-screen w-full flex flex-col gap-6 p-4">
       <div className="flex justify-end">
@@ -50,6 +60,12 @@ export default function Products() {
           isEditMode={isEditMode}
           setIsEditMode={setIsEditMode}
           setEditingProductId={setEditingProductId}
+          previews={previews}
+          setPreviews={setPreviews}
+          mainIndex={mainIndex}
+          setMainIndex={setMainIndex}
+          isDetailMode={isDetailMode}
+          setIsDetailMode={setIsDetailMode}
         />
       </div>
 

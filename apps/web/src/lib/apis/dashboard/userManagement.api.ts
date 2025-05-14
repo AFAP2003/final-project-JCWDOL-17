@@ -8,7 +8,6 @@ import { useState } from 'react';
 export function userManagementAPI() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const fetchUsers = async (pageIndex: number, pageSize: number) => {
     setIsLoading(true);
     try {
@@ -35,22 +34,41 @@ export function userManagementAPI() {
     }
   };
 
+  const fetchUserById = async (id: string) => {
+    setIsLoading(true);
+    try {
+      const userByIdRes = await fetch(`${API_BASE_URL}/dashboard/users/${id}`);
+      const userData = await userByIdRes.json();
+
+      if (userByIdRes.ok) {
+        return userData;
+      } else {
+        console.error(
+          'Failed to fetch user by id:',
+          userData.message || 'Unknown Error',
+        );
+      }
+    } catch (error) {
+      console.log('Error fetching data: ', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCreateUser = async (values) => {
     try {
+      const formData = new FormData();
+      formData.append('image', values.image[0]); // the File object
+      formData.append('name', values.nama);
+      formData.append('email', values.email);
+      formData.append('password', values.password);
+      formData.append('role', values.role);
+      formData.append('storeId', values.toko);
+      formData.append('emailVerified', String(values.verifikasi));
       const userRes = await fetch(`${API_BASE_URL}/dashboard/users`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: values.gambar,
-          name: values.nama,
-          email: values.email,
-          password: values.password,
-          role: values.role,
-          storeId: values.toko,
-          emailVerified: values.verifikasi,
-        }),
+
+        body: formData,
       });
 
       const userData = await userRes.json();
@@ -91,24 +109,21 @@ export function userManagementAPI() {
 
   const handleUpdateUser = async (id: string, values) => {
     try {
-      const payload: any = {
-        image: values.gambar,
-        name: values.nama,
-        email: values.email,
-        role: values.role,
-        storeId: values.toko,
-        emailVerified: values.verifikasi,
-      };
-
-      if (values.password !== '') {
-        payload.password = values.password;
+      const formData = new FormData();
+      if (values.image && values.image[0]) {
+        formData.append('image', values.image[0]);
+      }
+      formData.append('name', values.nama);
+      formData.append('email', values.email);
+      formData.append('role', values.role);
+      formData.append('storeId', values.toko);
+      formData.append('emailVerified', values.verifikasi);
+      if (values.password) {
+        formData.append('password', values.password);
       }
       const userRes = await fetch(`${API_BASE_URL}/dashboard/users/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       const userData = await userRes.json();
@@ -179,5 +194,6 @@ export function userManagementAPI() {
     handleCreateUser,
     handleUpdateUser,
     handleDeleteUser,
+    fetchUserById,
   };
 }

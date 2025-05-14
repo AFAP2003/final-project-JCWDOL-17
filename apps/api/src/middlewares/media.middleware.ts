@@ -25,3 +25,22 @@ export const withImageUpload = (
     next();
   });
 };
+
+export const withMultipleImageUpload = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const uploadmd = upload.array('image', 10); // up to 10 images
+  uploadmd(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      next(new BadRequestError(err.message));
+    } else if (err) {
+      next(new InternalSeverError(err));
+    }
+    next();
+  });
+};
+
+export const withImageUploadEdit = upload.single('image');
+

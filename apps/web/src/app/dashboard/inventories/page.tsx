@@ -1,11 +1,11 @@
 'use client';
 
 import UseInventoryManagement from '@/hooks/useInventoryManagement';
-import InventoryManagementForm from './_components/inventoryManagementForm';
 import InventoryManagementFilter from './_components/inventoryManagementFilter';
-import InventoryManagementTable from './_components/inventoryManagementTable';
+import InventoryManagementForm from './_components/inventoryManagementForm';
 import InventoryManagementPagination from './_components/inventoryManagementPagination';
 import InventoryManagementskeleton from './_components/inventoryManagementSkeleton';
+import InventoryManagementTable from './_components/inventoryManagementTable';
 
 export default function Inventory() {
   const {
@@ -26,6 +26,8 @@ export default function Inventory() {
     handleStoreFilter,
     setIsEditMode,
     setEditingInventoryId,
+    isDetailMode,
+    setIsDetailMode,
   } = UseInventoryManagement();
 
   if (isLoading) {
@@ -45,6 +47,8 @@ export default function Inventory() {
           stores={stores}
           setIsEditMode={setIsEditMode}
           setEditingInventoryId={setEditingInventoryId}
+          isDetailMode={isDetailMode}
+          setIsDetailMode={setIsDetailMode}
         />
       </div>
 

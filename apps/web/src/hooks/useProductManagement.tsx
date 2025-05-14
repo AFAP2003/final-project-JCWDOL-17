@@ -1,5 +1,28 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
 import productManagementAPI from '@/lib/apis/dashboard/productManagement.api';
+
+import { useSession } from '@/lib/auth/client';
 import { genRandomString } from '@/lib/utils';
+
+import { getValidationSchema } from '@/validations/product.validation';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -11,20 +34,10 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal } from 'lucide-react';
-import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
-import { getValidationSchema } from '@/validations/product.validation';
+import { ImageOff, MoreHorizontal } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 export default function UseProductManagement() {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -35,6 +48,13 @@ export default function UseProductManagement() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
+
+  const [previews, setPreviews] = useState<string[]>([]); // ✅ typed
+  const [mainIndex, setMainIndex] = useState<number>(0); // ✅ typed
+  const [isDetailMode, setIsDetailMode] = useState(false);
+  const { data: session, isPending: isSessionLoading } = useSession();
+  const user = session?.user;
+
   const {
     products,
     isLoading,
@@ -65,15 +85,21 @@ export default function UseProductManagement() {
   useEffect(() => {
     fetchCategories(0, 50);
   }, []);
+  useEffect(() => {
+    fetchCategories(0, 50);
+  }, []);
   const formik = useFormik({
     initialValues: {
       nama: '',
       deskripsi: '',
-      harga: '0',
-      berat: '1',
-      sku: Math.random().toString(36).substring(2),
+      harga: '',
+      berat: '',
+      sku: '',
       kategoriId: '',
       isActive: true,
+      image: [],
+      keptImages: [], // ✅ Add this
+      mainIndex: 0,
     },
     validationSchema: getValidationSchema(),
     onSubmit: async (values, { resetForm }) => {
@@ -96,39 +122,49 @@ export default function UseProductManagement() {
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
       {
-        accessorKey: 'gambar',
+        id: 'mainImage',
         header: 'Gambar',
+        // accessorFn now returns only the main image object (or undefined)
+        accessorFn: (row) => row.images.find((img) => img.isMain),
         cell: ({ getValue }) => {
-          const imageUrl = getValue<string>();
+          const img = getValue();
+          if (!img) {
+            return (
+              <Avatar className="h-32 w-32 overflow-hidden rounded-sm flex justify-center items-center">
+                <ImageOff className="w-32 h-32 text-gray-400" />
+              </Avatar>
+            );
+          }
           return (
-            <div className="avatar">
-              <div className="w-[150px] h-[100px] rounded-md">
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt="Product Image"
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-gray-200 rounded-md text-sm text-gray-500">
-                    NA
-                  </div>
-                )}
-              </div>
-            </div>
+            <Avatar className="h-32 w-32 overflow-hidden rounded-md">
+              <AvatarImage src={img.imageUrl} alt="main product image" />
+            </Avatar>
           );
         },
       },
       { accessorKey: 'name', header: 'Produk' },
+
+      // { accessorKey: 'description', header: 'Deskripsi' },
       {
         accessorKey: 'category',
         header: 'Kategori',
-        accessorFn: (row) => row.category?.name ?? 'N/A',
+        accessorFn: (row) => row.category?.name ?? '-',
         cell: ({ row }) => {
-          return row.original.category?.name ?? 'N/A';
+          return row.original.category?.name ?? '-';
         },
       },
-      { accessorKey: 'price', header: 'Harga' },
+      {
+        accessorKey: 'price',
+        header: 'Harga',
+        cell: ({ row }) => {
+          const { price } = row.original;
+          const num = Number(price);
+          return `Rp ${num.toLocaleString()}`;
+        },
+      },
+
+      { accessorKey: 'sku', header: 'SKU' },
+      // { accessorKey: 'weight', header: 'Berat (kg)' },
       {
         accessorKey: 'inventory',
         header: 'Stok',
@@ -155,7 +191,7 @@ export default function UseProductManagement() {
 
           if (total === 0) return 'Stok Habis';
           if (total < minStock) return 'Stok Rendah';
-          return 'Tersedia';
+          return 'Stok Tersedia';
         },
         cell: ({ getValue }) => {
           const status = getValue<string>();
@@ -179,46 +215,129 @@ export default function UseProductManagement() {
         header: 'Aksi',
         cell: ({ row }: any) => {
           const product = row.original;
+          const [isAlertOpen, setIsAlertOpen] = useState(false);
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
-                <MoreHorizontal className="w-5 h-5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
-                <DropdownMenuCheckboxItem
-                  onCheckedChange={() => {
-                    setDialogOpen(true);
-                    setEditingProductId(product.id);
-                    setIsEditMode(true);
-                    formik.setValues({
-                      nama: product.name || '',
-                      deskripsi: product.description || '',
-                      harga: product.price || 0,
-                      berat: product.weight || 0,
-                      isActive: product.isActive || '',
-                      sku: product.sku || '',
-                      kategoriId: product.categoryId || '',
-                    });
-                  }}
-                >
-                  Edit
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  className="text-red-600"
-                  onCheckedChange={() => {
-                    handleDeleteProduct(product.id);
-                  }}
-                >
-                  Delete
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
+                  <MoreHorizontal className="w-5 h-5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
+                  {user.role == 'SUPER' && (
+                    <DropdownMenuCheckboxItem
+                      onCheckedChange={() => {
+                        setDialogOpen(true);
+                        setEditingProductId(product.id);
+                        setIsEditMode(true);
+                        formik.setValues({
+                          nama: product.name || '',
+                          deskripsi: product.description || '',
+                          harga: product.price || 0,
+                          berat: product.weight || 0,
+                          isActive: product.isActive || '',
+                          sku: product.sku || '',
+                          kategoriId: product.categoryId || '',
+                          image: [],
+                          keptImages: product.images.map(
+                            (img: any) => img.imageUrl,
+                          ), // ✅ include this
+                          mainIndex:
+                            product.images.findIndex(
+                              (img: any) => img.isMain,
+                            ) || 0, // ✅ optional
+                        });
+
+                        setPreviews(
+                          product.images.map((img: any) => img.imageUrl),
+                        );
+                        const mainIdx = product.images.findIndex(
+                          (img: any) => img.isMain,
+                        );
+                        setMainIndex(mainIdx >= 0 ? mainIdx : 0);
+                      }}
+                    >
+                      Edit
+                    </DropdownMenuCheckboxItem>
+                  )}
+                  <DropdownMenuCheckboxItem
+                    onSelect={(e) => {
+                      console.log('Detail handler fired');
+
+                      setIsEditMode(false);
+                      setIsDetailMode(true);
+                      setEditingProductId(product.id);
+                      formik.setValues({
+                        nama: product.name || '',
+                        deskripsi: product.description || '',
+                        harga: product.price || 0,
+                        berat: product.weight || 0,
+                        isActive: product.isActive || '',
+                        sku: product.sku || '',
+                        kategoriId: product.categoryId || '',
+                        image: [],
+                        keptImages: product.images.map(
+                          (img: any) => img.imageUrl,
+                        ),
+                        mainIndex:
+                          product.images.findIndex((img: any) => img.isMain) ||
+                          0,
+                      });
+
+                      setPreviews(
+                        product.images.map((img: any) => img.imageUrl),
+                      );
+                      const mainIdx = product.images.findIndex(
+                        (img: any) => img.isMain,
+                      );
+                      setMainIndex(mainIdx >= 0 ? mainIdx : 0);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    Lihat Detail
+                  </DropdownMenuCheckboxItem>
+                  {user.role == 'SUPER' && (
+                    <DropdownMenuCheckboxItem
+                      className="text-red-600"
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          // Close dropdown and open alert manually
+                          setTimeout(() => setIsAlertOpen(true), 100);
+                        }
+                      }}
+                    >
+                      Delete
+                    </DropdownMenuCheckboxItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Hapus produk?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Apakah anda yakin untuk menghapus produk dengan nama "
+                      <b>{product.name}</b>" secara permanen.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        handleDeleteProduct(product.id);
+                      }}
+                    >
+                      Hapus
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
           );
         },
       },
     ],
-    [],
+    [user, formik, previews, mainIndex],
   );
 
   const table = useReactTable({
@@ -309,8 +428,10 @@ export default function UseProductManagement() {
     if (ok) {
       await fetchProducts(pagination.pageIndex, pagination.pageSize);
     }
+
     return ok;
   };
+
   return {
     formik,
     columns,
@@ -335,6 +456,15 @@ export default function UseProductManagement() {
     fetchCategories,
     handleCategoryFilter,
     setIsEditMode,
+
     setEditingProductId,
+    previews,
+    setPreviews,
+    mainIndex,
+    setMainIndex,
+    isDetailMode,
+    setIsDetailMode,
+    isSessionLoading,
+    user,
   };
 }

@@ -1,8 +1,5 @@
 import { Discount } from '@/interfaces/discountManagement.interface';
-import { Inventory } from '@/interfaces/inventoryManagement.interface';
-import { prismaclient } from '@/prisma';
 import discountManagementRepository from '@/repositories/discountManagement.repository';
-import inventoryManagementRepository from '@/repositories/inventoryManagement.repository';
 
 class DiscountManagementService {
   async listAllDiscounts(page = 1, take = 10) {

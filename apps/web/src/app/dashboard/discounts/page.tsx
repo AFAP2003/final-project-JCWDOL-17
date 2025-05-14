@@ -1,22 +1,22 @@
 'use client';
 
-import { flexRender } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Eye } from 'lucide-react';
 import UseDiscountManagement from '@/hooks/useDiscountManagement';
-import DiscountManagementPagination from './_components/discountManagementPagination';
-import DiscountManagementTable from './_components/discountManagementTable';
-import DiscountManagementForm from './_components/discountManagementForm';
+import { flexRender } from '@tanstack/react-table';
+import { Eye } from 'lucide-react';
 import DiscountManagementFilter from './_components/discountManagementFilter';
+import DiscountManagementForm from './_components/discountManagementForm';
+import DiscountManagementPagination from './_components/discountManagementPagination';
 import DiscountManagementskeleton from './_components/discountManagementSkeleton';
+import DiscountManagementTable from './_components/discountManagementTable';
 
 export default function DiscountManagement() {
   const {
@@ -35,11 +35,14 @@ export default function DiscountManagement() {
     handleTypeValueFilter,
     setIsEditMode,
     setEditingDiscountId,
+    isDetailMode,
+    setIsDetailMode,
   } = UseDiscountManagement();
 
   if (isLoading) {
     return <DiscountManagementskeleton />;
   }
+
   return (
     <div className="min-h-screen w-full flex flex-col gap-6 p-4">
       {/* Header */}
@@ -55,6 +58,8 @@ export default function DiscountManagement() {
           setDialogOpen={setDialogOpen}
           setIsEditMode={setIsEditMode}
           setEditingDiscountId={setEditingDiscountId}
+          isDetailMode={isDetailMode}
+          setIsDetailMode={setIsDetailMode}
         />
       </div>
 

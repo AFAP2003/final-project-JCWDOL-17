@@ -1,6 +1,5 @@
-import categoryManagementService from '@/services/categoryManagement.service';
 import inventoryManagementService from '@/services/inventoryManagement.service';
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 class InventoryManagementController {
   async getInventories(req: Request, res: Response, next: NextFunction) {
@@ -44,9 +43,14 @@ class InventoryManagementController {
   async updateInventory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
+      const { productId, storeId, minStock } = req.body;
+      const addQuantity = Number(req.body.addQuantity) || 0;
+      const subtractQuantity = Number(req.body.subtractQuantity) || 0;
       const data = await inventoryManagementService.updateInventoryById(
         id,
-        req.body,
+        { productId, storeId, minStock },
+        addQuantity,
+        subtractQuantity,
       );
 
       res.status(200).send({

@@ -1,6 +1,4 @@
 import { Inventory } from '@/interfaces/inventoryManagement.interface';
-import { prismaclient } from '@/prisma';
-import categoryManagementRepository from '@/repositories/categoryManagement.repository';
 import inventoryManagementRepository from '@/repositories/inventoryManagement.repository';
 
 class InventoryManagementService {

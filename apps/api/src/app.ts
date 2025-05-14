@@ -2,6 +2,7 @@ import { toNodeHandler } from 'better-auth/node';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { Express, json, urlencoded } from 'express';
+import path from 'path';
 import { auth } from './auth';
 import { BASE_FRONTEND_URL, PORT } from './config';
 import { withError, withNotFound } from './middlewares/errors.middleware';
@@ -21,7 +22,6 @@ import { TokenRouter } from './routers/token.router';
 import { UserRouter } from './routers/user.router';
 import { VoucherRouter } from './routers/voucher.router';
 import { WebhookRouter } from './routers/webhook.router';
-import path from 'path';
 
 export default class App {
   static VERSION = '1.0.0';

@@ -1,6 +1,6 @@
-import { prismaclient } from '@/prisma';
-import { Inventory } from '@/interfaces/inventoryManagement.interface';
 import { pagination } from '@/helpers/pagination';
+import { Inventory } from '@/interfaces/inventoryManagement.interface';
+import { prismaclient } from '@/prisma';
 class InventoryManagementRepository {
   async getInventories(page = 1, take = 10) {
     const total = await prismaclient.inventory.count();

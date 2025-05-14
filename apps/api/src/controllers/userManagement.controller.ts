@@ -1,7 +1,11 @@
+import { getImageFromRequest } from '@/helpers/get-image-from-request';
+import { MediaService } from '@/services/media.service';
 import userManagementService from '@/services/userManagement.service'
 import { Request, Response, NextFunction } from 'express'
+import { extract } from 'query-string';
 
 class UserManagementController{
+    
     async getUsers(req:Request,res:Response,next:NextFunction){
         try {
              const page = parseInt(req.query.page as string, 10) || 1;
@@ -25,11 +29,33 @@ class UserManagementController{
         }
     }
 
+    async getUserById(req:Request,res:Response,next:NextFunction){
+        try {
+            const {id} = req.params
+            const data = await userManagementService.listUserById(id)
+
+            res.status(200).send({
+                success:true,
+                message:'User by Id Fetched Successfully',
+                data
+            })
+        } catch (error) {
+            next(error)
+        }
+    }
+
     async createUser(req:Request,res:Response,next:NextFunction){
+        const mediaService = new MediaService();
 
         try {
+             // 1) extract the uploaded file buffer
+      const file = getImageFromRequest(req);
 
-            const data = await userManagementService.createNewUser(req.body)
+      // 2) send it to Cloudinary, get back a URL
+      const imageUrl = await mediaService.uploadImage({ file: file.buffer });
+
+            const payload = {...req.body,image:imageUrl}
+            const data = await userManagementService.createNewUser(payload)
             res.status(200).send({
                 success:true,
                 message:'User Created Successfully',
@@ -52,8 +78,30 @@ class UserManagementController{
 
     async updateUser(req:Request,res:Response,next:NextFunction){
         try {
+            const mediaService = new MediaService();
+
             const {id} = req.params
-            const data = await userManagementService.updateUserById(id,req.body)
+
+            const existing = await userManagementService.listUserById(id)
+            if(!existing){
+                return res.status(404).send({
+                    success:false,
+                    message:'Existing User Image Not Found'
+                })
+            }
+            let imageUrl = existing.image; 
+
+            if (req.file) {
+                if(imageUrl?.startsWith('https://res.cloudinary.com')){
+                    console.log('File for removal: ',imageUrl)
+                    await mediaService.removeImage(imageUrl)
+                }
+                imageUrl = await mediaService.uploadImage({ file: req.file.buffer });
+            }
+            const data = await userManagementService.updateUserById(id,{
+                ...req.body,
+                image:imageUrl
+            })
 
             res.status(200).send({
                 success:true,
@@ -62,23 +110,34 @@ class UserManagementController{
             })
         } catch (error) {
             next(error)
-        }
+               }
     }
 
-    async deleteUser(req:Request,res:Response,next:NextFunction){
+    async deleteUser(req: Request, res: Response, next: NextFunction) {
         try {
-            const {id} = req.params
-            const data = await userManagementService.deleteUserById(id)
+            const mediaService = new MediaService()
+          const { id } = req.params;
+      
+          const user = await userManagementService.listUserById(id);
 
-            res.status(200).send({
-                success:true,
-                message:"User deleted successfully",
-                data
-            })
+          if (user?.image?.startsWith('https://res.cloudinary.com')) {
+              const result = await mediaService.removeImage(user.image);
+            
+          }
+      
+          const data = await userManagementService.deleteUserById(id);
+      
+          res.status(200).send({
+            success: true,
+            message: "User deleted successfully",
+            data,
+          });
         } catch (error) {
-            next(error)
+          console.error('Error deleting user:', error);
+          next(error);
         }
-    }
+      }
+      
 }
 
 export default new UserManagementController()

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { Category } from '@/lib/interfaces/categoryManagement.interface';
 import { API_BASE_URL } from '@/lib/constant';
+import { Category } from '@/lib/interfaces/categoryManagement.interface';
+import { useState } from 'react';
 
 export function categoryManagementAPI() {
   const [categories, setCategories] = useState<Category[]>([]);

@@ -1,5 +1,26 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
 import { inventoryManagementAPI } from '@/lib/apis/dashboard/inventoryManagement.api';
-import * as Yup from 'yup';
+import productManagementAPI from '@/lib/apis/dashboard/productManagement.api';
+import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
+import { getValidationSchema } from '@/validations/inventory.validation';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -11,20 +32,9 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
-import { MoreHorizontal } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-} from '@/components/ui/dropdown-menu';
 import { useFormik } from 'formik';
-import { Badge } from '@/components/ui/badge';
-import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
-import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
-import productManagementAPI from '@/lib/apis/dashboard/productManagement.api';
-import { getValidationSchema } from '@/validations/inventory.validation';
+import { ImageOff, MoreHorizontal } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function UseInventoryManagement() {
   const {
@@ -33,7 +43,7 @@ export default function UseInventoryManagement() {
     fetchInventories: apiFetchInventories,
     handleCreateInventory,
     handleUpdateInventory,
-    handleDeleteInventory,
+    handleDeleteInventory: apiDeleteInventory,
   } = inventoryManagementAPI();
 
   const { stores, fetchStores } = storeManagementAPI();
@@ -50,6 +60,7 @@ export default function UseInventoryManagement() {
   );
   const [pageCount, setPageCount] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isDetailMode, setIsDetailMode] = useState(false);
 
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
@@ -57,49 +68,47 @@ export default function UseInventoryManagement() {
         accessorKey: 'gambar',
         header: 'Gambar',
         cell: ({ row }) => {
-          const imageUrl = row.original.product?.imageUrl; // adjust field if needed
+          const mainImg = row.original.product.images.find((img) => img.isMain);
+          const imageUrl = mainImg?.imageUrl;
           return (
-            <div className="avatar">
-              <div className="w-[150px] h-[100px] rounded-md">
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt="Product"
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-gray-200 rounded-md text-sm text-gray-500">
-                    NA
-                  </div>
-                )}
-              </div>
+            <div>
+              {imageUrl ? (
+                <Avatar className="h-32 w-32 overflow-hidden rounded-md">
+                  <AvatarImage src={imageUrl} alt="main product image" />
+                </Avatar>
+              ) : (
+                <Avatar className="h-32 w-32 overflow-hidden rounded-sm flex justify-center items-center">
+                  <ImageOff className="w-32 h-32 text-gray-400" />
+                </Avatar>
+              )}
             </div>
           );
         },
       },
       {
         header: 'Produk',
-        cell: ({ row }) => row.original.product?.name ?? 'NA',
+        cell: ({ row }) => row.original.product?.name ?? '-',
       },
       {
         id: 'category',
         header: 'Kategori',
         accessorFn: (row) => row.product?.category?.name ?? '',
-        cell: ({ row }) => row.original.product?.category?.name ?? 'NA',
+        cell: ({ row }) => row.original.product?.category?.name ?? '-',
       },
       {
         id: 'store',
         header: 'Toko',
         accessorFn: (row) => row.store?.name ?? '',
-        cell: ({ row }) => row.original.store?.name ?? 'NA',
+        cell: ({ row }) => row.original.store?.name ?? '-',
       },
 
       {
         header: 'Harga',
-        cell: ({ row }) =>
-          row.original.product?.price
-            ? `Rp ${row.original.product.price}`
-            : 'NA',
+        cell: ({ row }) => {
+          const { price } = row.original.product;
+          const num = Number(price);
+          return `Rp ${num.toLocaleString()}`;
+        },
       },
       {
         header: 'Stok',
@@ -130,7 +139,7 @@ export default function UseInventoryManagement() {
           return (
             <Badge
               variant={
-                status === 'Tersedia'
+                status === 'Stok Tersedia'
                   ? 'default'
                   : status === 'Stok Rendah'
                     ? 'secondary'
@@ -153,38 +162,86 @@ export default function UseInventoryManagement() {
         header: 'Aksi',
         cell: ({ row }) => {
           const inventory = row.original;
+          const [isAlertOpen, setIsAlertOpen] = useState(false);
+
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
-                <MoreHorizontal className="w-5 h-5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
-                <DropdownMenuCheckboxItem
-                  onCheckedChange={() => {
-                    setDialogOpen(true);
-                    setEditingInventoryId(inventory.id);
-                    setIsEditMode(true);
-                    formik.setValues({
-                      produk: inventory.productId,
-                      toko: inventory.storeId,
-                      tambah: '',
-                      kurangi: '',
-                      minimal: inventory.minStock,
-                    });
-                  }}
-                >
-                  Edit
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  className="text-red-600"
-                  onCheckedChange={() => {
-                    handleDeleteInventory(inventory.id);
-                  }}
-                >
-                  Delete
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
+                  <MoreHorizontal className="w-5 h-5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
+                  <DropdownMenuCheckboxItem
+                    onCheckedChange={() => {
+                      setDialogOpen(true);
+                      setEditingInventoryId(inventory.id);
+                      setIsEditMode(true);
+                      formik.setValues({
+                        produk: inventory.productId,
+                        toko: inventory.storeId,
+                        tambah: '',
+                        kurangi: '',
+                        minimal: inventory.minStock,
+                        mode: 'tambah',
+                      });
+                    }}
+                  >
+                    Edit
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    onCheckedChange={() => {
+                      setIsEditMode(false);
+                      setIsDetailMode(true);
+                      formik.setValues({
+                        produk: inventory.productId,
+                        toko: inventory.storeId,
+                        tambah: '',
+                        kurangi: '',
+                        minimal: inventory.minStock,
+                        mode: 'tambah',
+                      });
+
+                      setDialogOpen(true);
+                    }}
+                  >
+                    Lihat Detail
+                  </DropdownMenuCheckboxItem>
+
+                  <DropdownMenuCheckboxItem
+                    className="text-red-600"
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        // Close dropdown and open alert manually
+                        setTimeout(() => setIsAlertOpen(true), 100);
+                      }
+                    }}
+                  >
+                    Delete
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Hapus inventaris?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Apakah anda yakin untuk menghapus inventaris dengan nama "
+                      <b>{inventory.product.name}</b>" secara permanen.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        handleDeleteInventory(inventory.id);
+                      }}
+                    >
+                      Hapus
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
           );
         },
       },
@@ -238,6 +295,7 @@ export default function UseInventoryManagement() {
       if (success) {
         resetForm();
         setDialogOpen(false);
+        fetchInventories(pagination.pageIndex, pagination.pageSize);
       }
     },
   });
@@ -318,6 +376,14 @@ export default function UseInventoryManagement() {
       ?.setFilterValue(value === 'all' ? undefined : value);
   };
 
+  const handleDeleteInventory = async (id: string) => {
+    const ok = await apiDeleteInventory(id);
+    if (ok) {
+      await fetchInventories(pagination.pageIndex, pagination.pageSize);
+    }
+    return ok;
+  };
+
   return {
     table,
     handleSearchChange,
@@ -349,5 +415,7 @@ export default function UseInventoryManagement() {
     handleCategoryFilter,
     setIsEditMode,
     setEditingInventoryId,
+    isDetailMode,
+    setIsDetailMode,
   };
 }

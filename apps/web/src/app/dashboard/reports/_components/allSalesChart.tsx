@@ -1,25 +1,25 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import {
-  ChartContainer,
   ChartConfig,
-  ChartTooltip,
-  ChartTooltipContent,
+  ChartContainer,
   ChartLegend,
   ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
 } from '@/components/ui/chart';
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectGroup,
-  SelectLabel,
   SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import reportManagementAPI from '@/lib/apis/dashboard/reportManagement.api';
+import { useEffect } from 'react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import AllSalesChartSkeleton from './allSalesChartSkeleton';
 
 interface AllSalesChartProps {

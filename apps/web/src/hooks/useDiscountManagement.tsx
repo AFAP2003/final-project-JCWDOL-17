@@ -1,5 +1,24 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { discountManagementAPI } from '@/lib/apis/dashboard/discountManagement.api';
+import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 import { Discount } from '@/lib/interfaces/discountManagement.interface';
+import { getValidationSchema } from '@/validations/discount.validation';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -11,18 +30,10 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
-import * as Yup from 'yup';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-} from '@/components/ui/dropdown-menu';
+
+import { useFormik } from 'formik';
 import { MoreHorizontal } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { useFormik } from 'formik';
-import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
-import { getValidationSchema } from '@/validations/discount.validation';
 export default function UseDiscountManagement() {
   const {
     discounts,
@@ -30,7 +41,7 @@ export default function UseDiscountManagement() {
     fetchDiscounts: apiFetchDiscounts,
     handleCreateDiscount,
     handleUpdateDiscount,
-    handleDeleteDiscount,
+    handleDeleteDiscount: apiDeleteDiscount,
   } = discountManagementAPI();
   const { stores, fetchStores } = storeManagementAPI();
   const [globalFilter, setGlobalFilter] = useState('');
@@ -44,6 +55,7 @@ export default function UseDiscountManagement() {
   );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
+  const [isDetailMode, setIsDetailMode] = useState(false);
 
   const fetchDiscounts = useCallback(
     (pageIndex: number, pageSize: number) => {
@@ -85,10 +97,10 @@ export default function UseDiscountManagement() {
       accessorKey: 'name',
       header: 'Nama',
     },
-    {
-      accessorKey: 'description',
-      header: 'Deskripsi',
-    },
+    // {
+    //   accessorKey: 'description',
+    //   header: 'Deskripsi',
+    // },
     {
       id: 'tipe_diskon',
       header: 'Tipe Diskon',
@@ -165,9 +177,27 @@ export default function UseDiscountManagement() {
         const start = toDateOnly(new Date(row.startDate));
         const end = row.endDate ? toDateOnly(new Date(row.endDate)) : null;
 
-        if (start > today) return 'Inaktif';
-        if (end && end < today) return 'Kadaluwarsa';
-        return 'Aktif';
+        let status = '';
+        if (start > today) {
+          status = 'Inaktif';
+        } else if (end && end < today) {
+          status = 'Kadaluwarsa';
+        } else {
+          status = 'Aktif';
+        }
+        return (
+          <Badge
+            variant={
+              status === 'Aktif'
+                ? 'default'
+                : status === 'Inaktif'
+                  ? 'secondary'
+                  : 'destructive'
+            }
+          >
+            {status}
+          </Badge>
+        );
       },
       cell: ({ getValue }) => getValue<string>(),
       filterFn: 'equalsString',
@@ -177,56 +207,113 @@ export default function UseDiscountManagement() {
       header: 'Aksi',
       cell: ({ row }) => {
         const discount = row.original;
+        const [isAlertOpen, setIsAlertOpen] = useState(false);
 
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <MoreHorizontal />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuCheckboxItem
-                onClick={() => {
-                  setIsEditMode(true);
-                  setEditingDiscountId(discount.id);
-                  setDialogOpen(true);
-                  formik.setValues({
-                    nama: discount.name,
-                    deskripsi: discount.description,
-                    toko: discount.storeId ?? 'all',
-                    tipe_diskon:
-                      discount.type === 'NO_RULES_DISCOUNT'
-                        ? 'diskon_normal'
-                        : discount.type === 'WITH_MAX_PRICE'
-                          ? 'diskon_syarat'
-                          : discount.type === 'BUY_X_GET_Y'
-                            ? 'bogo'
-                            : '',
-                    tipe_nilai_diskon: discount.isPercentage
-                      ? 'percentage'
-                      : 'nominal',
-                    nilai_diskon: String(discount.value),
-                    min_pembelian: String(discount.minPurchase ?? ''),
-                    potongan_maks: String(discount.maxDiscount ?? ''),
-                    // ensure dates are YYYY-MM-DD for your <input type="date">
-                    tanggal_mulai: discount.startDate.split('T')[0],
-                    kadaluwarsa: discount.endDate?.split('T')[0] ?? '',
-                  });
-                }}
-              >
-                Edit
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                className="text-red-600"
-                onClick={() => {
-                  /* your delete handler here, e.g.
-                 handleDeleteDiscount(row.original.id!);
-              */
-                }}
-              >
-                Delete
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <MoreHorizontal />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuCheckboxItem
+                  onClick={() => {
+                    setIsEditMode(true);
+                    setEditingDiscountId(discount.id);
+                    setDialogOpen(true);
+                    formik.setValues({
+                      nama: discount.name,
+                      deskripsi: discount.description,
+                      toko: discount.storeId ?? 'all',
+                      tipe_diskon:
+                        discount.type === 'NO_RULES_DISCOUNT'
+                          ? 'diskon_normal'
+                          : discount.type === 'WITH_MAX_PRICE'
+                            ? 'diskon_syarat'
+                            : discount.type === 'BUY_X_GET_Y'
+                              ? 'bogo'
+                              : '',
+                      tipe_nilai_diskon: discount.isPercentage
+                        ? 'percentage'
+                        : 'nominal',
+                      nilai_diskon: String(discount.value),
+                      min_pembelian: String(discount.minPurchase ?? ''),
+                      potongan_maks: String(discount.maxDiscount ?? ''),
+                      // ensure dates are YYYY-MM-DD for your <input type="date">
+                      tanggal_mulai: discount.startDate.split('T')[0],
+                      kadaluwarsa: discount.endDate?.split('T')[0] ?? '',
+                    });
+                  }}
+                >
+                  Edit
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  onCheckedChange={() => {
+                    setIsEditMode(false);
+                    setIsDetailMode(true);
+                    formik.setValues({
+                      nama: discount.name,
+                      deskripsi: discount.description,
+                      toko: discount.storeId ?? 'all',
+                      tipe_diskon:
+                        discount.type === 'NO_RULES_DISCOUNT'
+                          ? 'diskon_normal'
+                          : discount.type === 'WITH_MAX_PRICE'
+                            ? 'diskon_syarat'
+                            : discount.type === 'BUY_X_GET_Y'
+                              ? 'bogo'
+                              : '',
+                      tipe_nilai_diskon: discount.isPercentage
+                        ? 'percentage'
+                        : 'nominal',
+                      nilai_diskon: String(discount.value),
+                      min_pembelian: String(discount.minPurchase ?? ''),
+                      potongan_maks: String(discount.maxDiscount ?? ''),
+                      // ensure dates are YYYY-MM-DD for your <input type="date">
+                      tanggal_mulai: discount.startDate.split('T')[0],
+                      kadaluwarsa: discount.endDate?.split('T')[0] ?? '',
+                    });
+
+                    setDialogOpen(true);
+                  }}
+                >
+                  Lihat Detail
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  className="text-red-600"
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      // Close dropdown and open alert manually
+                      setTimeout(() => setIsAlertOpen(true), 100);
+                    }
+                  }}
+                >
+                  Delete
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Hapus diskon?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Apakah anda yakin untuk menghapus diskon dengan nama "
+                    <b>{discount.name}</b>" secara permanen.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      handleDeleteDiscount(discount.id);
+                    }}
+                  >
+                    Hapus
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         );
       },
     },
@@ -235,6 +322,7 @@ export default function UseDiscountManagement() {
   const formik = useFormik({
     initialValues: {
       nama: '',
+      toko: '',
       deskripsi: '',
       tipe_diskon: '',
       tipe_nilai_diskon: '',
@@ -242,12 +330,23 @@ export default function UseDiscountManagement() {
       min_pembelian: '',
       potongan_maks: '',
       tanggal_mulai: '',
-      tanggal_kadaluwarsa: '',
+      kadaluwarsa: '',
     },
     validationSchema: getValidationSchema(),
-    onSubmit: (vals, { resetForm }) => {
-      console.log('CREATE DISCOUNT', vals);
-      resetForm();
+    onSubmit: async (values, { resetForm }) => {
+      let success = false;
+
+      if (isEditMode && editingDiscountId) {
+        success = await handleUpdateDiscount(editingDiscountId, values);
+      } else {
+        success = await handleCreateDiscount(values);
+      }
+
+      if (success) {
+        resetForm();
+        setDialogOpen(false);
+        fetchDiscounts(pagination.pageIndex, pagination.pageSize);
+      }
     },
   });
 
@@ -318,6 +417,14 @@ export default function UseDiscountManagement() {
     else table.getColumn('tipe_nilai_diskon')?.setFilterValue(value);
   };
 
+  const handleDeleteDiscount = async (id: string) => {
+    const ok = await apiDeleteDiscount(id);
+    if (ok) {
+      await fetchDiscounts(pagination.pageIndex, pagination.pageSize);
+    }
+    return ok;
+  };
+
   return {
     handleSearchChange,
     handleStatusFilter,
@@ -345,5 +452,7 @@ export default function UseDiscountManagement() {
     handleTypeValueFilter,
     setIsEditMode,
     setEditingDiscountId,
+    isDetailMode,
+    setIsDetailMode,
   };
 }

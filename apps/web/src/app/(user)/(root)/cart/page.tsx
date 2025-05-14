@@ -1,5 +1,7 @@
 'use client';
 
+import MaxWidthWrapper from '@/components/max-width-wrapper';
+import { CartSkeleton } from '@/components/skeleton/cart-skeleton';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -8,15 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-
 import { Separator } from '@/components/ui/separator';
+import { useCart } from '@/context/cart-provider';
+import { toast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-import MaxWidthWrapper from '@/components/max-width-wrapper';
-import { CartSkeleton } from '@/components/skeleton/cart-skeleton';
-import { useCart } from '@/context/cart-provider';
-import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 

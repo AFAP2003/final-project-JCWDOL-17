@@ -2,10 +2,10 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -19,13 +19,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MyFormValues } from '@/validations/user.validation';
-import { Plus } from 'lucide-react';
-import { FormikProps } from 'formik';
+import UseInventoryManagement from '@/hooks/useInventoryManagement';
 import { Product } from '@/lib/interfaces/productManagement.interface';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
+import { FormikProps } from 'formik';
+import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import UseInventoryManagement from '@/hooks/useInventoryManagement';
 
 interface InventoryManagementFormProps {
   dialogOpen: boolean;
@@ -36,6 +35,8 @@ interface InventoryManagementFormProps {
   stores: Store[];
   setIsEditMode: (edit: boolean) => void;
   setEditingInventoryId: (id: string | null) => void;
+  isDetailMode: boolean;
+  setIsDetailMode: (detail: boolean) => void;
 }
 export default function InventoryManagementForm({
   dialogOpen,
@@ -46,6 +47,8 @@ export default function InventoryManagementForm({
   isEditMode,
   setIsEditMode,
   setEditingInventoryId,
+  isDetailMode,
+  setIsDetailMode,
 }: InventoryManagementFormProps) {
   const { inventories } = UseInventoryManagement();
   const [activeTab, setActiveTab] = useState<'tambah' | 'kurangi'>('tambah');
@@ -80,6 +83,7 @@ export default function InventoryManagementForm({
     inventories,
   ]);
 
+  const disabled = isDetailMode;
   return (
     <Dialog
       open={dialogOpen}
@@ -87,11 +91,13 @@ export default function InventoryManagementForm({
         // if opening fresh (not edit), reset all fields
         if (open && !isEditMode) {
           formik.resetForm();
+          setIsDetailMode(false);
         }
         // closing always clears edit state
         if (!open) {
           setIsEditMode(false);
           setEditingInventoryId(null);
+          setIsDetailMode(false);
         }
         setDialogOpen(open);
       }}
@@ -105,9 +111,13 @@ export default function InventoryManagementForm({
       <DialogContent className="max-h-[90vh] sm:max-h-full overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditMode ? 'Edit Stok' : 'Perbarui Stok'}
+            {isDetailMode
+              ? 'Lihat Stok'
+              : isEditMode
+                ? 'Edit Stok'
+                : 'Perbarui Stok'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className={isDetailMode ? 'hidden' : 'block'}>
             {isEditMode
               ? 'Isi detail di bawah ini untuk edit stok.'
               : 'Isi detail di bawah ini untuk perbarui stok.'}
@@ -122,6 +132,7 @@ export default function InventoryManagementForm({
               <Select
                 value={formik.values.produk || undefined}
                 onValueChange={(v) => formik.setFieldValue('produk', v)}
+                disabled={disabled}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih produk" />
@@ -150,6 +161,7 @@ export default function InventoryManagementForm({
               <Select
                 value={formik.values.toko || undefined}
                 onValueChange={(v) => formik.setFieldValue('toko', v)}
+                disabled={disabled}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih Toko" />
@@ -172,11 +184,14 @@ export default function InventoryManagementForm({
               )}
             </div>
             <Tabs
+              className={isDetailMode ? 'hidden' : 'block'}
               defaultValue="tambah"
               value={formik.values.mode}
               onValueChange={(newMode) => {
                 formik.setFieldValue('mode', newMode); // ← write back into Formik
-                // optionally clear the opposite field:
+
+                setActiveTab(newMode as 'tambah' | 'kurangi');
+
                 if (newMode === 'tambah') {
                   formik.setFieldValue('kurangi', '');
                 } else {
@@ -241,7 +256,7 @@ export default function InventoryManagementForm({
                 disabled
               />
             </div>
-            <div>
+            <div className={isDetailMode ? 'hidden' : 'block'}>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Stok Baru
               </label>
@@ -263,6 +278,7 @@ export default function InventoryManagementForm({
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 placeholder="Masukkan Minimal Stok"
+                disabled={disabled}
               />
               {formik.touched.minimal && formik.errors.minimal && (
                 <p className="text-xs text-red-600">
@@ -289,10 +305,11 @@ export default function InventoryManagementForm({
                 formik.resetForm();
                 setDialogOpen(false);
               }}
+              className={isDetailMode ? 'hidden' : 'block'}
             >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" className={isDetailMode ? 'hidden' : 'block'}>
               {isEditMode ? 'Simpan Perubahan' : 'Perbarui Stok'}
             </Button>
           </DialogFooter>

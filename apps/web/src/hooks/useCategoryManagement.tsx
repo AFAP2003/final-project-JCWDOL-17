@@ -1,14 +1,21 @@
-import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useFormik } from 'formik';
-import { MoreHorizontal } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
   DropdownMenuCheckboxItem,
-  DropdownMenuSeparator,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
+import { getValidationSchema } from '@/validations/category.validation';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -20,8 +27,9 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
-import { getValidationSchema } from '@/validations/category.validation';
-import { toast } from '@/hooks/use-toast';
+import { useFormik } from 'formik';
+import { MoreHorizontal } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 export function useCategoryManagement() {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -34,6 +42,7 @@ export function useCategoryManagement() {
   );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
+  const [isDetailMode, setIsDetailMode] = useState(false);
   const {
     categories,
     isLoading,
@@ -63,7 +72,7 @@ export function useCategoryManagement() {
     initialValues: {
       nama: '',
       deskripsi: '',
-      gambar: 'agraegae',
+      gambar: 'random',
       isActive: true,
     },
     validationSchema: getValidationSchema(),
@@ -91,41 +100,81 @@ export function useCategoryManagement() {
         header: 'Aksi',
         cell: ({ row }: any) => {
           const category = row.original;
+          const [isAlertOpen, setIsAlertOpen] = useState(false);
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
-                <MoreHorizontal className="w-5 h-5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
-                <DropdownMenuCheckboxItem
-                  onCheckedChange={() => {
-                    setIsEditMode(true);
-                    setEditingCategoryId(category.id);
-                    setDialogOpen(true);
-                    formik.setValues({
-                      gambar: category.image || '',
-                      nama: category.name || '',
-                      isActive: category.isActive || '',
-                      deskripsi: category.description || '',
-                    });
-                  }}
-                >
-                  Edit
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem onCheckedChange={() => {}}>
-                  Lihat Detail
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  className="text-red-600"
-                  onCheckedChange={() => {
-                    handleDeleteCategory(category.id);
-                  }}
-                >
-                  Delete
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-sm font-semibold text-gray-600">
+                  <MoreHorizontal className="w-5 h-5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
+                  <DropdownMenuCheckboxItem
+                    onCheckedChange={() => {
+                      setIsEditMode(true);
+                      setEditingCategoryId(category.id);
+                      setDialogOpen(true);
+                      formik.setValues({
+                        gambar: category.image || '',
+                        nama: category.name || '',
+                        isActive: category.isActive || '',
+                        deskripsi: category.description || '',
+                      });
+                    }}
+                  >
+                    Edit
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    onCheckedChange={() => {
+                      setIsEditMode(false);
+                      setIsDetailMode(true);
+                      formik.setValues({
+                        gambar: category.image || '',
+                        nama: category.name || '',
+                        isActive: category.isActive || '',
+                        deskripsi: category.description || '',
+                      });
+
+                      setDialogOpen(true);
+                    }}
+                  >
+                    Lihat Detail
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    className="text-red-600"
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        // Close dropdown and open alert manually
+                        setTimeout(() => setIsAlertOpen(true), 100);
+                      }
+                    }}
+                  >
+                    Delete
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Hapus kategori?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Apakah anda yakin untuk menghapus kategori dengan nama "
+                      <b>{category.name}</b>" secara permanen.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        handleDeleteCategory(category.id);
+                      }}
+                    >
+                      Hapus
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
           );
         },
       },
@@ -195,5 +244,7 @@ export function useCategoryManagement() {
     dialogOpen,
     isEditMode,
     setDialogOpen,
+    isDetailMode,
+    setIsDetailMode,
   };
 }
