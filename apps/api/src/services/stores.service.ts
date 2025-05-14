@@ -1,126 +1,90 @@
-import { AddressCreateDTO } from '@/dtos/address-create.dto';
-import { AddressUpdateDTO } from '@/dtos/address-update.dto';
+import { StoreChangeStatusDTO } from '@/dtos/store-chnage-status.dto';
+import { StoreCreateDTO } from '@/dtos/store-create-dto';
 import { StoreGetAllDTO } from '@/dtos/store-get-all.dto';
-import { BadRequestError, NotFoundError } from '@/errors';
+import { StoreGetByIdDTO } from '@/dtos/store-get-by-id.dto';
+import { StoreUpdateDTO } from '@/dtos/store-update.dto';
+import { NotFoundError } from '@/errors';
 import { calculateMetadataPagination } from '@/helpers/pagination';
-import { getSession } from '@/helpers/session-helper';
 import { prismaclient } from '@/prisma';
 import { Prisma, Store, User } from '@prisma/client';
-import { Request } from 'express';
 import { z } from 'zod';
-import { LocationService } from './location.service';
 
 export class StoreService {
-  private locationService = new LocationService();
-
-  createStore = async (dto: z.infer<typeof AddressCreateDTO>, req: Request) => {
-    const session = getSession(req);
-
-    const count = await prismaclient.address.count({
-      where: {
-        userId: session.user.id,
-      },
-    });
-    if (count >= 100) {
-      throw new BadRequestError(
-        'Address limit exceeded: maximum of 100 records allowed',
-      );
-    }
-
-    // const province = await this.locationService.provinceGetByName(dto.province);
-    // const city = await this.locationService.cityGetByName(dto.city);
-
-    if (dto.isPrimary) {
-      const oldDefault = await prismaclient.address.findUnique({
-        where: {
-          isDefault: true,
-          userId: session.user.id,
-        },
-      });
-      if (oldDefault) {
-        await prismaclient.address.update({
-          where: {
-            id: oldDefault.id,
-          },
-          data: {
-            isDefault: null,
-          },
-        });
-      }
-    }
-
-    const address = await prismaclient.address.create({
+  createStore = async (dto: z.infer<typeof StoreCreateDTO>) => {
+    const store = await prismaclient.store.create({
       data: {
-        label: dto.label,
+        name: dto.name,
         address: dto.address,
-        province: dto.province,
         city: dto.city,
+        province: dto.province,
         postalCode: dto.postalCode,
-        isDefault: dto.isPrimary ? true : null,
         latitude: dto.latitude,
         longitude: dto.longitude,
-        phone: dto.phone,
-        recipient: dto.recipient,
-        userId: session.user.id,
+        maxDistance: dto.maxDistance,
+        adminId: dto.adminId ? dto.adminId : null,
       },
     });
 
-    return { address };
+    if (dto.adminId) {
+      await prismaclient.user.update({
+        where: {
+          id: dto.adminId,
+        },
+        data: {
+          storeId: store.id,
+        },
+      });
+    }
+    return store;
   };
 
-  updateStore = async (dto: z.infer<typeof AddressUpdateDTO>, req: Request) => {
-    const session = getSession(req);
-
-    const address = await prismaclient.address.findUnique({
+  updateStore = async (dto: z.infer<typeof StoreUpdateDTO>) => {
+    const store = await prismaclient.store.findUnique({
       where: {
-        id: dto.addressId,
-        userId: session.user.id,
+        id: dto.storeId,
       },
     });
-    if (!address) throw new NotFoundError();
+    if (!store) throw new NotFoundError();
 
-    if (dto.isPrimary) {
-      const oldDefault = await prismaclient.address.findUnique({
-        where: {
-          isDefault: true,
-          userId: session.user.id,
-        },
-      });
-      if (oldDefault && oldDefault.id !== address.id) {
-        await prismaclient.address.update({
-          where: {
-            id: oldDefault.id,
-          },
-          data: {
-            isDefault: null,
-          },
-        });
-      }
-    }
-
-    // const province = await this.locationService.provinceGetByName(dto.province);
-    // const city = await this.locationService.cityGetByName(dto.city);
-
-    const updated = await prismaclient.address.update({
+    const updatedStore = await prismaclient.store.update({
       where: {
-        id: dto.addressId,
-        userId: session.user.id,
+        id: store.id,
       },
       data: {
-        label: dto.label,
+        name: dto.name,
         address: dto.address,
-        province: dto.province,
         city: dto.city,
+        province: dto.province,
         postalCode: dto.postalCode,
-        isDefault: dto.isPrimary ? true : null,
         latitude: dto.latitude,
         longitude: dto.longitude,
-        phone: dto.phone,
-        recipient: dto.recipient,
+        maxDistance: dto.maxDistance,
+        adminId: dto.adminId ? dto.adminId : null,
       },
     });
 
-    return { address: updated };
+    if (store.adminId) {
+      await prismaclient.user.update({
+        where: {
+          id: store.adminId,
+        },
+        data: {
+          storeId: null,
+        },
+      });
+    }
+    if (dto.adminId) {
+      await prismaclient.user.update({
+        where: {
+          id: dto.adminId,
+        },
+        data: {
+          storeId: updatedStore.id,
+        },
+      });
+    }
+
+    return updatedStore;
   };
 
   getAllStore = async (dto: z.infer<typeof StoreGetAllDTO>) => {
@@ -180,10 +144,9 @@ export class StoreService {
       a."storeId" as "admin_storeId"
     FROM "Store" as s 
     LEFT JOIN "User" a ON s."adminId" = a."id"
-    WHERE
-      s."isActive" = true
+    WHERE true
       ${searchterm}
-    ORDER BY a."createdAt" DESC
+    ORDER BY s."createdAt" DESC
     OFFSET ${(dto.page - 1) * dto.pageSize}
     LIMIT ${dto.pageSize}`;
 
@@ -246,6 +209,17 @@ export class StoreService {
 
     const stores = Array.from(storeMap.values());
 
+    const activeStore = await prismaclient.store.count({
+      where: {
+        isActive: true,
+      },
+    });
+    const inactiveStore = await prismaclient.store.count({
+      where: {
+        isActive: false,
+      },
+    });
+
     const metadata = calculateMetadataPagination({
       page: dto.page,
       pageSize: dto.pageSize,
@@ -254,7 +228,43 @@ export class StoreService {
 
     return {
       stores,
+      extension: {
+        totalStore: activeStore + inactiveStore,
+        activeStore: activeStore,
+        inactiveStore: inactiveStore,
+      },
       metadata,
     };
+  };
+  changeStatus = async (dto: z.infer<typeof StoreChangeStatusDTO>) => {
+    const store = await prismaclient.store.findUnique({
+      where: {
+        id: dto.storeId,
+      },
+    });
+    if (!store) throw new NotFoundError();
+
+    return await prismaclient.store.update({
+      where: {
+        id: store.id,
+      },
+      data: {
+        isActive: dto.status,
+      },
+    });
+  };
+
+  getById = async (dto: z.infer<typeof StoreGetByIdDTO>) => {
+    const store = await prismaclient.store.findUnique({
+      where: {
+        id: dto.storeId,
+      },
+      include: {
+        admin: true,
+      },
+    });
+
+    if (!store) throw new NotFoundError();
+    return store;
   };
 }

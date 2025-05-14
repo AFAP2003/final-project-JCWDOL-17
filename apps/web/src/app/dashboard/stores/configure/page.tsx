@@ -2,12 +2,11 @@ import Content from './content';
 
 type Props = {
   searchParams: {
-    query?: string;
-    page?: string;
+    storeId: string;
   };
 };
 
-export default function StoresPage({ searchParams }: Props) {
+export default function ConfigureStorePage({ searchParams }: Props) {
   return (
     <div>
       <div className="mb-12 space-y-1 max-sm:px-6 max-sm:py-6">
@@ -20,7 +19,7 @@ export default function StoresPage({ searchParams }: Props) {
       </div>
 
       <div className="max-sm:px-6">
-        <Content />
+        <Content storeId={searchParams.storeId} />
       </div>
     </div>
   );

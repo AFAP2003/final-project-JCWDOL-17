@@ -161,4 +161,17 @@ export class UserController {
       throw error;
     }
   };
+
+  getAvailableAdmin = async (req: Request, res: Response) => {
+    try {
+      const admins = await this.userService.getAvailableAdmin();
+      res.json(admins);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
 }

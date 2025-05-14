@@ -1,9 +1,15 @@
 import SigninForm from './form';
 
-export default function SigninPage() {
+type Props = {
+  searchParams: {
+    role?: string;
+  };
+};
+
+export default function SigninPage({ searchParams }: Props) {
   return (
     <div className="size-full">
-      <SigninForm />
+      <SigninForm role={searchParams.role} />
     </div>
   );
 }

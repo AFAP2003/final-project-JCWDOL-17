@@ -68,4 +68,14 @@ export class UserService {
     });
     return { user: updated };
   };
+
+  getAvailableAdmin = async () => {
+    const admins = prismaclient.user.findMany({
+      where: {
+        role: 'ADMIN',
+        storeId: null,
+      },
+    });
+    return admins;
+  };
 }

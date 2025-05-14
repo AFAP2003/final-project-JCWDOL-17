@@ -1,13 +1,12 @@
+import { notFound } from 'next/navigation';
 import Content from './content';
 
 type Props = {
-  searchParams: {
-    query?: string;
-    page?: string;
-  };
+  params: { storeId: string };
 };
 
-export default function StoresPage({ searchParams }: Props) {
+export default function StoreDetailPage({ params }: Props) {
+  if (!params.storeId) notFound();
   return (
     <div>
       <div className="mb-12 space-y-1 max-sm:px-6 max-sm:py-6">
@@ -20,7 +19,7 @@ export default function StoresPage({ searchParams }: Props) {
       </div>
 
       <div className="max-sm:px-6">
-        <Content />
+        <Content storeId={params.storeId} />
       </div>
     </div>
   );

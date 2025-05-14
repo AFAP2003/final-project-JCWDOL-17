@@ -77,16 +77,28 @@ async function SEED_STORE_ADMIN() {
       name: 'The Batman',
     },
     {
-      email: 'themanbehindyou.gogrocery@mailinator.com',
-      name: 'The Man Behind You',
+      email: 'sherri.gogrocery@mailinator.com',
+      name: 'Sherri Hammond',
     },
     {
       email: 'thehash.gogrocery@mailinator.com',
       name: 'The Hash Slinging Slasher',
     },
     {
-      email: 'thecat.gogrocery@mailinator.com',
-      name: 'The Cat At Home',
+      email: 'jeromy.gogrocery@mailinator.com',
+      name: 'Jeromy Gibson',
+    },
+    {
+      email: 'tamera.gogrocery@mailinator.com',
+      name: 'Tamera Odonnell',
+    },
+    {
+      email: 'bert.gogrocery@mailinator.com',
+      name: 'Bert Mcneil',
+    },
+    {
+      email: 'arthur.gogrocery@mailinator.com',
+      name: 'Arthur Wallace',
     },
   ];
 
@@ -1082,6 +1094,15 @@ async function SEED_STORES(admins: User[]) {
         longitude: store.longitude,
         maxDistance: store.maxDistance,
         adminId: admin.id,
+      },
+    });
+
+    await prisma.user.update({
+      where: {
+        id: admin.id,
+      },
+      data: {
+        storeId: newstore.id,
       },
     });
 

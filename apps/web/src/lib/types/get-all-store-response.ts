@@ -1,5 +1,10 @@
 export type GetAllStoreResponse = {
   stores: Store[];
+  extension: {
+    totalStore: number;
+    activeStore: number;
+    inactiveStore: number;
+  };
   metadata: Metadata;
 };
 
@@ -18,7 +23,7 @@ type Store = {
   createdAt: string; // or Date if parsed
   updatedAt: string; // or Date if parsed
   adminId: string;
-  admin: Admin;
+  admin?: Admin;
 };
 
 type Admin = {

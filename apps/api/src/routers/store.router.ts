@@ -20,6 +20,30 @@ export class StoreRouter {
       withRole(['SUPER']),
       asynchandler(this.controller.getAll),
     );
+    this.router.post(
+      '/',
+      withAuthentication,
+      withRole(['SUPER']),
+      asynchandler(this.controller.create),
+    );
+    this.router.get(
+      '/:storeId',
+      withAuthentication,
+      withRole(['SUPER']),
+      asynchandler(this.controller.getById),
+    );
+    this.router.put(
+      '/:storeId',
+      withAuthentication,
+      withRole(['SUPER']),
+      asynchandler(this.controller.updateStore),
+    );
+    this.router.patch(
+      '/status',
+      withAuthentication,
+      withRole(['SUPER']),
+      asynchandler(this.controller.changeStatus),
+    );
   }
 
   getRouter(): Router {

@@ -27,6 +27,7 @@ import 'swiper/css/bundle';
 import { Mousewheel, Scrollbar } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { useMediaQuery } from 'usehooks-ts';
+import ContentSkeleton from './content-skeleton';
 
 type Props = {
   productId: string;
@@ -86,6 +87,10 @@ export default function ProductInfo({ productId }: Props) {
         'Sorry we have problem in our server, please try again later',
       variant: 'destructive',
     });
+  }
+
+  if (isGetProductPending) {
+    return <ContentSkeleton />;
   }
 
   const discount = data?.discounts.at(0);

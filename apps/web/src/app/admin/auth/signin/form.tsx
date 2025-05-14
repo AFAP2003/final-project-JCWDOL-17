@@ -53,10 +53,18 @@ const formSchema = z.object({
     ),
 });
 
-export default function SigninForm() {
+type Props = {
+  role?: string;
+};
+
+export default function SigninForm(props: Props) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { cooldownTime, rawCooldownTime, restartCooldown } = useCooldown(120);
-  const [loginRole, setLoginRole] = useState<'ADMIN' | 'SUPER'>('ADMIN');
+  const [loginRole, setLoginRole] = useState<'ADMIN' | 'SUPER'>(() => {
+    if (props.role === 'super') return 'SUPER';
+    if (props.role === 'admin') return 'ADMIN';
+    return 'ADMIN';
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -161,7 +169,7 @@ export function Signin({
       <div className="w-full max-w-md overflow-hidden">
         {/* Header */}
         <CardHeader className="space-y-2 pb-6">
-          <AuthLogo />
+          <AuthLogo shoudLink={false} />
 
           <CardDescription className="">
             Sign in as {loginRole === 'ADMIN' ? 'super admin' : 'admin store'}?{' '}
@@ -175,7 +183,7 @@ export function Signin({
               }}
               className="font-medium text-primary underline-offset-4 underline"
             >
-              Here
+              Click Here
             </button>
           </CardDescription>
         </CardHeader>

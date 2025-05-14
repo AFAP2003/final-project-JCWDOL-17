@@ -79,13 +79,13 @@ export default function Confirm({ token }: Props) {
       <div className="w-full max-w-md relative overflow-hidden">
         {/* Header */}
         <CardHeader className="space-y-2 pb-6">
-          <AuthLogo />
+          <AuthLogo shoudLink={false} />
 
           <CardTitle className="text-2xl font-bold">
             Confirm My Sign In
           </CardTitle>
           <CardDescription className="text-sm">
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit.
+            Confirm your signin and start manage your store.
           </CardDescription>
         </CardHeader>
 

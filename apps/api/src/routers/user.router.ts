@@ -1,5 +1,5 @@
 import { UserController } from '@/controllers/user.controller';
-import { withAuthentication } from '@/middlewares/auth.middleware';
+import { withAuthentication, withRole } from '@/middlewares/auth.middleware';
 import { withImageUpload } from '@/middlewares/media.middleware';
 import { Router } from 'express';
 import asynchandler from 'express-async-handler';
@@ -55,6 +55,13 @@ export class UserRouter {
       '/address/:addressId',
       withAuthentication,
       asynchandler(this.controller.deleteAddress),
+    );
+
+    this.router.get(
+      '/available-admin',
+      withAuthentication,
+      withRole(['SUPER']),
+      asynchandler(this.controller.getAvailableAdmin),
     );
   }
 
