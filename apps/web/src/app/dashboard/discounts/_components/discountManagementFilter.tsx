@@ -45,7 +45,7 @@ export default function DiscountManagementFilter({
             placeholder="Cari..."
             value={globalFilter}
             onChange={handleSearchChange}
-            className="h-9 w-[200px]"
+            className="h-9 w-[140px] sm:w-[200px]"
           />
         </div>
 

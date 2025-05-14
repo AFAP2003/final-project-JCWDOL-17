@@ -12,9 +12,11 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
+import { useSession } from '@/lib/auth/client';
 import { getValidationSchema } from '@/validations/category.validation';
 import {
   ColumnDef,
@@ -43,6 +45,9 @@ export function useCategoryManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
   const [isDetailMode, setIsDetailMode] = useState(false);
+  const { data: session, isPending: isSessionLoading } = useSession();
+  const user = session?.user;
+
   const {
     categories,
     isLoading,
@@ -109,23 +114,26 @@ export function useCategoryManagement() {
                   <MoreHorizontal className="w-5 h-5" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
-                  <DropdownMenuCheckboxItem
-                    onCheckedChange={() => {
-                      setIsEditMode(true);
-                      setEditingCategoryId(category.id);
-                      setDialogOpen(true);
-                      formik.setValues({
-                        gambar: category.image || '',
-                        nama: category.name || '',
-                        isActive: category.isActive || '',
-                        deskripsi: category.description || '',
-                      });
-                    }}
-                  >
-                    Edit
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    onCheckedChange={() => {
+                  {user.role == 'SUPER' && (
+                    <DropdownMenuCheckboxItem
+                      onCheckedChange={() => {
+                        setIsEditMode(true);
+                        setEditingCategoryId(category.id);
+                        setDialogOpen(true);
+                        formik.setValues({
+                          gambar: category.image || '',
+                          nama: category.name || '',
+                          isActive: category.isActive || '',
+                          deskripsi: category.description || '',
+                        });
+                      }}
+                    >
+                      Edit
+                    </DropdownMenuCheckboxItem>
+                  )}
+
+                  <DropdownMenuItem
+                    onSelect={(e) => {
                       setIsEditMode(false);
                       setIsDetailMode(true);
                       formik.setValues({
@@ -139,18 +147,21 @@ export function useCategoryManagement() {
                     }}
                   >
                     Lihat Detail
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    className="text-red-600"
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        // Close dropdown and open alert manually
-                        setTimeout(() => setIsAlertOpen(true), 100);
-                      }
-                    }}
-                  >
-                    Delete
-                  </DropdownMenuCheckboxItem>
+                  </DropdownMenuItem>
+
+                  {user.role == 'SUPER' && (
+                    <DropdownMenuCheckboxItem
+                      className="text-red-600"
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          // Close dropdown and open alert manually
+                          setTimeout(() => setIsAlertOpen(true), 100);
+                        }
+                      }}
+                    >
+                      Delete
+                    </DropdownMenuCheckboxItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
               <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
@@ -179,7 +190,14 @@ export function useCategoryManagement() {
         },
       },
     ],
-    [],
+    [
+      user,
+      formik,
+      setIsEditMode,
+      setEditingCategoryId,
+      setIsDetailMode,
+      setDialogOpen,
+    ],
   );
 
   const table = useReactTable({
@@ -246,5 +264,7 @@ export function useCategoryManagement() {
     setDialogOpen,
     isDetailMode,
     setIsDetailMode,
+    isSessionLoading,
+    session,
   };
 }

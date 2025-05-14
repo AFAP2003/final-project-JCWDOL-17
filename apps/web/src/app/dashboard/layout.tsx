@@ -13,7 +13,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  
   return (
     <div className={`${fontInter.variable} antialiased font-inter flex`}>
       {/* Sidebar */}

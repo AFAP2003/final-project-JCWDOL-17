@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/cart-provider';
 import { toast } from '@/hooks/use-toast';

@@ -6,6 +6,7 @@
   import UserManagementForm from './_components/userManagementForm';
   import UserManagementPagination from './_components/userManagementPagination';
   import { useUserManagement } from '@/hooks/useUserManagement';
+import { useSession } from '@/lib/auth/client';
 
   export default function UserManagement() {
     const {
@@ -32,12 +33,15 @@
       isDetailMode,
       setIsDetailMode
     } = useUserManagement();
+    const {data:session,isPending} = useSession() 
 
     if (isLoading) {
       return <UserManagementskeleton />;
     }
-
-    return (
+    const {user} = session
+   return (
+  <>
+    {user.role === 'SUPER' && (
       <div className="min-h-screen w-full flex flex-col gap-6 p-4">
         <div className="flex justify-between items-center">
           <h1 className="sm:text-4xl text-2xl font-bold">Manajemen User</h1>
@@ -58,8 +62,6 @@
           />
         </div>
 
-        {/* Filter row */}
-
         <UserManagementFilter
           globalFilter={globalFilter}
           handleSearchChange={handleSearchChange}
@@ -67,8 +69,6 @@
           table={table}
           handleRoleFilter={handleRoleFilter}
         />
-
-        {/* Main table */}
 
         <UserManagementTable
           users={users}
@@ -94,9 +94,10 @@
           }}
         />
 
-        {/* Pagination */}
-
         <UserManagementPagination table={table} />
       </div>
-    );
-  }
+    )}
+  </>
+);
+
+}

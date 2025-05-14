@@ -1,7 +1,6 @@
 'use client';
 
 import { useSession } from '@/lib/auth/client';
-import { cn } from '@/lib/utils';
 import {
   BarChart3,
   Boxes,
@@ -13,6 +12,8 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Skeleton } from '../ui/skeleton';
 type SidebarProps = {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
@@ -62,17 +63,23 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   // For simplicity, let's not handle that in this snippet.
   // But you can add those event listeners if needed.
 
-  // const {user: session,isPending} = useSession()
-
-  //   const itemsToRender = sidebarItem.filter((item) => {
-  //   if (item.href === '/dashboard/users' && session.user.role === 'ADMIN') {
-  //     return false
-  //   }
-  //   return true
-  // })
-
   const { data: session, isPending } = useSession();
+  if (isPending) {
+    return <Skeleton className="h-9 w-36" />;
+  }
 
+  const { user } = session;
+  const router = useRouter();
+
+  console.log(user.role);
+  const itemsToRender = sidebarItem.filter((item) => {
+    if (item.href === '/dashboard/users' && user.role === 'ADMIN') {
+      return router.push('/dashboard/products');
+    } else if (item.href === '/dashboard/stores' && user.role === 'ADMIN') {
+      return false;
+    }
+    return true;
+  });
   return (
     <>
       {/* For small screens, position the sidebar absolutely and slide in/out */}
@@ -92,27 +99,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
           alt="app logo"
         />
         <div className="flex flex-col sm:gap-14 gap-6 mt-10">
-          {!isPending &&
-            sidebarItem.map((item) => {
-              const isToko = item.title === 'Toko';
-
-              return (
-                <Link
-                  key={item.title}
-                  className={cn(
-                    'flex gap-4 text-black hover:bg-gray-100 p-4 hover:rounded-md',
-                    isToko && session?.user.role === 'ADMIN' && 'hidden',
-                  )}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)} // close sidebar on nav
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.title}
-                </Link>
-              );
-            })}
-
-          {/* {itemsToRender.map((item) => (
+          {/* {sidebarItem.map((item) => (
             <Link
               key={item.title}
               className="flex gap-4 text-black hover:bg-gray-100 p-4 hover:rounded-md"
@@ -123,6 +110,18 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               {item.title}
             </Link>
           ))} */}
+
+          {itemsToRender.map((item) => (
+            <Link
+              key={item.title}
+              className="flex gap-4 text-black hover:bg-gray-100 p-4 hover:rounded-md"
+              href={item.href}
+              onClick={() => setSidebarOpen(false)} // close sidebar on nav
+            >
+              <item.icon className="w-5 h-5" />
+              {item.title}
+            </Link>
+          ))}
         </div>
       </div>
 

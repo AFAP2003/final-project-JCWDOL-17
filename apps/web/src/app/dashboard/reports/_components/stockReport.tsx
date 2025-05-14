@@ -1,4 +1,5 @@
 'use client';
+
 import { ChartConfig, ChartContainer } from '@/components/ui/chart';
 import {
   Select,

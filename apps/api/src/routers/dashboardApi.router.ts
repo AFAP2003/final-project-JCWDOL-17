@@ -8,6 +8,7 @@ import { storeManagementRouter } from './storeManagement.router';
 import { userManagementRouter } from './userManagement.router';
 
 const apiRouter = Router();
+
 apiRouter.use('/', storeManagementRouter());
 apiRouter.use('/', userManagementRouter());
 apiRouter.use('/', categoryManagementRouter());

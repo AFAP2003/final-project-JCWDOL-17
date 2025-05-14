@@ -1,5 +1,4 @@
 import { pagination } from '@/helpers/pagination';
-
 import { CreateProductDTO } from '@/interfaces/productManagement.interface';
 import { prismaclient } from '@/prisma';
 

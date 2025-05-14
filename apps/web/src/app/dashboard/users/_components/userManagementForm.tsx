@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { FormikProps } from 'formik';
-import { Eye, EyeOff, Loader2, Plus, RefreshCw, } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Plus, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,8 +39,8 @@ interface UserManagementFormProps {
   setPreviews: (any: any) => any[];
   mainIndex: number;
   setMainIndex: (index: number) => void;
-  isDetailMode:boolean
-  setIsDetailMode:(detail:boolean)=>void
+  isDetailMode: boolean;
+  setIsDetailMode: (detail: boolean) => void;
 }
 
 export default function UserManagementForm({
@@ -56,9 +56,8 @@ export default function UserManagementForm({
   mainIndex,
   setMainIndex,
   isDetailMode,
-  setIsDetailMode
+  setIsDetailMode,
 }: UserManagementFormProps) {
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.currentTarget.files?.[0];
     if (!file) return;
@@ -69,8 +68,6 @@ export default function UserManagementForm({
     setMainIndex(0);
   };
 
-  
-  
   const [showPassword, setShowPassword] = useState(false);
   const handleGeneratePassword = () => {
     const pwd = genRandomString().slice(0, 12);
@@ -79,7 +76,7 @@ export default function UserManagementForm({
       navigator.clipboard.writeText(pwd);
     } catch (_) {}
   };
-  const disabled=isDetailMode
+  const disabled = isDetailMode;
   return (
     <Dialog
       open={dialogOpen}
@@ -90,12 +87,12 @@ export default function UserManagementForm({
           formik.resetForm();
           setPreviews([]);
           setMainIndex(0);
-          setIsDetailMode(false)
+          setIsDetailMode(false);
         }
 
         if (!open) {
           setIsEditMode(false);
-          setIsDetailMode(false)
+          setIsDetailMode(false);
           setEditingUserId(null);
           setPreviews([]);
           setMainIndex(0);
@@ -108,14 +105,16 @@ export default function UserManagementForm({
           Tambah User
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] sm:max-h-full overflow-y-auto">
         <DialogHeader>
-          <DialogTitle >
-            {isDetailMode?'Lihat Detail User':isEditMode ? 'Edit User' : 'Tambah User Baru'}
+          <DialogTitle>
+            {isDetailMode
+              ? 'Lihat Detail User'
+              : isEditMode
+                ? 'Edit User'
+                : 'Tambah User Baru'}
           </DialogTitle>
-          <DialogDescription
-           className={`${disabled?'hidden':'block'}`}
-          >
+          <DialogDescription className={`${disabled ? 'hidden' : 'block'}`}>
             {isEditMode
               ? 'Tolong isi detail di bawah ini untuk edit user.'
               : 'Tolong isi detail di bawah ini untuk tambah user baru.'}
@@ -130,8 +129,8 @@ export default function UserManagementForm({
               name="image"
               type="file"
               accept=".jpg,.jpeg,.png,.gif"
-             onChange={handleFileChange}
-             disabled={disabled}
+              onChange={handleFileChange}
+              disabled={disabled}
             />
             {formik.touched.foto && formik.errors.foto && (
               <p className="text-xs text-red-600">{formik.errors.foto}</p>
@@ -140,25 +139,20 @@ export default function UserManagementForm({
               Format yang didukung: JPG, JPEG, PNG, GIF. Ukuran maks.: 1MB.
             </p>
 
-             <div className="flex gap-4 mt-4 flex-wrap">
-                  {previews.map((src, index) => (
-              <div
-                key={index}
-                className="relative w-[100px] h-[100px] border rounded overflow-hidden"
-              >
-                <img
-                  src={src}
-                  alt={`preview-${index}`}
-                  className="w-full h-full object-cover"
-                />
-            
-                
-            
-               
-              </div>
-            ))}
-            
-                  </div>
+            <div className="flex gap-4 mt-4 flex-wrap">
+              {previews.map((src, index) => (
+                <div
+                  key={index}
+                  className="relative w-[100px] h-[100px] border rounded overflow-hidden"
+                >
+                  <img
+                    src={src}
+                    alt={`preview-${index}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* toko */}
@@ -174,12 +168,41 @@ export default function UserManagementForm({
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               disabled={disabled}
-
             />
             {formik.touched.nama && formik.errors.nama && (
               <p className="text-xs text-red-600">{formik.errors.nama}</p>
             )}
           </div>
+
+          {isDetailMode && (
+  <div className="space-y-2">
+    <label className="text-sm font-medium">Jenis Kelamin</label>
+    <Input value={formik.values.gender} readOnly disabled />
+  </div>
+)}
+
+{isDetailMode && (
+  <div className="space-y-2">
+    <label className="text-sm font-medium">Telepon</label>
+    <Input value={formik.values.telepon} readOnly disabled />
+  </div>
+)}
+
+{isDetailMode && (
+  <div className="space-y-2">
+    <label className="text-sm font-medium">Tanggal Lahir</label>
+    <Input
+      value={
+        formik.values.tglLahir
+          ? new Date(formik.values.tglLahir).toLocaleDateString('id-ID')
+          : '-'
+      }
+      readOnly
+      disabled
+    />
+  </div>
+)}
+
 
           <div className="space-y-2">
             <label
@@ -197,7 +220,6 @@ export default function UserManagementForm({
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               disabled={disabled}
-
             />
             {formik.touched.email && formik.errors.email && (
               <p className="text-xs text-red-600">{formik.errors.email}</p>
@@ -208,7 +230,7 @@ export default function UserManagementForm({
             <div className="flex justify-between">
               <label
                 htmlFor="password"
-                className={`${isDetailMode?'hidden':'block'} text-sm font-medium text-gray-700`}
+                className={`${isDetailMode ? 'hidden' : 'block'} text-sm font-medium text-gray-700`}
               >
                 Password
               </label>
@@ -216,7 +238,7 @@ export default function UserManagementForm({
                 type="button"
                 size="sm"
                 variant="secondary"
-                className={`${isDetailMode?'hidden':"block"}  h-7 px-2 `}
+                className={`${isDetailMode ? 'hidden' : 'block'}  h-7 px-2 `}
                 onClick={handleGeneratePassword}
                 title="Generate & copy password"
                 disabled={disabled}
@@ -235,7 +257,7 @@ export default function UserManagementForm({
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 disabled={disabled}
-                className={isDetailMode?'hidden':'block'}
+                className={isDetailMode ? 'hidden' : 'block'}
               />
               <Button
                 type="button"
@@ -243,7 +265,7 @@ export default function UserManagementForm({
                 size="icon"
                 disabled={disabled}
                 onClick={() => setShowPassword(!showPassword)}
-                className= {`${isDetailMode?'hidden':'block'} absolute bottom-1 right-1 h-7 w-7`}
+                className={`${isDetailMode ? 'hidden' : 'block'} absolute bottom-1 right-1 h-7 w-7`}
                 title={showPassword ? 'Sembunyikan' : 'Lihat password'}
               >
                 {showPassword ? (
@@ -289,7 +311,6 @@ export default function UserManagementForm({
               onValueChange={(value) => formik.setFieldValue('toko', value)}
               value={formik.values.toko}
               disabled={disabled}
-
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih Toko" />
@@ -318,7 +339,6 @@ export default function UserManagementForm({
               onValueChange={(value) => formik.setFieldValue('role', value)}
               value={formik.values.role}
               disabled={disabled}
-
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih Role" />
@@ -338,7 +358,7 @@ export default function UserManagementForm({
           <DialogFooter>
             <Button
               variant="outline"
-              className={`${disabled?'hidden':'block'} mt-2 sm:mt-0`}
+              className={`${disabled ? 'hidden' : 'block'} mt-2 sm:mt-0`}
               onClick={() => {
                 formik.resetForm();
                 setDialogOpen(false);
@@ -347,8 +367,11 @@ export default function UserManagementForm({
             >
               Cancel
             </Button>
-            <Button className={`${disabled?'hidden':'block'}`} type="submit" disabled={formik.isSubmitting}>
-
+            <Button
+              className={`${disabled ? 'hidden' : 'block'}`}
+              type="submit"
+              disabled={formik.isSubmitting}
+            >
               {isEditMode ? 'Simpan Perubahan' : 'Tambah User'}
             </Button>
           </DialogFooter>

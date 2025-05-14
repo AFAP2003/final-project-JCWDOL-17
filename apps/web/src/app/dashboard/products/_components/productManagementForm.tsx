@@ -124,6 +124,7 @@ export default function ProductManagementForm({
           setMainIndex(0);
           setIsDetailMode(false);
         }
+
         setDialogOpen(open);
       }}
     >
