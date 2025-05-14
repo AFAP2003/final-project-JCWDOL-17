@@ -1,7 +1,6 @@
 import { CalculateShippingDTO } from '@/dtos/calculate-shipping.dto';
 import {
   ApiError,
-  BadRequestError,
   InternalSeverError,
   UnprocessableEntityError,
 } from '@/errors';

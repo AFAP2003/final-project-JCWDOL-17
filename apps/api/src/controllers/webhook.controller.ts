@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
+import { ApiError } from '@/errors';
 import { PaymentService } from '@/services/payment.service';
-import { ApiError, InternalSeverError } from '@/errors';
+import { Request, Response } from 'express';
 
 export class WebhookController {
   private paymentService = new PaymentService();

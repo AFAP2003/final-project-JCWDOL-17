@@ -254,6 +254,8 @@ export function useUserManagement() {
                         : '',
                     });
                     setPreviews(user.image ? [user.image] : []);
+
+                    setDialogOpen(true);
                   }}
                 >
                   Lihat Detail

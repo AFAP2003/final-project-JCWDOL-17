@@ -18,10 +18,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
 import productManagementAPI from '@/lib/apis/dashboard/productManagement.api';
-
 import { useSession } from '@/lib/auth/client';
 import { genRandomString } from '@/lib/utils';
-
 import { getValidationSchema } from '@/validations/product.validation';
 import {
   ColumnDef,
@@ -37,7 +35,6 @@ import {
 import { useFormik } from 'formik';
 import { ImageOff, MoreHorizontal } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-
 export default function UseProductManagement() {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -48,7 +45,6 @@ export default function UseProductManagement() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
-
   const [previews, setPreviews] = useState<string[]>([]); // ✅ typed
   const [mainIndex, setMainIndex] = useState<number>(0); // ✅ typed
   const [isDetailMode, setIsDetailMode] = useState(false);
@@ -143,7 +139,6 @@ export default function UseProductManagement() {
         },
       },
       { accessorKey: 'name', header: 'Produk' },
-
       // { accessorKey: 'description', header: 'Deskripsi' },
       {
         accessorKey: 'category',
@@ -162,7 +157,6 @@ export default function UseProductManagement() {
           return `Rp ${num.toLocaleString()}`;
         },
       },
-
       { accessorKey: 'sku', header: 'SKU' },
       // { accessorKey: 'weight', header: 'Berat (kg)' },
       {
@@ -428,7 +422,6 @@ export default function UseProductManagement() {
     if (ok) {
       await fetchProducts(pagination.pageIndex, pagination.pageSize);
     }
-
     return ok;
   };
 
@@ -456,7 +449,6 @@ export default function UseProductManagement() {
     fetchCategories,
     handleCategoryFilter,
     setIsEditMode,
-
     setEditingProductId,
     previews,
     setPreviews,
