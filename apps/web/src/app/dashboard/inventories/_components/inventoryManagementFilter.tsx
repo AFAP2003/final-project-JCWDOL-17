@@ -21,6 +21,7 @@ import { Eye } from 'lucide-react';
 import { flexRender, Table } from '@tanstack/react-table';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
 import { Category } from '@/lib/interfaces/categoryManagement.interface';
+import UseInventoryManagement from '@/hooks/useInventoryManagement';
 
 interface InventoryManagementFilterProps {
   globalFilter: string;
@@ -42,6 +43,12 @@ export default function InventoryManagementFilter({
   handleStoreFilter,
   handleCategoryFilter,
 }: InventoryManagementFilterProps) {
+  const {user,isSessionLoading} = UseInventoryManagement()
+   if (isSessionLoading) {
+        return <Skeleton className="h-9 w-36"/>;
+      }
+      
+      if (!user)            return <div></div>;
   return (
     <div className="mb-4 flex items-end justify-between gap-2 sm:gap-0">
       <div className="flex gap-2">
@@ -53,7 +60,8 @@ export default function InventoryManagementFilter({
         />
       </div>
       <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4">
-        <Select onValueChange={handleStoreFilter} defaultValue="all">
+        {user.role == 'SUPER'&&(
+             <Select onValueChange={handleStoreFilter} defaultValue="all">
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Filter Status" />
           </SelectTrigger>
@@ -70,6 +78,9 @@ export default function InventoryManagementFilter({
             </SelectGroup>
           </SelectContent>
         </Select>
+
+        )}
+     
         <Select onValueChange={handleCategoryFilter} defaultValue="all">
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Filter Status" />

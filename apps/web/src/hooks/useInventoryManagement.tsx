@@ -36,6 +36,7 @@ import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 import productManagementAPI from '@/lib/apis/dashboard/productManagement.api';
 import { getValidationSchema } from '@/validations/inventory.validation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useSession } from '@/lib/auth/client';
 
 export default function UseInventoryManagement() {
   const {
@@ -62,7 +63,8 @@ export default function UseInventoryManagement() {
   const [pageCount, setPageCount] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDetailMode,setIsDetailMode] = useState(false)
-
+  const { data: session, isPending: isSessionLoading } = useSession()
+   const user = session?.user
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
       {
@@ -417,6 +419,8 @@ export default function UseInventoryManagement() {
     setIsEditMode,
     setEditingInventoryId,
     isDetailMode,
-    setIsDetailMode
+    setIsDetailMode,
+    isSessionLoading,
+    user
   };
 }

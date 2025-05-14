@@ -451,6 +451,6 @@ const columns = useMemo<ColumnDef<Discount>[]>(() => [
     isDetailMode,
     setIsDetailMode,
     isSessionLoading,
-    session
+    user
   };
 }

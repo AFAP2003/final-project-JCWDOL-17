@@ -10,6 +10,7 @@ class InventoryManagementController {
       const take = parseInt(req.query.take as string, 10) || 10;
 
        const { user } = getSessionAdmin(req)
+       console.log('the result of session user: ',user)
       let storeFilter: string | undefined
 
           const adminId = user.role === 'ADMIN' ? user.id : undefined;
