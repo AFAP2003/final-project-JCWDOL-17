@@ -1,5 +1,7 @@
 'use client';
 
+import { useSession } from '@/lib/auth/client';
+import { cn } from '@/lib/utils';
 import {
   BarChart3,
   Boxes,
@@ -68,6 +70,9 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   //   }
   //   return true
   // })
+
+  const { data: session, isPending } = useSession();
+
   return (
     <>
       {/* For small screens, position the sidebar absolutely and slide in/out */}
@@ -87,17 +92,25 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
           alt="app logo"
         />
         <div className="flex flex-col sm:gap-14 gap-6 mt-10">
-          {sidebarItem.map((item) => (
-            <Link
-              key={item.title}
-              className="flex gap-4 text-black hover:bg-gray-100 p-4 hover:rounded-md"
-              href={item.href}
-              onClick={() => setSidebarOpen(false)} // close sidebar on nav
-            >
-              <item.icon className="w-5 h-5" />
-              {item.title}
-            </Link>
-          ))}
+          {!isPending &&
+            sidebarItem.map((item) => {
+              const isToko = item.title === 'Toko';
+
+              return (
+                <Link
+                  key={item.title}
+                  className={cn(
+                    'flex gap-4 text-black hover:bg-gray-100 p-4 hover:rounded-md',
+                    isToko && session?.user.role === 'ADMIN' && 'hidden',
+                  )}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)} // close sidebar on nav
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.title}
+                </Link>
+              );
+            })}
 
           {/* {itemsToRender.map((item) => (
             <Link
