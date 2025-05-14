@@ -12,7 +12,7 @@ const publicRoutes = [
   '/auth/signin',
   '/auth/reset-password',
   '/auth/forgot-password',
-  '/admin/auth/signin',
+  '/admin/auth/signin/*',
   '/admin/auth/signin/confirm',
   // Wajib Delete Before merge
   // '/admin',
@@ -87,6 +87,12 @@ export async function middleware(request: NextRequest) {
 
       const { user } = session as unknown as Session;
 
+      console.log('AAAAAA');
+      console.log({
+        currentPath,
+        role: user?.role,
+      });
+
       const role = user?.role;
       switch (role) {
         case 'USER': {
@@ -107,7 +113,8 @@ export async function middleware(request: NextRequest) {
 
           if (role === 'ADMIN' && currentPath.startsWith('/dashboard/stores')) {
             const url = request.nextUrl.clone();
-            url.pathname = '/admin/auth/signin?role=super';
+            url.pathname = '/admin/auth/signin';
+            url.searchParams.append('role', 'super');
             return NextResponse.redirect(url);
           }
           break;
