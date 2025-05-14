@@ -119,35 +119,43 @@ export function useUserManagement() {
     },
     { accessorKey: 'name', header: 'Nama' },
     { accessorKey: 'email', header: 'Email' },
-    {  header: 'Alamat (Utama)' ,
+    // {  header: 'Alamat (Utama)' ,
 
-      accessorFn: (row: any) => {
-        return row.addresses?.length > 0 ? row.addresses[0].address : '-';
-      }
-    },
+    //   accessorFn: (row: any) => {
+    //     return row.addresses?.length > 0 ? row.addresses[0].address : '-';
+    //   }
+    // },
     { accessorKey: 'role', header: 'Role' },
-    {
-      accessorKey: 'gender',
-      header: 'Jenis Kelamin',
-      cell: ({ getValue }) => {
-        const gender = getValue();
-        return gender === 'MALE' ? 'Laki-laki' : gender === 'FEMALE' ? 'Perempuan' : '-';
-      },
-    },
-    {
-      accessorKey: 'phone',
-      header: 'Telepon',
-      cell: ({ getValue }) => {
-        const phone = getValue()
-        return phone ?`+${getValue()}` : '-'
-      }
-    },
-    {
-      accessorKey: 'dateOfBirth',
-      header: 'Tanggal Lahir',
-      cell: ({ getValue }) =>
-        new Date(getValue<string>()).toLocaleDateString('id-ID')
-    },
+    // {
+    //   accessorKey: 'gender',
+    //   header: 'Jenis Kelamin',
+    //   cell: ({ getValue }) => {
+    //     const gender = getValue();
+    //     return gender === 'MALE' ? 'Laki-laki' : gender === 'FEMALE' ? 'Perempuan' : '-';
+    //   },
+    // },
+    // {
+    //   accessorKey: 'phone',
+    //   header: 'Telepon',
+    //   cell: ({ getValue }) => {
+    //     const phone = getValue()
+    //     return phone ?`+${getValue()}` : '-'
+    //   }
+    // },
+    // {
+    //   accessorKey: 'dateOfBirth',
+    //   header: 'Tanggal Lahir',
+    //   cell: ({ getValue }) =>
+    //   {
+    //     const value = getValue()
+    //     if (!value){
+    //       return '-'
+    //     }
+        
+    //     return  new Date(getValue<string>()).toLocaleDateString('id-ID')
+
+    //   }
+    // },
     {
       header: 'Toko',
      
@@ -156,7 +164,11 @@ export function useUserManagement() {
 
       },
     },
-    { accessorKey: 'referralCode', header: 'Kode Rujukan' },
+    // { accessorKey: 'referralCode',
+    //    header: 'Kode Rujukan',
+    //   cell:({getValue})=>{
+    //     return getValue() || '-'}
+    //   },
     {id: 'verifikasi',
       header: 'Verifikasi',
       accessorFn: (row:any) => row.emailVerified,
@@ -207,17 +219,34 @@ export function useUserManagement() {
               <DropdownMenuCheckboxItem onCheckedChange={() => {
                 setIsEditMode(false)
                 setIsDetailMode(true)
-                formik.setValues({
-                  gambar: user.image || '',
-                  nama: user.name || '',
-                  email: user.email || '',
-                  password: '', // don't pre-fill password for security
-                  alamat: user.alamat || '',
-                  toko: user.storeId || '',
-                  kode_rujukan: user.referralCode || '',
-                  role: user.role || '',
-                  verifikasi: !!user.emailVerified,
-                });
+              formik.setValues({
+  // keep the file input empty — previews handle the old image
+  image: null,
+
+  // basic fields
+  nama:         user.name           ?? '',
+  email:        user.email          ?? '',
+  password:     '',                    // never pre-fill passwords
+
+  // address (takes the first one as “utama”)
+  alamat:       user.addresses?.[0]?.address ?? '',
+
+  // store
+  toko:         user.managedStore?.id     ?? '',
+
+  // referral
+  kode_rujukan: user.referralCode         ?? '',
+  role:         user.role                 ?? 'USER',
+  verifikasi:   Boolean(user.emailVerified),
+
+  // the “extra” detail-only fields
+  telepon:        user.phone           ?? '-',
+  gender:       user.gender          ?? '-',
+  // for a <Input type="date" />, format as YYYY-MM-DD
+  tglLahir:  user.dateOfBirth
+    ? new Date(user.dateOfBirth).toISOString().substring(0, 10)
+    : '',
+});
                 setPreviews(user.image ? [user.image] : []);
 
                 setDialogOpen(true)
@@ -242,7 +271,7 @@ export function useUserManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus user?</AlertDialogTitle>
             <AlertDialogDescription>
-              Akan menghapus user "{user.name}" secara permanen.
+              Apakah anda yakin untuk menghapus user "<b>{user.name}</b>" dengan email "<b>{user.email}</b>" secara permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

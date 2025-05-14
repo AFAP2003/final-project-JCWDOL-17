@@ -33,6 +33,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 import { getValidationSchema } from '@/validations/discount.validation';
+import { Badge } from '@/components/ui/badge';
 export default function UseDiscountManagement() {
   const {
     discounts,
@@ -94,10 +95,10 @@ const columns: ColumnDef<Discount>[] = [
     accessorKey: 'name',
     header: 'Nama',
   },
-  {
-    accessorKey: 'description',
-    header: 'Deskripsi',
-  },
+  // {
+  //   accessorKey: 'description',
+  //   header: 'Deskripsi',
+  // },
  {
   id: 'tipe_diskon',
   header: 'Tipe Diskon',
@@ -172,9 +173,26 @@ const columns: ColumnDef<Discount>[] = [
       const start = toDateOnly(new Date(row.startDate))
       const end   = row.endDate ? toDateOnly(new Date(row.endDate)) : null
 
-      if (start > today)      return 'Inaktif'
-      if (end && end < today) return 'Kadaluwarsa'
-      return 'Aktif'
+      let status = ''
+      if (start > today)    {
+          status = 'Inaktif'}
+     else if (end && end < today)
+      {status =  'Kadaluwarsa'}
+      else{
+        status =  'Aktif'}
+        return(
+            <Badge
+              variant={
+                status === 'Aktif'
+                  ? 'default'
+                  : status === 'Inaktif'
+                    ? 'secondary'
+                    : 'destructive'
+              }
+            >
+              {status}
+            </Badge>
+        )
     },
     cell: ({ getValue }) => getValue<string>(),
     filterFn: 'equalsString',
@@ -258,9 +276,9 @@ const columns: ColumnDef<Discount>[] = [
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus user?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus diskon?</AlertDialogTitle>
             <AlertDialogDescription>
-              Akan menghapus user "{discount.name}" secara permanen.
+              Apakah anda yakin untuk menghapus diskon dengan nama "<b>{discount.name}</b>" secara permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -222,9 +222,9 @@ export default function UseInventoryManagement() {
             <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus user?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus inventaris?</AlertDialogTitle>
             <AlertDialogDescription>
-              Akan menghapus user "{inventory.name}" secara permanen.
+              Apakah anda yakin untuk menghapus inventaris dengan nama "<b>{inventory.product.name}</b>" secara permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

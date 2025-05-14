@@ -3,12 +3,12 @@
 import { toast } from '@/hooks/use-toast';
 import { API_BASE_URL } from '@/lib/constant';
 import { User } from '@/lib/interfaces/userManagement.interface';
+import { id } from 'date-fns/locale';
 import { useState } from 'react';
 
 export function userManagementAPI() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const fetchUsers = async (pageIndex: number, pageSize: number) => {
     setIsLoading(true);
     try {
@@ -34,6 +34,30 @@ export function userManagementAPI() {
       setIsLoading(false);
     }
   };
+
+  const fetchUserById=async (id:string)=>{
+    setIsLoading(true)
+    try {
+      const userByIdRes = await fetch(
+        `${API_BASE_URL}/dashboard/users/${id}`,
+      );
+      const userData = await userByIdRes.json();
+
+      if(userByIdRes.ok){
+          return userData
+      } else {
+        console.error(
+          'Failed to fetch user by id:',
+          userData.message || 'Unknown Error',
+        );
+      }
+    } catch (error) {
+      console.log('Error fetching data: ', error);
+
+    } finally{
+      setIsLoading(false)
+    }
+  }
 
   const handleCreateUser = async (values) => {
     try {
@@ -176,5 +200,6 @@ formData.append('emailVerified', String(values.verifikasi));
     handleCreateUser,
     handleUpdateUser,
     handleDeleteUser,
+    fetchUserById
   };
 }

@@ -157,9 +157,9 @@ export function useCategoryManagement() {
             <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus user?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus kategori?</AlertDialogTitle>
             <AlertDialogDescription>
-              Akan menghapus user "{category.name}" secara permanen.
+              Apakah anda yakin untuk menghapus kategori dengan nama "<b>{category.name}</b>" secara permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

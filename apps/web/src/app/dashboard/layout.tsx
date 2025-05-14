@@ -14,7 +14,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  
   return (
     <html lang="en">
       <body className={`${fontInter.variable} antialiased font-inter`}>

@@ -6,12 +6,13 @@ export default function UserManagementskeleton() {
     <div className="p-4 flex flex-col gap-6">
       {/* 1. Header + button */}
       <div className="flex justify-between items-center">
-        <Skeleton className="h-8 w-60" />
+        <Skeleton className="h-8 sm:w-60 w-40" />
         <Skeleton className="h-10 w-36" />
       </div>
 
       {/* 2. Filters row */}
-      <div className="flex justify-between ">
+     <div className='hidden sm:block'>
+       <div className="flex justify-between ">
         <div className="">
           <Skeleton className="h-9 w-40" />
         </div>
@@ -21,6 +22,20 @@ export default function UserManagementskeleton() {
           <Skeleton className="h-9 w-20" />
         </div>
       </div>
+     </div>
+     
+    <div className='sm:hidden block'>
+       <div className='flex flex-col gap-2 '>
+          <Skeleton className="h-9 w-20 self-end" />
+          <Skeleton className="h-9 w-36 self-end" />
+      <div className='flex justify-between'>
+          <Skeleton className="h-9 w-40" />
+          <Skeleton className="h-9 w-36" />
+
+      </div>
+      </div>
+
+    </div>
 
       {/* 3. Table body placeholder */}
       <div className="border border-gray-200 rounded overflow-hidden">

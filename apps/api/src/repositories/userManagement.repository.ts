@@ -25,6 +25,8 @@ class UserManagementRepository {
         id
       },
       select:{
+        managedStore:true,
+        addresses:true,
         image:true
       }
     })

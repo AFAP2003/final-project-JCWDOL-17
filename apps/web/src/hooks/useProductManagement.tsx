@@ -135,7 +135,7 @@ export default function UseProductManagement() {
         },
       },
       { accessorKey: 'name', header: 'Produk' },
-      { accessorKey: 'description', header: 'Deskripsi' },
+      // { accessorKey: 'description', header: 'Deskripsi' },
       {
         accessorKey: 'category',
         header: 'Kategori',
@@ -154,7 +154,7 @@ export default function UseProductManagement() {
         },
       },
       { accessorKey: 'sku', header: 'SKU' },
-      { accessorKey: 'weight', header: 'Berat (kg)' },
+      // { accessorKey: 'weight', header: 'Berat (kg)' },
       {
         accessorKey: 'inventory',
         header: 'Stok',
@@ -296,9 +296,9 @@ export default function UseProductManagement() {
               <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Hapus user?</AlertDialogTitle>
+                    <AlertDialogTitle>Hapus produk?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Akan menghapus user "{product.name}" secara permanen.
+              Apakah anda yakin untuk menghapus produk dengan nama "<b>{product.name}</b>" secara permanen.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

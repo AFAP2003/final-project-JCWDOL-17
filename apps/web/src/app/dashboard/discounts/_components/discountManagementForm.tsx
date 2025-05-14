@@ -19,6 +19,7 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
+import { formatDistanceToNow } from 'date-fns';
 import { FormikProps } from 'formik';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -38,26 +39,28 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
 
   const type  = formik.values.tipe_diskon
   const [disableValue,setDisableValue] = useState(false)
-  const [disableMinPembelian,setdisableMinPembelian] = useState(false)
+  const [disableMinPembelian,setDisableMinPembelian] = useState(false)
   const [disablePotonganMaks,setDisablePotonganMaks] = useState(false)
- 
+  const [disableTipeNilaiDiskon,setDisableTipeNilaiDiskon] = useState(false)
   useEffect(()=>{
     if(type=='diskon_normal' ){
       formik.setFieldValue('min_pembelian','')
       formik.setFieldValue('potongan_maks','')
-      setdisableMinPembelian(true)
+      setDisableMinPembelian(true)
       setDisablePotonganMaks(true)
      
     } else if(type== 'bogo'){
+      formik.setFieldValue('tipe_nilai_diskon','')
       formik.setFieldValue('nilai_diskon','')
       formik.setFieldValue('min_pembelian','')
       formik.setFieldValue('potongan_maks','')
+      setDisableTipeNilaiDiskon(true)
       setDisableValue(true)
-      setdisableMinPembelian(true)
+      setDisableMinPembelian(true)
       setDisablePotonganMaks(true)
       
     }else{
-      setdisableMinPembelian(false)
+      setDisableMinPembelian(false)
       setDisablePotonganMaks(false)
     }
   
@@ -199,7 +202,7 @@ export default function DiscountManagementForm({ formik,stores,setDialogOpen ,is
             <Select
               value={formik.values.tipe_nilai_diskon}
               onValueChange={(v) => formik.setFieldValue('tipe_nilai_diskon', v)}
-              disabled={disabled}
+              disabled={disabled || disableTipeNilaiDiskon}
 
             >
               <SelectTrigger>

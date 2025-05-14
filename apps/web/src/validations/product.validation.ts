@@ -11,7 +11,7 @@ export interface MyFormValues {
 export const getValidationSchema = ()=>
     Yup.object<MyFormValues>().shape({
         nama: Yup.string().required('Nama produk wajib diisi').trim().min(2,'Nama produk setidaknya harus 2 karakter').max(100,'Nama produk maksimal harus 100 karakter'),
-        deskripsi: Yup.string().max(5000, 'Maksimal 5000 karakter'),
+        deskripsi: Yup.string().required('Deskripsi wajib diisi').max(5000, 'Maksimal 5000 karakter'),
         harga: Yup.number()
         .typeError('Harga harus diisi angka')
           .positive('Harga harus lebih dari 0')

@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import Link from 'next/link'
 import { User, ShoppingCart, Boxes, Package, Tag, BarChart3,Store } from 'lucide-react'
 import Image from 'next/image'
+import { useSession } from '@/lib/auth/client'
 type SidebarProps = {
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
@@ -48,11 +49,21 @@ const sidebarItem = [
   },
 ]
 
+
+
 export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   // Optional: close sidebar if we click outside or ESC, etc.
   // For simplicity, let's not handle that in this snippet.
   // But you can add those event listeners if needed.
 
+  // const {user: session,isPending} = useSession()
+
+  //   const itemsToRender = sidebarItem.filter((item) => {
+  //   if (item.href === '/dashboard/users' && session.user.role === 'ADMIN') {
+  //     return false
+  //   }
+  //   return true
+  // })
   return (
     <>
       {/* For small screens, position the sidebar absolutely and slide in/out */}
@@ -77,6 +88,18 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               {item.title}
             </Link>
           ))}
+
+           {/* {itemsToRender.map((item) => (
+            <Link
+              key={item.title}
+              className="flex gap-4 text-black hover:bg-gray-100 p-4 hover:rounded-md"
+              href={item.href}
+              onClick={() => setSidebarOpen(false)} // close sidebar on nav
+            >
+              <item.icon className="w-5 h-5" />
+              {item.title}
+            </Link>
+          ))} */}
         </div>
       </div>
 

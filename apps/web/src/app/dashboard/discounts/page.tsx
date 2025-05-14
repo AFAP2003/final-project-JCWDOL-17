@@ -42,7 +42,7 @@ export default function DiscountManagement() {
     
   } = UseDiscountManagement();
  
-
+  
   if(isLoading){
     return <DiscountManagementskeleton/>
   }
