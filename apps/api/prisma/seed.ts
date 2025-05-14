@@ -27,7 +27,7 @@ async function SEED_SUPER_ADMIN() {
   const ctx = await auth.$context;
 
   const superemail = 'super.gogrocery@mailinator.com';
-  const superpassword = '@Password';
+  const superpassword = '@Password123';
   const supername = 'Super Admin Gogrocery';
 
   const superadmin = await prisma.user.create({

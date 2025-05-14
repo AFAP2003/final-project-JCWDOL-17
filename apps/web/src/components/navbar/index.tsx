@@ -46,6 +46,8 @@ function DesktopNavbar() {
   const { isFullNavbar } = useNavbar();
   const router = useRouter();
 
+  const isLogin = !isPending && session?.user && session.user.role === 'USER';
+
   return (
     <nav className="relative text-neutral-800 overflow-hidden z-50">
       <div
@@ -111,11 +113,7 @@ function DesktopNavbar() {
             <div className="flex items-center justify-center ml-3">
               {/* User Profile | Auth Button */}
               <div>
-                {isPending || !session ? (
-                  <AuthButton />
-                ) : (
-                  <AvatarPopup session={session} />
-                )}
+                {isLogin ? <AvatarPopup session={session!} /> : <AuthButton />}
               </div>
             </div>
           </div>
@@ -131,6 +129,8 @@ function TabletNavbar() {
   const { isFullNavbar } = useNavbar();
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  const isLogin = !isPending && session?.user && session.user.role === 'USER';
 
   return (
     <nav className="relative text-neutral-800 overflow-hidden z-50">
@@ -227,7 +227,7 @@ function TabletNavbar() {
                     <Separator className="bg-neutral-500 rounded-full my-6" />
 
                     {/* Account and Link */}
-                    {!isPending && session?.user ? (
+                    {isLogin ? (
                       <div className="mt-9">
                         <div className="flex items-center gap-3">
                           <Avatar className="size-9 border-2 border-neutral-500  shadow-sm">
