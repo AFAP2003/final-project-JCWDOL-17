@@ -52,13 +52,13 @@ export default function ProductCard({ product }: Props) {
             {images.length > 1 ? (
               <div className="group/image relative aspect-square">
                 <Image
-                  src={images[0].imageUrl}
+                  src={images.at(0)?.imageUrl || ''}
                   alt={product.name}
                   fill
                   className="object-cover"
                 />
                 <Image
-                  src={images[1].imageUrl}
+                  src={images.at(1)?.imageUrl || ''}
                   alt={product.name}
                   fill
                   className="object-cover absolute opacity-0 group-hover/image:opacity-100 transition-all duration-300 "
