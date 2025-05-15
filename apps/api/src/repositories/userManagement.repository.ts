@@ -140,4 +140,3 @@ class UserManagementRepository {
 }
 
 export default new UserManagementRepository();
-\
