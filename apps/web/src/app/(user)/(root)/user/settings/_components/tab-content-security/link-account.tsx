@@ -109,7 +109,7 @@ export default function LinkAccount({ session }: Props) {
       isPending: isPending,
     },
     {
-      label: 'Facebook',
+      label: 'Discord',
       icon: <SiDiscord className="size-4 text-blue-500" />,
       isLinked: isDiscordLinked,
       canToogle: false,
