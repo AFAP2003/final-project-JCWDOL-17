@@ -14,7 +14,7 @@ import { Key, Link2, Link2Off } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ReactNode, useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
-import { SiFacebook } from 'react-icons/si';
+import { SiDiscord } from 'react-icons/si';
 import EmailVerification from '../email-verification';
 import SectionHeading from '../section-heading';
 
@@ -22,6 +22,10 @@ type LinkAccountParam =
   | {
       method: 'CREDENTIAL';
       action: 'CREATE' | 'RESET';
+    }
+  | {
+      method: 'DISCORD';
+      callbackUrl: string;
     }
   | {
       method: 'GOOGLE';
@@ -47,7 +51,7 @@ export default function LinkAccount({ session }: Props) {
   });
 
   const isGoogleLinked = !!query.data?.find((a) => a.provider === 'google');
-  const isFacebookLinked = !!query.data?.find((a) => a.provider === 'facebook');
+  const isDiscordLinked = !!query.data?.find((a) => a.provider === 'discord');
   const isCredentialLinked = !!query.data?.find(
     (a) => a.provider === 'credential',
   );
@@ -106,12 +110,21 @@ export default function LinkAccount({ session }: Props) {
     },
     {
       label: 'Facebook',
-      icon: <SiFacebook className="size-4 text-blue-500" />,
-      isLinked: isFacebookLinked,
+      icon: <SiDiscord className="size-4 text-blue-500" />,
+      isLinked: isDiscordLinked,
       canToogle: false,
-      onClick: () => {
-        toast({ description: 'Coming soon!', variant: 'default' });
-      },
+      onClick: () =>
+        linkAccount(
+          {
+            method: 'DISCORD',
+            callbackUrl: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/user/settings`,
+          },
+          {
+            onSuccess: (response) => {
+              router.replace(response.data.url);
+            },
+          },
+        ),
       isPending: isPending,
     },
   ];

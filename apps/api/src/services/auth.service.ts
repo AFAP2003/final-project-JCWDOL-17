@@ -608,6 +608,24 @@ export class AuthService {
           );
         }
       }
+
+      case 'DISCORD': {
+        try {
+          const { redirect, url } = await auth.api.linkSocialAccount({
+            body: {
+              provider: 'discord',
+              callbackURL: dto.callbackUrl,
+            },
+            headers: fromNodeHeaders(req.headers),
+          });
+
+          return { method: dto.method, redirect, url };
+        } catch (error) {
+          throw new InternalSeverError(
+            `invalid link account to discord ${error}`,
+          );
+        }
+      }
     }
   };
 
