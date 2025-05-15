@@ -6,6 +6,7 @@ import { productManagementRouter } from './productManagement.router';
 import { reportManagementRouter } from './reportManagement.router';
 import { storeManagementRouter } from './storeManagement.router';
 import { userManagementRouter } from './userManagement.router';
+import { orderManagementRouter } from './orderManagement.router';
 
 const apiRouter = Router();
 
@@ -16,4 +17,6 @@ apiRouter.use('/', productManagementRouter());
 apiRouter.use('/', inventoryManagementRouter());
 apiRouter.use('/', discountManagementRouter());
 apiRouter.use('/', reportManagementRouter());
+apiRouter.use('/', orderManagementRouter());
+
 export default apiRouter;

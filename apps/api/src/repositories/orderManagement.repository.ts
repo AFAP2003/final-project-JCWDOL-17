@@ -352,7 +352,7 @@ class OrderManagementRepository {
       },
     });
 
-    const results = [];
+    const results: any[] = [];
     for (const order of ordersToConfirm) {
       const updatedOrder = await prismaclient.order.update({
         where: { id: order.id },

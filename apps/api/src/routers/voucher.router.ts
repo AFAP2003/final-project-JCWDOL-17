@@ -19,6 +19,11 @@ export class VoucherRouter {
       withAuthentication,
       asynchandler(this.controller.getAllMyVoucher),
     );
+    this.router.post(
+      '/validate',
+      withAuthentication,
+      asynchandler(this.controller.validateVoucher),
+    );
   }
 
   getRouter(): Router {

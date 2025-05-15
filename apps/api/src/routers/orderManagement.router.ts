@@ -5,7 +5,6 @@ import orderManagementController from '@/controllers/orderManagement.controller'
 export const orderManagementRouter = () => {
   const router = Router();
 
-  // Order management routes without authentication for testing
   router.get('/orders', orderManagementController.getOrders);
   router.get(
     '/orders/:orderNumber',

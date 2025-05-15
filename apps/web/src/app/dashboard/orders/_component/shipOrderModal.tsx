@@ -79,7 +79,7 @@ export default function ShipOrderModal({
 
       if (data && data.items) {
         // Map API response to component's expected format
-        const mappedItems = data.items.map((item) => ({
+        const mappedItems = data.items.map((item: any) => ({
           productName: item.productName,
           orderQuantity: item.required,
           stockQuantity: item.available,
