@@ -81,7 +81,7 @@ import { useSession } from '@/lib/auth/client';
             setEditingUserId(user.id);
             setDialogOpen(true);
             formik.setValues({
-              gambar: user.image ?? '',
+              image: user.image ?? '',
               nama: user.name ?? '',
               email: user.email ?? '',
               password: '',

@@ -15,7 +15,12 @@ export function discountManagementAPI() {
     try {
       const page = pageIndex + 1;
       const discountRes = await fetch(
-        `${API_BASE_URL}/dashboard/discounts?page=${page}&take=${pageSize}`,
+        `${API_BASE_URL}/dashboard/discounts?page=${page}&take=${pageSize}`,{
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        }
+         
       );
       const discountData = await discountRes.json();
 
@@ -37,9 +42,10 @@ export function discountManagementAPI() {
   };
 
   const handleCreateDiscount = async (values) => {
-    try {
+    try { 
       const discountRes = await fetch(`${API_BASE_URL}/dashboard/discounts`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

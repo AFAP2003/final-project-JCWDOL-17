@@ -18,13 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UseInventoryManagement from '@/hooks/useInventoryManagement';
 import { Product } from '@/lib/interfaces/productManagement.interface';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
 import { FormikProps } from 'formik';
 import { Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface InventoryManagementFormProps {
   dialogOpen: boolean;
@@ -37,6 +38,7 @@ interface InventoryManagementFormProps {
   setEditingInventoryId: (id: string | null) => void;
   isDetailMode: boolean;
   setIsDetailMode: (detail: boolean) => void;
+  isDetailDropdown:boolean
 }
 export default function InventoryManagementForm({
   dialogOpen,
@@ -49,41 +51,107 @@ export default function InventoryManagementForm({
   setEditingInventoryId,
   isDetailMode,
   setIsDetailMode,
+  isDetailDropdown
 }: InventoryManagementFormProps) {
-  const { inventories } = UseInventoryManagement();
   const [activeTab, setActiveTab] = useState<'tambah' | 'kurangi'>('tambah');
+const [initialValuesSet, setInitialValuesSet] = useState(false);
+   const {user,isSessionLoading,inventories} = UseInventoryManagement()
+     if (isSessionLoading) {
+          return <Skeleton className="h-9 w-36"/>;
+        }
+        
+        if (!user)            return <div></div>;
 
-  useEffect(() => {
-    const add = Number(formik.values.tambah || 0);
-    const reduce = Number(formik.values.kurangi || 0);
+        const availableProducts = products
+// Filter available products based on current inventories and selected store
+// const availableProducts = useMemo(() => {
+//   // determine which store we're talking about:
+//   // – ADMINs get their storeId hidden in the form
+//   // – SUPERs pick one into formik.values.toko
+//   const storeId = 
+//     user?.role === 'ADMIN' 
+//       ? user.storeId! 
+//       : formik.values.toko;
+  
+//   // if we don't know what store yet, return empty list
+//   if (!storeId) return [];
+  
+//   // The key issue: We need to get products that DON'T have an inventory entry for THIS store
+  
+//   // Step 1: Get all product IDs that already have inventory entries for this store
+//   const productIdsInThisStore = inventories
+//     .filter(inv => inv.storeId === storeId)
+//     .map(inv => inv.productId);
+  
+//   // Step 2: Filter products that are NOT in the above list
+//   const availableProductsForStore = products.filter(product => 
+//     !productIdsInThisStore.includes(product.id)
+//   );
+  
+//   // Special case: If we're in edit mode or detail mode, include the current product
+//   if ((isEditMode || isDetailMode) && formik.values.produk) {
+//     const currentProduct = products.find(p => p.id === formik.values.produk);
+    
+//     if (currentProduct) {
+//       // Check if it's already in our filtered list
+//       const alreadyIncluded = availableProductsForStore.some(p => p.id === currentProduct.id);
+      
+//       // Only add it if not already included
+//       if (!alreadyIncluded) {
+//         return [currentProduct, ...availableProductsForStore];
+//       }
+//     }
+//   }
+  
+//   return availableProductsForStore;
+// }, [
+//   products,
+//   inventories,
+//   user?.role,
+//   user?.storeId,
+//   formik.values.toko,
+//   formik.values.produk,
+//   isEditMode,
+//   isDetailMode
+// ]);
+  // Effect for calculating stock based on form values
+ useEffect(() => {
+  const productId = formik.values.produk;
+  // determine store in the same way you do elsewhere:
+  const storeId = user.role === 'ADMIN'
+    ? user.storeId!
+    : formik.values.toko;
 
-    const matchedInventory = inventories.find(
-      (inv) =>
-        inv.productId === formik.values.produk &&
-        inv.storeId === formik.values.toko,
-    );
+  // if either is missing, default everything to zero/empty
+  if (!productId || !storeId) {
+    formik.setFieldValue('sekarang', 0);
+    formik.setFieldValue('baru', 0);
+    formik.setFieldValue('minimal', '');
+    return;
+  }
 
-    const stokSekarang = matchedInventory ? matchedInventory.quantity : 0;
+  // look up the matching inventory record
+  const inv = inventories.find(
+    (inv) => inv.productId === productId && inv.storeId === storeId
+  );
 
-    let stokBaru = stokSekarang;
-    if (activeTab === 'tambah') {
-      stokBaru = stokSekarang + add;
-    } else {
-      stokBaru = Math.max(stokSekarang - reduce, 0);
-    }
+  const currentQty = inv ? inv.quantity : 0;
+  // “stok sekarang” = existing quantity or 0
+  formik.setFieldValue('sekarang', currentQty);
+  // “stok baru” = same as current until user enters an “add” or “kurangi”
+  formik.setFieldValue('baru', currentQty);
+  // “minimal” = existing minStock or empty string
+  formik.setFieldValue('minimal', inv ? inv.minStock : '');
+}, [
+  formik.values.produk,
+  formik.values.toko,
+  inventories,
+]);
 
-    formik.setFieldValue('sekarang', stokSekarang);
-    formik.setFieldValue('baru', stokBaru);
-  }, [
-    formik.values.tambah,
-    formik.values.kurangi,
-    formik.values.produk,
-    formik.values.toko,
-    activeTab, // <- include this in deps
-    inventories,
-  ]);
 
   const disabled = isDetailMode;
+  const disableSelect = isEditMode || isDetailMode
+ 
   return (
     <Dialog
       open={dialogOpen}
@@ -92,12 +160,16 @@ export default function InventoryManagementForm({
         if (open && !isEditMode) {
           formik.resetForm();
           setIsDetailMode(false);
+                    setInitialValuesSet(false);
+
         }
         // closing always clears edit state
         if (!open) {
           setIsEditMode(false);
           setEditingInventoryId(null);
           setIsDetailMode(false);
+                    setInitialValuesSet(false);
+
         }
         setDialogOpen(open);
       }}
@@ -132,7 +204,7 @@ export default function InventoryManagementForm({
               <Select
                 value={formik.values.produk || undefined}
                 onValueChange={(v) => formik.setFieldValue('produk', v)}
-                disabled={disabled}
+                disabled={disableSelect }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih produk" />
@@ -140,11 +212,17 @@ export default function InventoryManagementForm({
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Produk</SelectLabel>
-                    {products.map((product) => (
-                      <SelectItem value={product.id} key={product.id}>
-                        {product.name}
+                     {availableProducts.length > 0 ? (
+                      availableProducts.map((product) => (
+                        <SelectItem value={product.id} key={product.id}>
+                          {product.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="nothing" disabled>
+                        Tidak ada produk yang tersedia
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -154,14 +232,15 @@ export default function InventoryManagementForm({
                 </p>
               )}
             </div>
-            <div>
+           {user.role=='SUPER'&&(
+             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Toko
               </label>
               <Select
                 value={formik.values.toko || undefined}
                 onValueChange={(v) => formik.setFieldValue('toko', v)}
-                disabled={disabled}
+                disabled={disableSelect }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih Toko" />
@@ -183,6 +262,7 @@ export default function InventoryManagementForm({
                 </p>
               )}
             </div>
+           )}
             <Tabs
               className={isDetailMode ? 'hidden' : 'block'}
               defaultValue="tambah"

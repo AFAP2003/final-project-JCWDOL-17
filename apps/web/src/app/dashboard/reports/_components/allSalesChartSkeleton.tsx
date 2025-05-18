@@ -1,7 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import UseProductManagement from '@/hooks/useProductManagement';
 
 export default function AllSalesChartSkeleton() {
+  const {user,isSessionLoading} = UseProductManagement()
+   if (isSessionLoading) {
+    return <Skeleton className="h-9 w-36" />;
+  }
+  
+  if (!user) return <div></div>;
   return (
     <Card className="w-full">
       <CardHeader className="">
@@ -11,7 +18,14 @@ export default function AllSalesChartSkeleton() {
           <Skeleton className="h-6 w-28" />
         </CardTitle>
         {/* Year selector placeholder */}
-        <Skeleton className="h-8 w-20" />
+        <div className='flex gap-4'>
+          {user.role=='SUPER'&&(
+            <Skeleton className="h-8 w-20" />
+          )}
+            <Skeleton className="h-8 w-20" />
+
+
+          </div>        
        </div>
       </CardHeader>
       <CardContent className='flex flex-col items-center justify-center gap-2'>

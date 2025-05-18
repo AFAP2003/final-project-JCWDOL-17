@@ -164,10 +164,14 @@ export default function UseProductManagement() {
         header: 'Stok',
         cell: ({ row }) => {
           const inventoryArray = row.original.inventory;
+          
+          if(user.role=='ADMIN'){
+          return inventoryArray?.[0]?.quantity ?? 0;
 
-          const quantity = inventoryArray?.[0]?.quantity ?? 0;
+          }
 
-          return quantity;
+
+    return inventoryArray.reduce((sum, inv) => sum + inv.quantity, 0);
         },
       },
       {
@@ -257,6 +261,7 @@ export default function UseProductManagement() {
                   <DropdownMenuCheckboxItem
                     onSelect={(e) => {
                       console.log('Detail handler fired');
+                      setDialogOpen(true);
 
                       setIsEditMode(false);
                       setIsDetailMode(true);
@@ -285,7 +290,6 @@ export default function UseProductManagement() {
                         (img: any) => img.isMain,
                       );
                       setMainIndex(mainIdx >= 0 ? mainIdx : 0);
-                      setDialogOpen(true);
                     }}
                   >
                     Lihat Detail
@@ -351,49 +355,39 @@ export default function UseProductManagement() {
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _col, filter) => {
-      const search = String(filter).toLowerCase();
-      const product = row.original; // Access the raw product object
+  globalFilterFn: (row, _col, filter) => {
+  const search = String(filter).toLowerCase();
+  const product = row.original;
 
-      // Check relevant string/numeric fields
-      const nameMatch = product.name?.toLowerCase().includes(search);
-      const descriptionMatch = product.description
-        ?.toLowerCase()
-        .includes(search);
-      const skuMatch = product.sku?.toLowerCase().includes(search);
-      const priceMatch = String(product.price).includes(search); // Check price as string
-      const weightMatch = String(product.weight).includes(search); // Check weight as string
+  const nameMatch = product.name?.toLowerCase().includes(search);
+  const descriptionMatch = product.description?.toLowerCase().includes(search);
+  const skuMatch = product.sku?.toLowerCase().includes(search);
+  const priceMatch = String(product.price).includes(search);
+  const weightMatch = String(product.weight).includes(search);
+  const categoryNameMatch = product.category?.name?.toLowerCase().includes(search);
 
-      // Check category name
-      const categoryNameMatch = product.category?.name
-        ?.toLowerCase()
-        .includes(search);
+  // ✅ NEW: total inventory quantity for stok column
+  const totalInventory =
+    product.inventory?.reduce((sum, inv) => sum + inv.quantity, 0) ?? 0;
+  const inventoryMatch =
+    totalInventory.toString().includes(search); // now searchable
 
-      // Check total inventory quantity
-      const totalInventory =
-        product.inventory?.reduce((sum, inv) => sum + inv.quantity, 0) ?? 0;
-      const inventoryMatch = String(totalInventory).includes(search); // Check total quantity as string
+  // ✅ Status column match
+  const statusValue = row.getValue('status');
+  const statusMatch = String(statusValue ?? '').toLowerCase().includes(search);
 
-      // Check status string (derived value)
-      const statusValue = table
-        .getCoreRowModel()
-        .rowsById[row.id]?.getValue('status'); // Get the calculated status value
-      const statusMatch = String(statusValue ?? '')
-        .toLowerCase()
-        .includes(search);
+  return (
+    nameMatch ||
+    descriptionMatch ||
+    skuMatch ||
+    priceMatch ||
+    weightMatch ||
+    categoryNameMatch ||
+    inventoryMatch || // ✅ stok column match
+    statusMatch
+  );
+},
 
-      // Return true if any field matches
-      return (
-        nameMatch ||
-        descriptionMatch ||
-        skuMatch ||
-        priceMatch ||
-        weightMatch ||
-        categoryNameMatch ||
-        inventoryMatch ||
-        statusMatch
-      );
-    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

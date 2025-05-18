@@ -12,26 +12,14 @@ export interface MyFormValues {
 
 export const getValidationSchema = (isEditMode: boolean) =>
   Yup.object<MyFormValues>().shape({
- image: Yup
+ image: isEditMode
+  ? Yup.mixed().notRequired() // <- allow skipping image during edit
+  : Yup
       .mixed<FileList>()
-      .test(
-        'required',
-        'Foto wajib diupload',
-        (value) => !!value && value.length > 0
-      )
-      .test(
-        'fileSize',
-        'Ukuran file maksimal 1MB',
-        (value) => !value || (value[0]?.size ?? 0) <= 1024 * 1024
-      )
-      .test(
-        'fileType',
-        'Format foto tidak valid',
-        (value) => !value || ['image/jpeg','image/png','image/gif'].includes(value[0]?.type)
-      ),    nama: Yup.string().required('Nama wajib diisi').min(2,'Nama setidaknya harus 2 karakter').max(50,'Nama maksimal harus 50 karakter').trim()  .matches(
-      /^[A-Za-z\s]+$/,
-      'Nama hanya boleh berisi huruf dan spasi'
-    ),
+      .required('Foto wajib diupload')
+      .test('fileSize', 'Ukuran file maksimal 1MB', value => !value || (value[0]?.size ?? 0) <= 1024 * 1024)
+      .test('fileType', 'Format foto tidak valid', value => !value || ['image/jpeg','image/png','image/gif'].includes(value[0]?.type)),
+
     email: Yup.string()
       .trim()
       .max(50)

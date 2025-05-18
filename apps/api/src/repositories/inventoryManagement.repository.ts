@@ -26,9 +26,19 @@ class InventoryManagementRepository {
     return { total, data };
   }
 
-  async createInventory(inventoryData: Inventory) {
+  
+
+  async createInventory(inventoryData: Inventory,adminId?:string) {
+    const store = await prismaclient.store.findUnique({
+      where:{adminId}
+    })
+    if (!store) {
+    throw new Error(`No store found for admin ${adminId}`);
+  }
+
     const inv = await prismaclient.inventory.create({
-      data: inventoryData,
+      data: {...inventoryData,
+        storeId:store.id}
     });
 
     if (inv.quantity > 0) {

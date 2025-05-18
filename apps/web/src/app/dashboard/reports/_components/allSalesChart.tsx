@@ -18,9 +18,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import reportManagementAPI from '@/lib/apis/dashboard/reportManagement.api';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import AllSalesChartSkeleton from './allSalesChartSkeleton';
+import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
+import { useSession } from '@/lib/auth/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AllSalesChartProps {
   year: string;
@@ -41,10 +44,19 @@ export default function AllSalesChart({
   onYearChange,
 }: AllSalesChartProps) {
   const { fetchMonthlySales, isLoading, monthlySales } = reportManagementAPI();
+  const { fetchStores, stores } = storeManagementAPI();
+  const [selectedStore, setSelectedStore] = useState<string | 'all'>('all');
+  const { data: session, isPending: isSessionLoading } = useSession();
+  const user = session?.user;
+if (isSessionLoading) {
+    return <Skeleton className="h-9 w-36" />;
+  }
 
+  if (!user) return <div></div>;
   useEffect(() => {
-    fetchMonthlySales(year);
-  }, [year]);
+    fetchMonthlySales(year,selectedStore);
+    fetchStores()
+  }, [year,selectedStore]);
   if (isLoading) {
     return <AllSalesChartSkeleton />;
   }
@@ -55,6 +67,29 @@ export default function AllSalesChart({
     >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Penjualan</h2>
+        <div className='flex gap-4'>
+          {user.role=='SUPER'&&(
+              <Select
+                      value={selectedStore}
+                      onValueChange={setSelectedStore}
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Pilih Toko</SelectLabel>
+                          <SelectItem value="all">Semua Toko</SelectItem>
+                          {stores.map((store) => (
+                            <SelectItem value={store.id} key={store.id}>
+                              {store.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+          )}
+          
         <Select
           defaultValue={year}
           onValueChange={(value) => onYearChange(value)}
@@ -78,6 +113,7 @@ export default function AllSalesChart({
             </SelectGroup>
           </SelectContent>
         </Select>
+        </div>
       </div>
       <BarChart
         data={monthlySales}

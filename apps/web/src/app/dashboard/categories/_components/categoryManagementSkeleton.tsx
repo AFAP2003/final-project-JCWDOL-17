@@ -1,8 +1,15 @@
 
 'use client'
 import { Skeleton } from '@/components/ui/skeleton';
+import UseProductManagement from '@/hooks/useProductManagement';
 
 export default function CategoryManagementskeleton(){
+  const {user,isSessionLoading} = UseProductManagement()
+   if (isSessionLoading) {
+    return <Skeleton className="h-9 w-36" />;
+  }
+  
+  if (!user) return <div></div>;
     return(
          <div className="p-4 flex flex-col gap-6">
                 <div>

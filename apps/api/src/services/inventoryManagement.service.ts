@@ -10,8 +10,10 @@ class InventoryManagementService {
     );
   }
 
-  async createNewInventory(inventoryData: Inventory) {
-    return await inventoryManagementRepository.createInventory(inventoryData);
+  
+
+  async createNewInventory(inventoryData: Inventory ,adminId?: string) {
+    return await inventoryManagementRepository.createInventory(inventoryData,adminId);
   }
 
   async updateInventoryById(

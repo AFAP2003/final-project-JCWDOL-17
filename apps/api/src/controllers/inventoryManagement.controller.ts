@@ -1,4 +1,4 @@
-import { getSessionAdmin } from '@/helpers/session-helper';
+import { getSession, getSessionAdmin } from '@/helpers/session-helper';
 import inventoryManagementService from '@/services/inventoryManagement.service';
 import { NextFunction, Request, Response } from 'express';
 
@@ -8,12 +8,12 @@ class InventoryManagementController {
       const page = parseInt(req.query.page as string, 10) || 1;
       const take = parseInt(req.query.take as string, 10) || 10;
 
-      const { user } = getSessionAdmin(req);
+      const { user } = getSession(req);
       console.log('the result of session user: ', user);
       let storeFilter: string | undefined;
 
       const adminId = user.role === 'ADMIN' ? user.id : undefined;
-
+      
       const { total, data } =
         await inventoryManagementService.listAllInventories(
           page,
@@ -37,10 +37,16 @@ class InventoryManagementController {
     }
   }
 
+  
+
   async createInventory(req: Request, res: Response, next: NextFunction) {
     try {
+      const { user } = getSession(req);
+      const adminId = user.role === 'ADMIN' ? user.id : undefined;
+
       const data = await inventoryManagementService.createNewInventory(
         req.body,
+        adminId
       );
       res.status(200).send({
         success: true,
@@ -89,6 +95,8 @@ class InventoryManagementController {
       next(error);
     }
   }
+
+  
 }
 
 export default new InventoryManagementController();

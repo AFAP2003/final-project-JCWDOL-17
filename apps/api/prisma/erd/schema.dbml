@@ -24,6 +24,7 @@ Table User {
   orders Order [not null]
   managedStore Store
   storeId String
+  store Store
   sessions Session [not null]
   accounts Account [not null]
   stores Store [not null]
@@ -109,6 +110,7 @@ Table Store {
   orders Order [not null]
   discounts Discount [not null]
   users User [not null]
+  user User [not null]
 }
 
 Table Category {
@@ -450,6 +452,8 @@ Enum Gender {
 }
 
 Ref: User.referredById > User.id
+
+Ref: User.storeId - Store.id
 
 Ref: Session.userId > User.id [delete: Cascade]
 

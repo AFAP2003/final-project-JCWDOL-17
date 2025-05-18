@@ -117,7 +117,7 @@ export function userManagementAPI() {
       formData.append('email', values.email);
       formData.append('role', values.role);
       formData.append('storeId', values.toko);
-      formData.append('emailVerified', values.verifikasi);
+      formData.append('emailVerified', String(values.verifikasi));
       if (values.password) {
         formData.append('password', values.password);
       }

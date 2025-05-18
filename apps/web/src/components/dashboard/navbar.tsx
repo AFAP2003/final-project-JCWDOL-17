@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { signOut, useSession } from '@/lib/auth/client';
 import { Skeleton } from '../ui/skeleton';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
     const { data: session, isPending } = useSession();
@@ -28,6 +29,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
     );
   }
  const { user } = session;
+ const router = useRouter()
 
   return (
     <nav className="flex items-center h-[50px] px-4 sm:px-10 border-b bg-white justify-between sm:justify-end">
@@ -74,7 +76,11 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           <DropdownMenuLabel>Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem className="text-[#ef4444]" onClick={async()=>await signOut()}>
+          <DropdownMenuItem className="text-[#ef4444]" onClick={async()=>{
+            await signOut()
+            router.push('/admin/auth/signin')
+
+          }}>
             Log out
           </DropdownMenuItem>
         </DropdownMenuContent>

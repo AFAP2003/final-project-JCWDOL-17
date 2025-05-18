@@ -14,7 +14,11 @@ export default function productManagementAPI() {
     try {
       const page = pageIndex + 1;
       const productRes = await fetch(
-        `${API_BASE_URL}/dashboard/products?page=${page}&take=${pageSize}`,
+        `${API_BASE_URL}/dashboard/products?page=${page}&take=${pageSize}`,{
+          method:'GET',
+          credentials:'include',
+          headers: { 'Content-Type': 'application/json' },
+        }
       );
       const productData = await productRes.json();
 

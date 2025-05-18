@@ -1,3 +1,4 @@
+import { getSession } from '@/helpers/session-helper';
 import { MediaService } from '@/services/media.service';
 import productManagementService from '@/services/productManagement.service';
 import { NextFunction, Request, Response } from 'express';
@@ -7,9 +8,15 @@ class ProductManagementController {
     try {
       const page = parseInt(req.query.page as string, 10) || 1;
       const take = parseInt(req.query.take as string, 10) || 10;
+      const { user } = getSession(req)
+        const adminId = user.role === 'ADMIN'
+      ? user.id // or however you look up storeId from user
+      : undefined
+
       const { total, data } = await productManagementService.listAllProducts(
         page,
         take,
+        adminId
       );
 
       res.status(200).send({

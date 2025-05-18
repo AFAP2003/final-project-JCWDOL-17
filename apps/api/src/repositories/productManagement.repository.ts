@@ -3,12 +3,28 @@ import { CreateProductDTO } from '@/interfaces/productManagement.interface';
 import { prismaclient } from '@/prisma';
 
 class ProductManagementRepository {
-  async getProducts(page = 1, take = 10) {
+  async getProducts(page = 1, take = 10,adminId:string) {
+  
+    
+     let storeId: string | undefined;
+    if (adminId) {
+      const store = await prismaclient.store.findUnique({
+        where: { adminId },
+      });
+      if (!store) throw new Error(`No store found for admin ${adminId}`);
+      storeId = store.id;
+    }
+
+    const whereInventory = storeId ? { storeId } : {};
+
+
     const total = await prismaclient.product.count();
     const { skip, take: realTake } = pagination(page, take);
     const data = await prismaclient.product.findMany({
       include: {
-        inventory: true,
+        inventory: {
+          where:whereInventory
+        },
         category: true,
         images: true,
       },

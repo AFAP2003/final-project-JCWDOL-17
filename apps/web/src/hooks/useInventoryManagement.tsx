@@ -56,111 +56,94 @@ export default function UseInventoryManagement() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingInventoryId, setEditingInventoryId] = useState<string | null>(
-    null,
-  );
+  const [editingInventoryId, setEditingInventoryId] = useState<string | null>(null,);
   const [pageCount, setPageCount] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDetailMode, setIsDetailMode] = useState(false);
+  const [isDetailDropdown,setIsDetailDropdown] = useState(false)
   const { data: session, isPending: isSessionLoading } = useSession();
   const user = session?.user;
-  const columns = useMemo<ColumnDef<any>[]>(
-    () => [
-      {
-        accessorKey: 'gambar',
-        header: 'Gambar',
-        cell: ({ row }) => {
-          const mainImg = row.original.product.images.find((img) => img.isMain);
-          const imageUrl = mainImg?.imageUrl;
-          return (
-            <div>
-              {imageUrl ? (
-                <Avatar className="h-32 w-32 overflow-hidden rounded-md">
-                  <AvatarImage src={imageUrl} alt="main product image" />
-                </Avatar>
-              ) : (
-                <Avatar className="h-32 w-32 overflow-hidden rounded-sm flex justify-center items-center">
-                  <ImageOff className="w-32 h-32 text-gray-400" />
-                </Avatar>
-              )}
-            </div>
-          );
+ const columns = useMemo<ColumnDef<any>[]>(
+    () => {
+      const cols: ColumnDef<any>[] = [
+        {
+          accessorKey: 'gambar',
+          header: 'Gambar',
+          cell: ({ row }) => {
+            const mainImg = row.original.product.images.find(img => img.isMain)
+            const url = mainImg?.imageUrl
+            return url ? (
+              <Avatar className="h-32 w-32 rounded-md overflow-hidden">
+                <AvatarImage src={url} alt="main product image" />
+              </Avatar>
+            ) : (
+              <Avatar className="h-32 w-32 rounded-sm flex items-center justify-center">
+                <ImageOff className="w-8 h-8 text-gray-400" />
+              </Avatar>
+            )
+          },
         },
-      },
-      {
-        header: 'Produk',
-        cell: ({ row }) => row.original.product?.name ?? '-',
-      },
-      {
-        id: 'category',
-        header: 'Kategori',
-        accessorFn: (row) => row.product?.category?.name ?? '',
-        cell: ({ row }) => row.original.product?.category?.name ?? '-',
-      },
-      {
-        id: 'store',
-        header: 'Toko',
-        accessorFn: (row) => row.store?.name ?? '',
-        cell: ({ row }) => row.original.store?.name ?? '-',
-      },
+        {
+          header: 'Produk',
+          cell: ({ row }) => row.original.product?.name ?? '-',
+        },
+        {
+          id: 'category',
+          header: 'Kategori',
+          accessorFn: row => row.product?.category?.name ?? '',
+          cell: ({ row }) => row.original.product?.category?.name ?? '-',
+        },
+      ]
 
-      {
-        header: 'Harga',
-        cell: ({ row }) => {
-          const { price } = row.original.product;
-          const num = Number(price);
-          return `Rp ${num.toLocaleString()}`;
-        },
-      },
-      {
-        header: 'Stok',
-        cell: ({ row }) => row.original.quantity ?? '0',
-      },
-      {
-        id: 'status',
-        header: 'Status',
-        accessorFn: (row) => {
-          const { quantity, minStock } = row;
-          if (quantity === 0) return 'Stok Habis';
-          if (quantity <= minStock) return 'Stok Rendah';
-          return 'Stok Tersedia';
-        },
-        cell: ({ row }) => {
-          const quantity = row.original.quantity;
-          const minStock = row.original.minStock;
+      // only super-admins get the “Toko” column
+      if (user?.role === 'SUPER') {
+        cols.push({
+          id: 'store',
+          header: 'Toko',
+          accessorFn: row => row.store?.name ?? '',
+          cell: ({ row }) => row.original.store?.name ?? '-',
+        })
+      }
 
-          let status = '';
-          if (quantity === 0) {
-            status = 'Stok Habis';
-          } else if (quantity <= minStock) {
-            status = 'Stok Rendah';
-          } else {
-            status = 'Stok Tersedia';
-          }
-
-          return (
-            <Badge
-              variant={
-                status === 'Stok Tersedia'
-                  ? 'default'
-                  : status === 'Stok Rendah'
-                    ? 'secondary'
-                    : 'destructive'
-              }
-            >
-              {status}
-            </Badge>
-          );
+      // now append the rest of your columns
+      cols.push(
+        {
+          header: 'Harga',
+          cell: ({ row }) => {
+            const price = Number(row.original.product.price)
+            return `Rp ${price.toLocaleString()}`
+          },
         },
-      },
-      {
-        header: 'Terakhir Diperbarui',
-        cell: ({ row }) => {
-          const date = new Date(row.original.updatedAt);
-          return date.toLocaleString('id-ID');
+        {
+          header: 'Stok',
+          cell: ({ row }) => row.original.quantity?.toString() ?? '0',
         },
-      },
-      {
+        {
+          id: 'status',
+          header: 'Status',
+          accessorFn: row => {
+            const { quantity, minStock } = row
+            if (quantity === 0) return 'Stok Habis'
+            if (quantity <= minStock) return 'Stok Rendah'
+            return 'Stok Tersedia'
+          },
+          cell: ({ row }) => {
+            const qty = row.original.quantity
+            const min = row.original.minStock
+            const status =
+              qty === 0
+                ? 'Stok Habis'
+                : qty <= min
+                ? 'Stok Rendah'
+                : 'Stok Tersedia'
+            return <Badge variant={status === 'Stok Tersedia' ? 'default' : status === 'Stok Rendah' ? 'secondary' : 'destructive'}>{status}</Badge>
+          },
+        },
+        {
+          header: 'Terakhir Diperbarui',
+          cell: ({ row }) => new Date(row.original.updatedAt).toLocaleString('id-ID'),
+        },
+       {
         header: 'Aksi',
         cell: ({ row }) => {
           const inventory = row.original;
@@ -178,6 +161,7 @@ export default function UseInventoryManagement() {
                       setDialogOpen(true);
                       setEditingInventoryId(inventory.id);
                       setIsEditMode(true);
+                      setIsDetailDropdown(true)
                       formik.setValues({
                         produk: inventory.productId,
                         toko: inventory.storeId,
@@ -192,6 +176,8 @@ export default function UseInventoryManagement() {
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     onCheckedChange={() => {
+                      setDialogOpen(true);
+
                       setIsEditMode(false);
                       setIsDetailMode(true);
                       formik.setValues({
@@ -203,7 +189,6 @@ export default function UseInventoryManagement() {
                         mode: 'tambah',
                       });
 
-                      setDialogOpen(true);
                     }}
                   >
                     Lihat Detail
@@ -247,9 +232,12 @@ export default function UseInventoryManagement() {
           );
         },
       },
-    ],
-    [],
-  );
+      )
+
+      return cols
+    },
+    [user?.role],
+  )
 
   const fetchInventories = useCallback(
     (pageIndex: number, pageSize: number) => {
@@ -273,14 +261,18 @@ export default function UseInventoryManagement() {
     fetchProducts(0, 50);
   }, []);
 
+  
+
   const formik = useFormik({
     initialValues: {
-      produk: '',
-      toko: '',
+      produk:'' ,
+      toko: user?.role == 'ADMIN'? user.storeId!:'',
       mode: 'tambah' as 'tambah' | 'kurangi',
       tambah: '',
       kurangi: '',
       minimal: '',
+      sekarang:0,
+      baru:0
     },
 
     validationSchema: getValidationSchema(),
@@ -301,6 +293,8 @@ export default function UseInventoryManagement() {
       }
     },
   });
+
+  
 
   const table = useReactTable({
     data: inventories,
@@ -421,5 +415,7 @@ export default function UseInventoryManagement() {
     setIsDetailMode,
     isSessionLoading,
     user,
+    isDetailDropdown,
+    setIsDetailDropdown
   };
 }

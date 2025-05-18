@@ -42,5 +42,7 @@ export const withMultipleImageUpload = (
   });
 };
 
-export const withImageUploadEdit = upload.single('image');
+export  const withImageUploadEdit = upload.fields([
+  { name: 'image', maxCount: 1 }
+]);
 

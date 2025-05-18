@@ -132,7 +132,7 @@ export function useCategoryManagement() {
                     </DropdownMenuCheckboxItem>
                   )}
 
-                  <DropdownMenuItem
+                  <DropdownMenuCheckboxItem
                     onSelect={(e) => {
                       setIsEditMode(false);
                       setIsDetailMode(true);
@@ -147,7 +147,7 @@ export function useCategoryManagement() {
                     }}
                   >
                     Lihat Detail
-                  </DropdownMenuItem>
+                  </DropdownMenuCheckboxItem>
 
                   {user.role == 'SUPER' && (
                     <DropdownMenuCheckboxItem
@@ -265,6 +265,8 @@ export function useCategoryManagement() {
     isDetailMode,
     setIsDetailMode,
     isSessionLoading,
-    session,
+    user,
+    setIsEditMode,
+    setEditingCategoryId
   };
 }

@@ -357,8 +357,8 @@ export default function ProductManagementForm({
                 <p className="text-xs text-red-600">{formik.errors.storeId}</p>
               )}
             </div> */}
-
-          <DialogFooter className={isDetailMode ? 'hidden' : 'block'}>
+              
+          <DialogFooter className={`flex justify-end gap-2 `} >
             <Button
               variant="outline"
               type="button"
@@ -366,10 +366,12 @@ export default function ProductManagementForm({
                 formik.resetForm();
                 setDialogOpen(false);
               }}
+                            className={isDetailMode ? 'hidden' : 'block'}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={formik.isSubmitting}>
+            <Button type="submit" disabled={formik.isSubmitting} 
+            className={isDetailMode ? 'hidden' : 'block'}>
               {formik.isSubmitting && <UploadImageLoadingOverlay />}
 
               {isEditMode ? 'Simpan Perubahan' : 'Tambah Produk'}

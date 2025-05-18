@@ -163,7 +163,7 @@ export function useUserManagement() {
       header: 'Toko',
 
       cell: ({ row }) => {
-        return row.original.managedStore?.name ?? '-';
+    return row.original.store?.name ?? '-';
       },
     },
     // { accessorKey: 'referralCode',
@@ -256,7 +256,7 @@ export function useUserManagement() {
                     setPreviews(user.image ? [user.image] : []);
 
                     setDialogOpen(true);
-                  }}
+                  }} 
                 >
                   Lihat Detail
                 </DropdownMenuCheckboxItem>
@@ -318,17 +318,20 @@ export function useUserManagement() {
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: (row, _columnId, filterValue) => {
-      const searchText = String(filterValue).toLowerCase();
-      const cellValues = [
-        String(row.getValue('nama') ?? ''),
-        String(row.getValue('email') ?? ''),
-        String(row.getValue('role') ?? ''),
-        String(row.getValue('referralCode') ?? ''),
-      ];
-      return cellValues.some((value) =>
-        value.toLowerCase().includes(searchText),
-      );
-    },
+  const searchText = String(filterValue).toLowerCase();
+  const original = row.original;
+
+  const name = original.name?.toLowerCase() ?? '';
+  const email = original.email?.toLowerCase() ?? '';
+  const role = original.role?.toLowerCase() ?? '';
+  const referralCode = original.referralCode?.toLowerCase() ?? '';
+  const toko = original.managedStore?.name?.toLowerCase() ?? '';
+  const verifikasi = original.emailVerified ? 'terverifikasi' : 'belum terverifikasi';
+
+  return [name, email, role, referralCode, toko, verifikasi].some((field) =>
+    field.includes(searchText),
+  );
+},
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

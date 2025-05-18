@@ -6,6 +6,7 @@ export const userManagementRouter = ()=>{
     const router = Router()
 
     router.get('/users',userManagementController.getUsers)
+      router.get('/users/:id', userManagementController.getUserById);
     router.post('/users',withImageUpload,userManagementController.createUser)
     router.put('/users/:id',withImageUploadEdit,userManagementController.updateUser)
     router.delete('/users/:id',userManagementController.deleteUser)

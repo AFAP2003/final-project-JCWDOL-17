@@ -1,3 +1,4 @@
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -6,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import UseProductManagement from '@/hooks/useProductManagement';
 import { flexRender, Table as ReactTable } from '@tanstack/react-table';
 
 interface ProductManagementTableProps {
@@ -18,6 +20,7 @@ export default function ProductManagementTable({
   columns,
   onStartEdit,
 }: ProductManagementTableProps) {
+  
   return (
     <div className="rounded-md border border-gray-200 overflow-x-auto w-full">
       <Table className="min-w-full">

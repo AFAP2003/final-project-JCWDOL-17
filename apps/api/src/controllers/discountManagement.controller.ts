@@ -7,10 +7,12 @@ class DiscountManagementController {
     try {
       const page = parseInt(req.query.page as string, 10) || 1;
       const take = parseInt(req.query.take as string, 10) || 10;
-      const { user } = getSession(req);
+      const {user} = getSession(req)
+      const adminId = user.role === 'ADMIN' ? user.id : undefined;      
       const { total, data } = await discountManagementService.listAllDiscounts(
         page,
         take,
+        adminId
       );
 
       res.status(200).send({
@@ -31,7 +33,9 @@ class DiscountManagementController {
 
   async createDiscount(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await discountManagementService.createNewDiscount(req.body);
+      const { user } = getSession(req);
+      const adminId = user.role === 'ADMIN' ? user.id : undefined;
+      const data = await discountManagementService.createNewDiscount(req.body,adminId);
       res.status(200).send({
         success: true,
         message: 'Discount created successfully',

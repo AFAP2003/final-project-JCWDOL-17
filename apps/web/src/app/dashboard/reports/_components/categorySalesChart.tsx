@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -28,6 +28,9 @@ import {
 } from '@/components/ui/select';
 import reportManagementAPI from '@/lib/apis/dashboard/reportManagement.api';
 import CategorySalesChartSkeleton from './categorySalesChartSkeleton';
+import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
+import { useSession } from '@/lib/auth/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CategorySalesChartProps {
   month: string;
@@ -52,10 +55,19 @@ export default function CategorySalesChart({
 }: CategorySalesChartProps) {
   const { fetchCategorySales, categorySales, isLoading } =
     reportManagementAPI();
+  const { fetchStores, stores } = storeManagementAPI();
+  const [selectedStore, setSelectedStore] = useState('all');
+  const { data: session, isPending: isSessionLoading } = useSession();
+  const user = session?.user;
+if (isSessionLoading) {
+    return <Skeleton className="h-9 w-36" />;
+  }
 
+  if (!user) return <div></div>;
   useEffect(() => {
-    fetchCategorySales(year, month);
-  }, [year, month]);
+    fetchCategorySales(year, month,selectedStore);
+    fetchStores()
+  }, [year, month,selectedStore]);
   if (isLoading) {
     return <CategorySalesChartSkeleton />;
   }
@@ -67,6 +79,28 @@ export default function CategorySalesChart({
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Penjualan per Kategori</h2>
         <div className="flex flex-col sm:flex-row gap-4">
+          {user.role=='SUPER'&&(
+<Select
+                                value={selectedStore}
+                                onValueChange={setSelectedStore}
+                              >
+                                <SelectTrigger className="w-[130px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    <SelectLabel>Pilih Toko</SelectLabel>
+                                    <SelectItem value="all">Semua Toko</SelectItem>
+                                    {stores.map((store) => (
+                                      <SelectItem value={store.id} key={store.id}>
+                                        {store.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+          )}
+          
           <Select
             defaultValue={month}
             onValueChange={(value) => onMonthChange(value)}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChartContainer, ChartConfig } from '@/components/ui/chart';
 import {
   Select,
@@ -13,6 +13,9 @@ import {
 } from '@/components/ui/select';
 import reportManagementAPI from '@/lib/apis/dashboard/reportManagement.api';
 import ProductSalesChartSkeleton from './productSalesChartSkeleton';
+import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
+import { useSession } from '@/lib/auth/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface TopProduct {
   rank: number;
@@ -39,10 +42,19 @@ export default function ProductSalesChart({
   onYearChange,
 }: ProductSalesChartProps) {
   const { fetchProductSales, productSales, isLoading } = reportManagementAPI();
+  const { fetchStores, stores } = storeManagementAPI();
+  const [selectedStore, setSelectedStore] = useState('all');
+  const { data: session, isPending: isSessionLoading } = useSession();
+  const user = session?.user;
+if (isSessionLoading) {
+    return <Skeleton className="h-9 w-36" />;
+  }
 
+  if (!user) return <div></div>;
   useEffect(() => {
-    fetchProductSales(year, month);
-  }, [year, month]);
+    fetchProductSales(year, month,selectedStore);
+    fetchStores()
+  }, [year, month,selectedStore]);
 
   if (isLoading) {
     return <ProductSalesChartSkeleton />;
@@ -55,6 +67,29 @@ export default function ProductSalesChart({
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Penjualan Terlaris</h2>
         <div className="flex flex-col sm:flex-row gap-4">
+          {user.role=='SUPER'&&(
+
+            <Select
+                      defaultValue={selectedStore}
+                      onValueChange={setSelectedStore}
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Pilih Toko</SelectLabel>
+                          <SelectItem value="all">Semua Toko</SelectItem>
+                          {stores.map((store) => (
+                            <SelectItem value={store.id} key={store.id}>
+                              {store.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+          )}
+          
           <Select
             defaultValue={month}
             onValueChange={(value) => onMonthChange(value)}

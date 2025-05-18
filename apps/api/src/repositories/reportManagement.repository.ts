@@ -1,3 +1,4 @@
+import { pagination } from '@/helpers/pagination';
 import { prismaclient } from '@/prisma';
 const MONTH_NAMES = [
   'Jan',
@@ -15,11 +16,12 @@ const MONTH_NAMES = [
 ];
 
 class ReportManagementRepository {
-  async getMonthlySales(year: number) {
+  async getMonthlySales(year: number, storeId: string = 'all') {
     const start = new Date(Date.UTC(year, 0, 1));
     const end = new Date(Date.UTC(year + 1, 0, 1));
     const orders = await prismaclient.order.findMany({
       where: {
+        ...(storeId !== 'all' ? { storeId } : {}),
         createdAt: {
           gte: start,
           lt: end,
@@ -47,7 +49,7 @@ class ReportManagementRepository {
     }));
   }
 
-  async getCategorySales(year: number, month: number) {
+  async getCategorySales(year: number, month: number, storeId: string = 'all') {
     const start = new Date(Date.UTC(year, month - 1, 1));
     const end = new Date(Date.UTC(year, month, 1));
 
@@ -58,6 +60,7 @@ class ReportManagementRepository {
             gte: start,
             lt: end,
           },
+          ...(storeId !== 'all' ? { storeId } : {}),
           paymentStatus: 'PAID',
           status: {
             notIn: [
@@ -89,7 +92,7 @@ class ReportManagementRepository {
     }));
   }
 
-  async getProductSales(year: number, month: number) {
+  async getProductSales(year: number, month: number, storeId: string | 'all') {
     const start = new Date(Date.UTC(year, month - 1, 1));
     const end = new Date(Date.UTC(year, month, 1));
 
@@ -100,6 +103,8 @@ class ReportManagementRepository {
             gte: start,
             lt: end,
           },
+          ...(storeId !== 'all' ? { storeId } : {}),
+
           paymentStatus: 'PAID',
           status: {
             notIn: [
@@ -135,30 +140,64 @@ class ReportManagementRepository {
     return top10;
   }
 
-  async getStockReport(year: number, month: number, storeId: string) {
+  async getStockReport(
+    page: number = 1,
+    take: number = 10,
+    year: number,
+    month: number,
+    storeId: string | 'all',
+  ) {
     const start = new Date(Date.UTC(year, month - 1, 1));
     const end = new Date(Date.UTC(year, month, 1));
 
-    // fetch all journals in this period *and* all journals *before* the period
+    const { skip, take: realTake } = pagination(page, take);
+
+    // Load inventories scoped to the store (or all)
+    const inventories = await prismaclient.inventory.findMany({
+      where: storeId !== 'all' ? { storeId } : {},
+      include: { product: true },
+      skip,
+      take: realTake,
+    });
+
+    const totalProducts = await prismaclient.inventory.count({
+      where: storeId !== 'all' ? { storeId } : {},
+    });
+
+    const inventoryIds = inventories.map((inv) => inv.id);
+
+    // Now get journals for these inventories, filtered by storeId through related inventory
     const [periodJournals, beforeJournals] = await Promise.all([
       prismaclient.stockJournal.findMany({
         where: {
+          inventoryId: { in: inventoryIds },
           createdAt: { gte: start, lt: end },
-          ...(storeId !== 'all' && { inventory: { storeId } }),
+          ...(storeId !== 'all' ? { inventory: { storeId } } : {}),
         },
-        select: { inventoryId: true, quantity: true, type: true },
+        select: {
+          inventoryId: true,
+          quantity: true,
+          type: true,
+        },
       }),
       prismaclient.stockJournal.findMany({
         where: {
+          inventoryId: { in: inventoryIds },
           createdAt: { lt: start },
-          ...(storeId !== 'all' && { inventory: { storeId } }),
+          ...(storeId !== 'all' ? { inventory: { storeId } } : {}),
         },
-        select: { inventoryId: true, quantity: true, type: true },
+        select: {
+          inventoryId: true,
+          quantity: true,
+          type: true,
+        },
       }),
     ]);
 
-    // helper to sum up +/− by inventoryId
-    function accumulate(journals: typeof periodJournals) {
+    // Helper to accumulate additions/subtractions per inventoryId
+    function accumulate(
+      journals: { inventoryId: string; quantity: number; type: string }[],
+    ) {
       return journals.reduce<
         Record<string, { added: number; removed: number }>
       >((acc, j) => {
@@ -169,51 +208,39 @@ class ReportManagementRepository {
       }, {});
     }
 
-    const beforeMap = accumulate(beforeJournals);
     const periodMap = accumulate(periodJournals);
+    const beforeMap = accumulate(beforeJournals);
 
-    // load all inventories for this store (or all)
-    const inventories = await prismaclient.inventory.findMany({
-      where: storeId !== 'all' ? { storeId } : {},
-      include: { product: true },
-    });
-
-    // now build your details array
     const details = inventories.map((inv) => {
-      const { added: periodAdded = 0, removed: periodRemoved = 0 } =
-        periodMap[inv.id] || {};
-      const { added: beforeAdded = 0, removed: beforeRemoved = 0 } =
-        beforeMap[inv.id] || {};
+      const { added: pA = 0, removed: pR = 0 } = periodMap[inv.id] || {};
+      const { added: bA = 0, removed: bR = 0 } = beforeMap[inv.id] || {};
 
-      // opening = all movements up *to* the first of period
-      const opening = beforeAdded - beforeRemoved;
-
-      // closing = opening + this period’s net movement
-      const closing = opening + (periodAdded - periodRemoved);
+      const opening = bA - bR;
+      const closing = opening + (pA - pR);
 
       return {
         product: inv.product.name,
         opening,
-        added: periodAdded,
-        removed: periodRemoved,
+        added: pA,
+        removed: pR,
         closing,
       };
     });
 
-    // summary too…
-    const totalProducts = await prismaclient.inventory.count({
-      where: storeId !== 'all' ? { storeId } : {},
-    });
     const stockAdded = periodJournals
       .filter((j) => j.type === 'ADDITION')
-      .reduce((s, j) => s + j.quantity, 0);
+      .reduce((sum, j) => sum + j.quantity, 0);
+
     const stockRemoved = periodJournals
       .filter((j) => j.type === 'SUBTRACTION')
-      .reduce((s, j) => s + j.quantity, 0);
+      .reduce((sum, j) => sum + j.quantity, 0);
 
     return {
-      summary: { totalProducts, stockAdded, stockRemoved },
-      details,
+      total: totalProducts,
+      data: {
+        summary: { totalProducts, stockAdded, stockRemoved },
+        details,
+      },
     };
   }
 }

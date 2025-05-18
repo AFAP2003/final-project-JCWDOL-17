@@ -21,7 +21,7 @@ interface CategoryManagementFormProps {
   formik: FormikProps<MyFormValues>;
   isEditMode: boolean;
   setIsEditMode: (edit: boolean) => void;
-  setEditingUserId: (id: string | null) => void;
+  setEditingCategoryId: (id: string | null) => void;
   isDetailMode: boolean;
   setIsDetailMode: (detail: boolean) => void;
 }
@@ -31,7 +31,7 @@ export default function CategoryManagementForm({
   setDialogOpen,
   isEditMode,
   setIsEditMode,
-  setEditingUserId,
+  setEditingCategoryId,
   isDetailMode,
   setIsDetailMode,
 }: CategoryManagementFormProps) {
@@ -49,7 +49,6 @@ export default function CategoryManagementForm({
       open={dialogOpen}
       onOpenChange={(open) => {
         // update the open state
-        setDialogOpen(open);
 
         if (open && !isEditMode) {
           // fresh “Add User” → clear the form
@@ -60,9 +59,11 @@ export default function CategoryManagementForm({
         if (!open) {
           // dialog closed → clear edit flags
           setIsEditMode(false);
-          setEditingUserId(null);
+          setEditingCategoryId(null);
           setIsDetailMode(false);
         }
+        setDialogOpen(open);
+
       }}
     >
       {user.role == 'SUPER' && (
@@ -128,7 +129,7 @@ export default function CategoryManagementForm({
             </div>
           </div>
 
-          <DialogFooter className={isDetailMode ? 'hidden' : 'block'}>
+          <DialogFooter className={`${isDetailMode} ? 'hidden' : 'block' flex justify-end`}>
             <Button
               variant="outline"
               type="button"
@@ -136,10 +137,13 @@ export default function CategoryManagementForm({
                 formik.resetForm();
                 setDialogOpen(false);
               }}
+              className={isDetailMode ? 'hidden' : 'block'}
+
             >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" className={isDetailMode ? 'hidden' : 'block'}
+>
               {isEditMode ? 'Simpan Perubahan' : 'Tambah Kategori'}
             </Button>
           </DialogFooter>

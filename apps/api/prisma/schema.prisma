@@ -39,6 +39,7 @@ model User {
 
   managedStore Store?    @relation("StoreToAdmin")
   storeId      String?
+  store        Store?  @relation("UserPrimaryStore", fields: [storeId], references: [id]) // ✅ named relation
   sessions     Session[]
   accounts     Account[]
   stores       Store[]
@@ -128,6 +129,8 @@ model Store {
   discounts Discount[]
   users     User[] // A store can have multiple users (e.g., employees)
   // Remove the redundant `User?` and `userId?` fields that create ambiguity
+    user      User[]      @relation("UserPrimaryStore") // ✅ matches User.store (optional, if needed from this side)
+
 }
 
 model Category {

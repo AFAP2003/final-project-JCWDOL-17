@@ -55,11 +55,7 @@ export default function DiscountManagementForm({
   const [disableTipeNilaiDiskon, setDisableTipeNilaiDiskon] = useState(false);
   const { isSessionLoading, user } = UseDiscountManagement();
 
-  if (isSessionLoading) {
-    return <Skeleton className="h-9 w-36" />;
-  }
-
-  if (!user) return <div></div>;
+  
 
   useEffect(() => {
     if (type == 'diskon_normal') {
@@ -77,10 +73,19 @@ export default function DiscountManagementForm({
       setDisableMinPembelian(true);
       setDisablePotonganMaks(true);
     } else {
+      setDisableTipeNilaiDiskon(false);
+      setDisableValue(false);
+
       setDisableMinPembelian(false);
       setDisablePotonganMaks(false);
     }
   }, [type]);
+
+  if (isSessionLoading) {
+    return <Skeleton className="h-9 w-36" />;
+  }
+
+  if (!user) return <div></div>;
   return (
     <Dialog
       open={dialogOpen}
@@ -159,8 +164,9 @@ export default function DiscountManagementForm({
               <p className="text-xs text-red-600">{formik.errors.deskripsi}</p>
             )}
           </div>
-
-          <div>
+            
+            {user.role=='SUPER'&&(
+               <div>
             <label className="mb-1 block text-sm font-medium">Toko</label>
             <Select
               value={formik.values.toko}
@@ -185,6 +191,8 @@ export default function DiscountManagementForm({
               <p className="text-xs text-red-600">{formik.errors.toko}</p>
             )}
           </div>
+            )}
+         
 
           <div>
             <label className="mb-1 block text-sm font-medium">

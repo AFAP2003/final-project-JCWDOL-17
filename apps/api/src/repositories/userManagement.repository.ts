@@ -9,6 +9,7 @@ class UserManagementRepository {
     const { skip, take: realTake } = pagination(page, take);
     const data = await prismaclient.user.findMany({
       include: {
+        store:true,
         addresses: true,
         managedStore: true,
       },
@@ -140,4 +141,3 @@ class UserManagementRepository {
 }
 
 export default new UserManagementRepository();
-\

@@ -8,6 +8,7 @@ import { useState } from 'react';
 export function inventoryManagementAPI() {
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination]         = useState({ currentPage: 1, pageSize: 10, totalPages: 1 });
 
   const fetchInventories = async (pageIndex: number, pageSize: number) => {
     setIsLoading(true);
@@ -16,7 +17,7 @@ export function inventoryManagementAPI() {
 
       const inventoryRes = await fetch(
         `${API_BASE_URL}/dashboard/inventories?page=${page}&take=${pageSize}`,
-        {
+        {                   
           method: 'GET',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
