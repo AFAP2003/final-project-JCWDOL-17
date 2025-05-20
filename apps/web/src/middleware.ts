@@ -23,7 +23,6 @@ const publicRoutes = [
   // '/checkout',
 ];
 
-
 export async function middleware(request: NextRequest) {
   // Add this
   // if (process.env.NODE_ENV === 'development') {

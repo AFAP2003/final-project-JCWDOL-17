@@ -5,48 +5,14 @@ import { toast } from '@/hooks/use-toast';
 import { apiclient } from '@/lib/apiclient';
 import { useSession } from '@/lib/auth/client';
 import { PaymentMethod } from '@/lib/enums';
+import {
+  CheckoutContextType,
+  MidtransConfig,
+  Voucher,
+} from '@/lib/types/checkout-type';
+import { formatCurrency } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-
-type CheckoutContextType = {
-  addresses: any[];
-  shippingMethods: any[];
-  selectedAddressId: string;
-  selectedShippingId: string;
-  paymentMethod: PaymentMethod;
-  notes: string;
-  voucherCode: string;
-  isLoading: boolean;
-  isSubmitting: boolean;
-  shippingCost: number;
-  nearestStore: any;
-  shippingDistance: number | null;
-  stockAvailability: {
-    available: boolean;
-    missingItems: any[];
-  };
-  serviceDetails: any;
-  calculatingShipping: boolean;
-  shippingError: string | null;
-  isOrderSuccess: boolean;
-  orderNumber: string;
-  total: number;
-  setSelectedAddressId: (id: string) => void;
-  setSelectedShippingId: (id: string) => void;
-  setPaymentMethod: (method: PaymentMethod) => void;
-  setNotes: (notes: string) => void;
-  setVoucherCode: (code: string) => void;
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
-  applyVoucher: () => Promise<void>;
-  initializePayment: (orderId: string) => Promise<void>;
-  resetCheckout: () => void;
-};
-
-interface MidtransConfig {
-  token: string;
-  clientKey: string;
-  redirectUrl?: string;
-}
 
 const CheckoutContext = createContext<CheckoutContextType | null>(null);
 
@@ -84,6 +50,8 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [createdOrderId, setCreatedOrderId] = useState('');
+  const [voucherDiscount, setVoucherDiscount] = useState<number>(0);
+  const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
 
   const total = Number(subtotal) + Number(shippingCost);
 
@@ -235,7 +203,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
-    if (!stockAvailability.available) {
+    if (!stockAvailability.available && !shippingError) {
       toast({
         description: 'Some items are unavailable. Please update your cart.',
         variant: 'destructive',
@@ -243,18 +211,26 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
-    console.log('Session:', session);
-
     try {
       setIsSubmitting(true);
 
+      // Create the order payload - specifically handle the voucher ID properly
+      const orderPayload = {
+        addressId: selectedAddressId,
+        shippingMethodId: selectedShippingId,
+        paymentMethod: paymentMethod,
+        notes: notes || undefined,
+        // Use voucherId directly instead of the code - this is the key change
+        vouchers: appliedVoucher ? [appliedVoucher.id] : [],
+      };
+
+      console.log('Submitting order with payload:', orderPayload);
+
       if (paymentMethod === PaymentMethod.PAYMENT_GATEWAY) {
-        const response = await apiclient.post('/payment/initialize', {
-          addressId: selectedAddressId,
-          shippingMethodId: selectedShippingId,
-          vouchers: voucherCode ? [voucherCode] : [],
-          notes,
-        });
+        const response = await apiclient.post(
+          '/payment/initialize',
+          orderPayload,
+        );
 
         const data = response.data;
         const { snapToken } = data;
@@ -268,14 +244,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
           data.orderNumber,
         );
       } else {
-        // Bank transfer flow → call backend /orders directly
-        const response = await apiclient.post('/orders', {
-          addressId: selectedAddressId,
-          shippingMethodId: selectedShippingId,
-          paymentMethod: paymentMethod,
-          notes: notes || undefined,
-          voucherCode: voucherCode || undefined,
-        });
+        const response = await apiclient.post('/orders', orderPayload);
 
         const orderId = response.data.id;
         setCreatedOrderId(orderId);
@@ -285,12 +254,20 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
         router.push(`/orders/${response.data.orderNumber}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout error:', error);
+      // More detailed error logging
+      if (error.response?.data) {
+        console.error('Error details:', error.response.data);
+      }
+
+      const errorMessage =
+        error.response?.data?.error?.message ||
+        error.response?.data?.message ||
+        'Failed to place order';
+
       toast({
-        description:
-          (error as any)?.response?.data?.error?.message ||
-          'Failed to place order',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -299,26 +276,93 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const applyVoucher = async () => {
-    if (!voucherCode || !createdOrderId) return;
-
-    try {
-      const response = await apiclient.post('/orders/apply-voucher', {
-        orderId: createdOrderId,
-        voucherCode: voucherCode,
-      });
-
+    if (!voucherCode) {
       toast({
-        description: 'Voucher applied successfully',
-      });
-
-      return response.data;
-    } catch (error) {
-      console.error('Error applying voucher:', error);
-      toast({
-        description:
-          error.response?.data?.error?.message || 'Failed to apply voucher',
+        description: 'Please enter a voucher code',
         variant: 'destructive',
       });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await apiclient.post('/voucher/validate', {
+        code: voucherCode,
+        subtotal: subtotal,
+      });
+
+      if (!response.data.voucher) {
+        throw new Error('Invalid voucher response');
+      }
+
+      const voucherData = response.data.voucher;
+      const discountAmount = Number(voucherData.discount) || 0;
+
+      // Validate for product-specific vouchers
+      if (
+        voucherData.type === 'PRODUCT_SPECIFIC' &&
+        voucherData.products?.length > 0
+      ) {
+        const voucherProductIds = voucherData.products.map((p) => p.id);
+        const eligibleItems = items.filter((item) =>
+          voucherProductIds.includes(item.product.id),
+        );
+
+        if (eligibleItems.length === 0) {
+          toast({
+            description:
+              'This voucher applies to specific products that are not in your cart',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        const eligibleSubtotal = eligibleItems.reduce(
+          (sum, item) => sum + item.product.price * item.quantity,
+          0,
+        );
+
+        if (
+          voucherData.minPurchase &&
+          eligibleSubtotal < Number(voucherData.minPurchase)
+        ) {
+          toast({
+            description: `You need to have at least ${formatCurrency(voucherData.minPurchase)} of eligible products to use this voucher`,
+            variant: 'destructive',
+          });
+          return;
+        }
+      } else if (
+        voucherData.minPurchase &&
+        subtotal < Number(voucherData.minPurchase)
+      ) {
+        toast({
+          description: `A minimum purchase of ${formatCurrency(voucherData.minPurchase)} is required for this voucher`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Set the voucher with its full data, including the ID
+      setVoucherDiscount(discountAmount);
+      setAppliedVoucher(voucherData);
+
+      toast({
+        description: `Voucher "${voucherData.name}" applied! You saved ${formatCurrency(discountAmount)}`,
+      });
+    } catch (error: any) {
+      console.error('Error applying voucher:', error);
+      setVoucherDiscount(0);
+      setAppliedVoucher(null);
+
+      toast({
+        description:
+          error.response?.data?.error?.message || 'Invalid voucher code',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -387,7 +431,6 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
       title: 'Payment Successful',
       description: 'Your payment has been processed successfully.',
     });
-    // Fetch the updated order or navigate to order details
     router.push(`/orders/${orderId}?status=success`);
   };
 
@@ -467,6 +510,8 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
         applyVoucher,
         initializePayment,
         resetCheckout,
+        appliedVoucher,
+        voucherDiscount,
       }}
     >
       {children}

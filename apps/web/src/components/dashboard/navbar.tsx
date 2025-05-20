@@ -17,8 +17,8 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { signOut, useSession } from '@/lib/auth/client';
-import { Skeleton } from '../ui/skeleton';
 import { useRouter } from 'next/navigation';
+import { Skeleton } from '../ui/skeleton';
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
     const { data: session, isPending } = useSession();
@@ -50,12 +50,12 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             <AvatarImage src="" alt="Admin avatar" />
             <AvatarFallback>AU</AvatarFallback>
           </Avatar> */}
-            <Avatar className="h-8 w-8">
-            {user.image ? (
-              <AvatarImage src={user.image} alt={user.name} />
+          <Avatar className="h-8 w-8">
+            {session?.user.image ? (
+              <AvatarImage src={session?.user.image} alt={session?.user.name} />
             ) : (
               <AvatarFallback>
-                {user.name
+                {session?.user.name
                   .split(' ')
                   .map((w) => w[0])
                   .join('')
@@ -63,7 +63,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               </AvatarFallback>
             )}
           </Avatar>
-          <div className="text-left">
+           <div className="text-left">
             {/* <div className="text-sm font-medium leading-none">Admin User</div>
             <div className="text-xs text-muted-foreground">Super Admin</div> */}
             <div className="text-sm font-medium leading-none">{user.name}</div>

@@ -16,7 +16,7 @@ class StoreManagementController {
     }
   }
 
-   async getStoreByAdminId(req: Request, res: Response, next: NextFunction) {
+  async getStoreByAdminId(req: Request, res: Response, next: NextFunction) {
     try {
       const { user } = getSession(req);
 
@@ -40,7 +40,6 @@ class StoreManagementController {
       });
     }
   }
-
 }
 
 export default new StoreManagementController();

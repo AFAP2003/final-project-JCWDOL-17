@@ -1,6 +1,7 @@
 'use client';
 
 import { useSession } from '@/lib/auth/client';
+import { cn } from '@/lib/utils';
 import {
   BarChart3,
   Boxes,
@@ -67,15 +68,15 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   if (isPending) {
     return <div></div>;
   }
-
-  const { user } = session;
   const router = useRouter();
 
-  console.log(user.role);
   const itemsToRender = sidebarItem.filter((item) => {
-    if (item.href === '/dashboard/users' && user.role === 'ADMIN') {
+    if (item.href === '/dashboard/users' && session?.user.role === 'ADMIN') {
       return router.push('/dashboard/products');
-    } else if (item.href === '/dashboard/stores' && user.role === 'ADMIN') {
+    } else if (
+      item.href === '/dashboard/stores' &&
+      session?.user.role === 'ADMIN'
+    ) {
       return false;
     }
     return true;
@@ -111,17 +112,24 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
             </Link>
           ))} */}
 
-          {itemsToRender.map((item) => (
-            <Link
-              key={item.title}
-              className="flex gap-4 text-black hover:bg-gray-100 p-4 hover:rounded-md"
-              href={item.href}
-              onClick={() => setSidebarOpen(false)} // close sidebar on nav
-            >
-              <item.icon className="w-5 h-5" />
-              {item.title}
-            </Link>
-          ))}
+          {itemsToRender.map((item) => {
+            const isStore = item.title === 'Toko';
+
+            return (
+              <Link
+                key={item.title}
+                className={cn(
+                  'flex gap-4 text-black hover:bg-gray-100 p-4 hover:rounded-md',
+                  isStore && session?.user.role !== 'SUPER' && 'hidden',
+                )}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)} // close sidebar on nav
+              >
+                <item.icon className="w-5 h-5" />
+                {item.title}
+              </Link>
+            );
+          })}
         </div>
       </div>
 

@@ -38,6 +38,7 @@ import {
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { toast } from '@/hooks/use-toast';
 
 export default function Checkout() {
   const router = useRouter();
@@ -51,6 +52,8 @@ export default function Checkout() {
     paymentMethod,
     notes,
     voucherCode,
+    voucherDiscount,
+    appliedVoucher,
     isLoading,
     isSubmitting,
     shippingCost,
@@ -137,6 +140,8 @@ export default function Checkout() {
       </MaxWidthWrapper>
     );
   }
+
+  const finalTotal = total - (Number(voucherDiscount) || 0);
 
   return (
     <MaxWidthWrapper className="container max-w-2xl mx-auto py-8 px-4">
@@ -353,18 +358,85 @@ export default function Checkout() {
               value={voucherCode}
               onChange={(e) => setVoucherCode(e.target.value)}
               className="flex-1"
+              disabled={isSubmitting}
             />
             <Button
               type="button"
               variant="outline"
               onClick={applyVoucher}
-              disabled={!voucherCode}
+              disabled={!voucherCode || isSubmitting}
             >
-              Apply
+              {isSubmitting ? 'Applying...' : 'Apply'}
             </Button>
           </CardContent>
-        </Card>
+          {appliedVoucher && (
+            <div className="px-6 pb-4">
+              <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-700">
+                      {appliedVoucher.name}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-green-700">
+                    -{formatCurrency(Number(voucherDiscount) || 0)}
+                  </span>
+                </div>
 
+                {appliedVoucher.description && (
+                  <p className="text-xs text-green-600 mt-1">
+                    {appliedVoucher.description}
+                  </p>
+                )}
+
+                {appliedVoucher.type === 'PRODUCT_SPECIFIC' &&
+                  appliedVoucher.products &&
+                  appliedVoucher.products.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs text-green-700 font-medium">
+                        Applicable to these products:
+                      </p>
+                      <div className="flex flex-wrap gap-1 mt-1 max-h-16 overflow-y-auto">
+                        {appliedVoucher.products.map((product) => (
+                          <Badge
+                            key={product.id}
+                            variant="outline"
+                            className="text-xs bg-green-100 text-green-800 border-green-200"
+                          >
+                            {product.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                <div className="flex justify-between text-xs text-green-700 mt-2 pt-2 border-t border-green-200">
+                  <span>
+                    Valid until:{' '}
+                    {new Date(appliedVoucher.validUntil).toLocaleDateString()}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 text-xs text-red-500 hover:text-red-700 hover:bg-transparent"
+                    onClick={() => {
+                      setVoucherDiscount(0);
+                      setAppliedVoucher(null);
+                      setVoucherCode('');
+                      toast({
+                        description: 'Voucher removed',
+                      });
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
         {/* Payment Method Card */}
         <Card>
           <CardHeader>
@@ -487,12 +559,24 @@ export default function Checkout() {
                 <span className="text-muted-foreground">Shipping</span>
                 <span>{formatCurrency(shippingCost)}</span>
               </div>
-              {/* Show discount if voucher applied */}
-              {/* We'll implement this when the backend supports it */}
+              {voucherDiscount > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span className="flex items-center gap-1">
+                    <Tag className="h-3 w-3" /> Voucher Discount
+                    {appliedVoucher && (
+                      <span className="text-xs text-muted-foreground ml-1">
+                        ({appliedVoucher.code})
+                      </span>
+                    )}
+                  </span>
+                  <span>-{formatCurrency(Number(voucherDiscount))}</span>
+                </div>
+              )}
+
               <Separator className="my-2" />
               <div className="flex justify-between font-bold">
                 <span>Total</span>
-                <span>{formatCurrency(total)}</span>
+                <span>{formatCurrency(finalTotal)}</span>
               </div>
             </div>
           </CardContent>

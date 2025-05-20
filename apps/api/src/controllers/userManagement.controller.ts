@@ -47,10 +47,8 @@ class UserManagementController {
     const mediaService = new MediaService();
 
     try {
-      // 1) extract the uploaded file buffer
       const file = getImageFromRequest(req);
 
-      // 2) send it to Cloudinary, get back a URL
       const imageUrl = await mediaService.uploadImage({ file: file.buffer });
 
       const payload = { ...req.body, image: imageUrl };
@@ -72,54 +70,52 @@ class UserManagementController {
     }
   }
 
- async updateUser(req: Request, res: Response, next: NextFunction) {
-  try {
-    const mediaService = new MediaService();
-    const { id } = req.params;
+  async updateUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const mediaService = new MediaService();
+      const { id } = req.params;
 
-    // 1) fetch the existing record
-    const existing = await userManagementService.listUserById(id);
-    if (!existing) {
-      return res.status(404).send({
-        success: false,
-        message: 'Existing User Not Found',
-      });
-    }
-
-    // 2) see if we got an uploaded file
-    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
-    const file = files?.image?.[0];
-
-    // 3) if there's a file, remove the old one and upload new
-    let newImageUrl: string | undefined;
-    if (file) {
-      if (existing.image?.startsWith('https://res.cloudinary.com')) {
-        await mediaService.removeImage(existing.image);
+      const existing = await userManagementService.listUserById(id);
+      if (!existing) {
+        return res.status(404).send({
+          success: false,
+          message: 'Existing User Not Found',
+        });
       }
-      newImageUrl = await mediaService.uploadImage({ file: file.buffer });
+
+      const files = req.files as
+        | Record<string, Express.Multer.File[]>
+        | undefined;
+      const file = files?.image?.[0];
+
+      let newImageUrl: string | undefined;
+      if (file) {
+        if (existing.image?.startsWith('https://res.cloudinary.com')) {
+          await mediaService.removeImage(existing.image);
+        }
+        newImageUrl = await mediaService.uploadImage({ file: file.buffer });
+      }
+
+      const updatePayload: any = { ...req.body };
+      if (newImageUrl) {
+        updatePayload.image = newImageUrl;
+      }
+
+      const data = await userManagementService.updateUserById(
+        id,
+        updatePayload,
+      );
+
+      return res.status(200).send({
+        success: true,
+        message: 'User updated successfully',
+        data,
+      });
+    } catch (error) {
+      console.error('Error in updateUser:', error);
+      next(error);
     }
-
-    // 4) build your payload — spread in req.body, then only add `image` if we got one
-    const updatePayload: any = { ...req.body };
-    if (newImageUrl) {
-      updatePayload.image = newImageUrl;
-    }
-
-    // 5) call your service/repo
-    const data = await userManagementService.updateUserById(id, updatePayload);
-
-    return res.status(200).send({
-      success: true,
-      message: 'User updated successfully',
-      data,
-    });
-  } catch (error) {
-    console.error('Error in updateUser:', error);
-    next(error);
   }
-}
-
-
 
   async deleteUser(req: Request, res: Response, next: NextFunction) {
     try {

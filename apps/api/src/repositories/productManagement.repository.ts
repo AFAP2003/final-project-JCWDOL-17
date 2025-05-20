@@ -3,10 +3,8 @@ import { CreateProductDTO } from '@/interfaces/productManagement.interface';
 import { prismaclient } from '@/prisma';
 
 class ProductManagementRepository {
-  async getProducts(page = 1, take = 10,adminId:string) {
-  
-    
-     let storeId: string | undefined;
+  async getProducts(page = 1, take = 10, adminId: string) {
+    let storeId: string | undefined;
     if (adminId) {
       const store = await prismaclient.store.findUnique({
         where: { adminId },
@@ -17,13 +15,12 @@ class ProductManagementRepository {
 
     const whereInventory = storeId ? { storeId } : {};
 
-
     const total = await prismaclient.product.count();
     const { skip, take: realTake } = pagination(page, take);
     const data = await prismaclient.product.findMany({
       include: {
         inventory: {
-          where:whereInventory
+          where: whereInventory,
         },
         category: true,
         images: true,

@@ -3,7 +3,7 @@ import { Inventory } from '@/interfaces/inventoryManagement.interface';
 import { prismaclient } from '@/prisma';
 class InventoryManagementRepository {
   async getInventories(page = 1, take = 10, storeId?: string) {
-const where = storeId ? { storeId } : {};
+    const where = storeId ? { storeId } : {};
     const total = await prismaclient.inventory.count({ where });
 
     const { skip, take: realTake } = pagination(page, take);
@@ -25,13 +25,9 @@ const where = storeId ? { storeId } : {};
     return { total, data };
   }
 
-  
-
   async createInventory(inventoryData: Inventory) {
-    // Simplified: directly use the provided storeId
-    // The controller handles role-specific logic
     const inv = await prismaclient.inventory.create({
-      data: inventoryData
+      data: inventoryData,
     });
 
     if (inv.quantity > 0) {
@@ -58,8 +54,7 @@ const where = storeId ? { storeId } : {};
 
     let newQty = current.quantity + addQuantity - subtractQuantity;
     if (newQty < 0) newQty = 0;
-    
-    // Update the inventory with specified data plus the quantity calculation
+
     const inv = await prismaclient.inventory.update({
       where: { id },
       data: {
@@ -68,7 +63,6 @@ const where = storeId ? { storeId } : {};
       },
     });
 
-    // Create journal entries for stock movements
     if (addQuantity > 0) {
       await prismaclient.stockJournal.create({
         data: {
@@ -93,7 +87,6 @@ const where = storeId ? { storeId } : {};
 
     return inv;
   }
-
 
   async deleteInventory(id: string) {
     return await prismaclient.$transaction(async (tx) => {

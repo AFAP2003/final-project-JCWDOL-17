@@ -5,8 +5,8 @@ import { fontBitter, fontInter } from './fonts';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'My Next App',
-  description: 'A Next.js application',
+  title: 'GoGrocery',
+  description: 'Easy Buy Easy Go',
 };
 
 export default function RootLayout({

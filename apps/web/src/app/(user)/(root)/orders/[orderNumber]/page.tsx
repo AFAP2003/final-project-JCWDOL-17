@@ -264,8 +264,50 @@ export default function OrderDetailsPage({
               <span>{formatCurrency(currentOrder.shippingCost)}</span>
             </div>
 
+            {currentOrder.discount > 0 &&
+              currentOrder.appliedVouchers &&
+              currentOrder.appliedVouchers.length > 0 && (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" /> Applied Vouchers
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {currentOrder.appliedVouchers.map(
+                        (voucherApplied: any) => (
+                          <div
+                            key={voucherApplied.id}
+                            className="p-3 bg-green-50 border border-green-200 rounded-md"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4 text-green-600" />
+                                <span className="text-sm font-medium text-green-700">
+                                  {voucherApplied.voucher?.name ||
+                                    'Voucher Applied'}
+                                </span>
+                              </div>
+                              <span className="text-sm font-medium text-green-700">
+                                -{formatCurrency(voucherApplied.discount)}
+                              </span>
+                            </div>
+                            {voucherApplied.voucher?.description && (
+                              <p className="text-xs text-green-600 mt-1">
+                                {voucherApplied.voucher.description}
+                              </p>
+                            )}
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
             {currentOrder.discount > 0 && (
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-sm text-green-600">
                 <span className="text-muted-foreground">Discount</span>
                 <span>-{formatCurrency(currentOrder.discount)}</span>
               </div>
@@ -341,6 +383,15 @@ export default function OrderDetailsPage({
                 <span className="text-muted-foreground">Shipping Method</span>
                 <span>{currentOrder.shippingMethod}</span>
               </div>
+              {currentOrder.appliedVouchers &&
+                currentOrder.appliedVouchers.length > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Voucher Applied
+                    </span>
+                    <span className="text-green-600">Yes</span>
+                  </div>
+                )}
               {currentOrder.notes && (
                 <div className="pt-2">
                   <span className="text-muted-foreground text-sm">Notes:</span>
