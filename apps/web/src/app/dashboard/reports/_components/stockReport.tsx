@@ -23,17 +23,8 @@ import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 import { useEffect, useState } from 'react';
 import StockReportSkeleton from './stockReportSkeleton';
 import { useSession } from '@/lib/auth/client';
-import { Skeleton } from '@/components/ui/skeleton';
-import StockReportPagination from './stockReportPagination';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-interface StockRecord {
-  product: string;
-  opening: number;
-  added: number;
-  removed: number;
-  closing: number;
-}
 
 interface StockReportProps {
   month: string;
@@ -52,7 +43,12 @@ export default function StockReport({
   onMonthChange,
   onYearChange,
 }: StockReportProps) {
-  const { isLoading, fetchStockReport, stockReport, pagination,setPagination } = reportManagementAPI();
+  const {
+    isLoading,
+    fetchStockReport,
+    stockReport,
+    pagination,
+  } = reportManagementAPI();
   const { fetchStores, stores } = storeManagementAPI();
   const [selectedStore, setSelectedStore] = useState('all');
   const { data: session, isPending: isSessionLoading } = useSession();
@@ -65,10 +61,10 @@ export default function StockReport({
 
   if (!user) return <div></div>;
   useEffect(() => {
-    fetchStockReport( pageIndex,10,year, month, selectedStore,);
+    fetchStockReport(pageIndex, 10, year, month, selectedStore);
     fetchStores();
-  }, [year, month, selectedStore,pageIndex]);
- 
+  }, [year, month, selectedStore, pageIndex]);
+
   if (isLoading) {
     return <StockReportSkeleton />;
   }
@@ -213,33 +209,32 @@ export default function StockReport({
         </Table>
       </div>
 
-    <div className="flex items-center justify-between mt-4">
-              <div className="flex items-center gap-2">
-
-        <Button
-         variant="outline"
+      <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
             size="sm"
-          disabled={pageIndex === 1}
-          onClick={() => setPageIndex((p) => Math.max(1, p - 1))}
-        >
+            disabled={pageIndex === 1}
+            onClick={() => setPageIndex((p) => Math.max(1, p - 1))}
+          >
             <ChevronLeft className="w-4 h-4" />
-        </Button>
+          </Button>
 
-         <Button
-         variant="outline"
+          <Button
+            variant="outline"
             size="sm"
-          disabled={!pagination.totalPages || pageIndex === pagination.totalPages}
-          onClick={() => setPageIndex((p) => p + 1)}
-        >
+            disabled={
+              !pagination.totalPages || pageIndex === pagination.totalPages
+            }
+            onClick={() => setPageIndex((p) => p + 1)}
+          >
             <ChevronRight className="w-4 h-4" />
-        </Button>
+          </Button>
         </div>
 
-         <div className="">
-    Halaman {pagination.pageIndex} dari {pagination.totalPages || 1}
-  </div>
-
-       
+        <div className="">
+          Halaman {pagination.pageIndex} dari {pagination.totalPages || 1}
+        </div>
       </div>
     </>
   );

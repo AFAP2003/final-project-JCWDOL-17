@@ -47,7 +47,8 @@ export default function UseInventoryManagement() {
     handleDeleteInventory: apiDeleteInventory,
   } = inventoryManagementAPI();
 
-  const { stores, fetchStores,fetchStoreByAdminId,storeByAdmin } = storeManagementAPI();
+  const { stores, fetchStores, fetchStoreByAdminId, storeByAdmin } =
+    storeManagementAPI();
   const { categories, fetchCategories } = categoryManagementAPI();
   const { products, fetchProducts } = productManagementAPI();
   const [globalFilter, setGlobalFilter] = useState('');
@@ -56,94 +57,108 @@ export default function UseInventoryManagement() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingInventoryId, setEditingInventoryId] = useState<string | null>(null,);
+  const [editingInventoryId, setEditingInventoryId] = useState<string | null>(
+    null,
+  );
   const [pageCount, setPageCount] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDetailMode, setIsDetailMode] = useState(false);
-  const [isDetailDropdown,setIsDetailDropdown] = useState(false)
+  const [isDetailDropdown, setIsDetailDropdown] = useState(false);
   const { data: session, isPending: isSessionLoading } = useSession();
   const user = session?.user;
- const columns = useMemo<ColumnDef<any>[]>(
-    () => {
-      const cols: ColumnDef<any>[] = [
-        {
-          accessorKey: 'gambar',
-          header: 'Gambar',
-          cell: ({ row }) => {
-            const mainImg = row.original.product.images.find(img => img.isMain)
-            const url = mainImg?.imageUrl
-            return url ? (
-              <Avatar className="h-32 w-32 rounded-md overflow-hidden">
-                <AvatarImage src={url} alt="main product image" />
-              </Avatar>
-            ) : (
-              <Avatar className="h-32 w-32 rounded-sm flex items-center justify-center">
-                <ImageOff className="w-8 h-8 text-gray-400" />
-              </Avatar>
-            )
-          },
+  const columns = useMemo<ColumnDef<any>[]>(() => {
+    const cols: ColumnDef<any>[] = [
+      {
+        accessorKey: 'gambar',
+        header: 'Gambar',
+        cell: ({ row }) => {
+          const mainImg = row.original.product.images.find((img) => img.isMain);
+          const url = mainImg?.imageUrl;
+          return url ? (
+            <Avatar className="h-32 w-32 rounded-md overflow-hidden">
+              <AvatarImage src={url} alt="main product image" />
+            </Avatar>
+          ) : (
+            <Avatar className="h-32 w-32 rounded-sm flex items-center justify-center">
+              <ImageOff className="w-8 h-8 text-gray-400" />
+            </Avatar>
+          );
         },
-        {
-          header: 'Produk',
-          cell: ({ row }) => row.original.product?.name ?? '-',
-        },
-        {
-          id: 'category',
-          header: 'Kategori',
-          accessorFn: row => row.product?.category?.name ?? '',
-          cell: ({ row }) => row.original.product?.category?.name ?? '-',
-        },
-      ]
+      },
+      {
+        header: 'Produk',
+        cell: ({ row }) => row.original.product?.name ?? '-',
+      },
+      {
+        id: 'category',
+        header: 'Kategori',
+        accessorFn: (row) => row.product?.category?.name ?? '',
+        cell: ({ row }) => row.original.product?.category?.name ?? '-',
+      },
+    ];
 
-      // only super-admins get the “Toko” column
-      if (user?.role === 'SUPER') {
-        cols.push({
-          id: 'store',
-          header: 'Toko',
-          accessorFn: row => row.store?.name ?? '',
-          cell: ({ row }) => row.original.store?.name ?? '-',
-        })
-      }
+    // only super-admins get the “Toko” column
+    if (user?.role === 'SUPER') {
+      cols.push({
+        id: 'store',
+        header: 'Toko',
+        accessorFn: (row) => row.store?.name ?? '',
+        cell: ({ row }) => row.original.store?.name ?? '-',
+      });
+    }
 
-      // now append the rest of your columns
-      cols.push(
-        {
-          header: 'Harga',
-          cell: ({ row }) => {
-            const price = Number(row.original.product.price)
-            return `Rp ${price.toLocaleString()}`
-          },
+    // now append the rest of your columns
+    cols.push(
+      {
+        header: 'Harga',
+        cell: ({ row }) => {
+          const price = Number(row.original.product.price);
+          return `Rp ${price.toLocaleString()}`;
         },
-        {
-          header: 'Stok',
-          cell: ({ row }) => row.original.quantity?.toString() ?? '0',
+      },
+      {
+        header: 'Stok',
+        cell: ({ row }) => row.original.quantity?.toString() ?? '0',
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        accessorFn: (row) => {
+          const { quantity, minStock } = row;
+          if (quantity === 0) return 'Stok Habis';
+          if (quantity <= minStock) return 'Stok Rendah';
+          return 'Stok Tersedia';
         },
-        {
-          id: 'status',
-          header: 'Status',
-          accessorFn: row => {
-            const { quantity, minStock } = row
-            if (quantity === 0) return 'Stok Habis'
-            if (quantity <= minStock) return 'Stok Rendah'
-            return 'Stok Tersedia'
-          },
-          cell: ({ row }) => {
-            const qty = row.original.quantity
-            const min = row.original.minStock
-            const status =
-              qty === 0
-                ? 'Stok Habis'
-                : qty <= min
+        cell: ({ row }) => {
+          const qty = row.original.quantity;
+          const min = row.original.minStock;
+          const status =
+            qty === 0
+              ? 'Stok Habis'
+              : qty <= min
                 ? 'Stok Rendah'
-                : 'Stok Tersedia'
-            return <Badge variant={status === 'Stok Tersedia' ? 'default' : status === 'Stok Rendah' ? 'secondary' : 'destructive'}>{status}</Badge>
-          },
+                : 'Stok Tersedia';
+          return (
+            <Badge
+              variant={
+                status === 'Stok Tersedia'
+                  ? 'default'
+                  : status === 'Stok Rendah'
+                    ? 'secondary'
+                    : 'destructive'
+              }
+            >
+              {status}
+            </Badge>
+          );
         },
-        {
-          header: 'Terakhir Diperbarui',
-          cell: ({ row }) => new Date(row.original.updatedAt).toLocaleString('id-ID'),
-        },
-       {
+      },
+      {
+        header: 'Terakhir Diperbarui',
+        cell: ({ row }) =>
+          new Date(row.original.updatedAt).toLocaleString('id-ID'),
+      },
+      {
         header: 'Aksi',
         cell: ({ row }) => {
           const inventory = row.original;
@@ -161,7 +176,7 @@ export default function UseInventoryManagement() {
                       setDialogOpen(true);
                       setEditingInventoryId(inventory.id);
                       setIsEditMode(true);
-                      setIsDetailDropdown(true)
+                      setIsDetailDropdown(true);
                       formik.setValues({
                         produk: inventory.productId,
                         toko: inventory.storeId,
@@ -188,7 +203,6 @@ export default function UseInventoryManagement() {
                         minimal: inventory.minStock,
                         mode: 'tambah',
                       });
-
                     }}
                   >
                     Lihat Detail
@@ -232,12 +246,10 @@ export default function UseInventoryManagement() {
           );
         },
       },
-      )
+    );
 
-      return cols
-    },
-    [user?.role],
-  )
+    return cols;
+  }, [user?.role]);
 
   const fetchInventories = useCallback(
     (pageIndex: number, pageSize: number) => {
@@ -261,105 +273,120 @@ export default function UseInventoryManagement() {
     fetchProducts(0, 50);
   }, []);
 
-   useEffect(() => {
+  useEffect(() => {
     if (user?.role === 'ADMIN') {
       fetchStoreByAdminId(user.id);
     }
   }, [user]);
 
-
-  
-
   const formik = useFormik({
     initialValues: {
-      produk:'' ,
-      toko: user?.role == 'ADMIN'? user.storeId!:'',
+      produk: '',
+      toko: user?.role == 'ADMIN' ? user.storeId! : '',
       mode: 'tambah' as 'tambah' | 'kurangi',
       tambah: '',
       kurangi: '',
       minimal: '',
-      sekarang:0,
-      baru:0
+      sekarang: 0,
+      baru: 0,
     },
 
     validationSchema: getValidationSchema(),
 
-  onSubmit: async (values, { resetForm }) => {
-    console.log(">>> 1. Formik onSubmit function reached START");
-    console.log(">>> 1a. Submitting values:", values);
+    onSubmit: async (values, { resetForm }) => {
+      console.log('>>> 1. Formik onSubmit function reached START');
+      console.log('>>> 1a. Submitting values:', values);
 
-const selectedStoreId =
-  user?.role === 'ADMIN'
-    ? storeByAdmin?.id
-    : values.toko || values.storeId || '';    
-    console.log(">>> 1b. Selected Store ID:", selectedStoreId);
+      const selectedStoreId =
+        user?.role === 'ADMIN'
+          ? storeByAdmin?.id
+          : values.toko || values.storeId || '';
+      console.log('>>> 1b. Selected Store ID:', selectedStoreId);
 
-    const existingInv = inventories.find(
-      (inv) =>
-        String(inv.productId) === String(values.produk) &&
-        String(inv.storeId) === String(selectedStoreId)
-    );
-    console.log(">>> 2. Existing inventory found:", existingInv);
+      const existingInv = inventories.find(
+        (inv) =>
+          String(inv.productId) === String(values.produk) &&
+          String(inv.storeId) === String(selectedStoreId),
+      );
+      console.log('>>> 2. Existing inventory found:', existingInv);
 
-    let success = false;
-    let inventoryIdToProcess = null; // Variable to hold the ID for update
+      let success = false;
+      let inventoryIdToProcess = null; // Variable to hold the ID for update
 
-    // --- CRITICAL LOGIC CHANGE HERE ---
-    // If we're explicitly in 'edit mode' (from clicking an edit button on the table)
-    // AND we have a valid editingInventoryId from the context, use that.
-    if (isEditMode && editingInventoryId) {
-      console.log(">>> 3a. EDIT mode branch active (from table edit button). Using ID:", editingInventoryId);
-      inventoryIdToProcess = editingInventoryId;
-    }
-    // ELSE IF an existing inventory was found based on form selections (from '+' button)
-    // This is the path for '+' button when an existing item is selected
-    else if (existingInv) {
-      console.log(">>> 3b. EXISTING item selected (via + button). Using ID:", existingInv.id);
-      inventoryIdToProcess = existingInv.id;
-    }
-    // ELSE it's a completely new item to be created
-    else {
-      console.log(">>> 3c. CREATE NEW item.");
-      const newQuantity = values.mode === 'tambah' ? Number(values.tambah || 0) : Math.max(0, Number(values.sekarang) - Number(values.kurangi || 0));
-      console.log(">>> 3c1. Calling handleCreateInventory with quantity:", newQuantity, " and storeId:", selectedStoreId);
-      success = await handleCreateInventory({
+      // --- CRITICAL LOGIC CHANGE HERE ---
+      // If we're explicitly in 'edit mode' (from clicking an edit button on the table)
+      // AND we have a valid editingInventoryId from the context, use that.
+      if (isEditMode && editingInventoryId) {
+        console.log(
+          '>>> 3a. EDIT mode branch active (from table edit button). Using ID:',
+          editingInventoryId,
+        );
+        inventoryIdToProcess = editingInventoryId;
+      }
+      // ELSE IF an existing inventory was found based on form selections (from '+' button)
+      // This is the path for '+' button when an existing item is selected
+      else if (existingInv) {
+        console.log(
+          '>>> 3b. EXISTING item selected (via + button). Using ID:',
+          existingInv.id,
+        );
+        inventoryIdToProcess = existingInv.id;
+      }
+      // ELSE it's a completely new item to be created
+      else {
+        console.log('>>> 3c. CREATE NEW item.');
+        const newQuantity =
+          values.mode === 'tambah'
+            ? Number(values.tambah || 0)
+            : Math.max(
+                0,
+                Number(values.sekarang) - Number(values.kurangi || 0),
+              );
+        console.log(
+          '>>> 3c1. Calling handleCreateInventory with quantity:',
+          newQuantity,
+          ' and storeId:',
+          selectedStoreId,
+        );
+        success = await handleCreateInventory({
           productId: values.produk,
           storeId: selectedStoreId,
           quantity: newQuantity,
           minStock: Number(values.minimal),
-      });
-      console.log(">>> 3c2. handleCreateInventory returned:", success);
-    }
-    // --- END CRITICAL LOGIC CHANGE ---
+        });
+        console.log('>>> 3c2. handleCreateInventory returned:', success);
+      }
+      // --- END CRITICAL LOGIC CHANGE ---
 
-    // --- Execute Update if an ID was determined for it ---
-    if (inventoryIdToProcess) { // Only call update if an ID was set in the branches above
-        console.log(">>> 4a. Inventory ID to process (update):", inventoryIdToProcess);
-        console.log(">>> 4b. Calling handleUpdateInventory...");
+      // --- Execute Update if an ID was determined for it ---
+      if (inventoryIdToProcess) {
+        // Only call update if an ID was set in the branches above
+        console.log(
+          '>>> 4a. Inventory ID to process (update):',
+          inventoryIdToProcess,
+        );
+        console.log('>>> 4b. Calling handleUpdateInventory...');
         success = await handleUpdateInventory(inventoryIdToProcess, values);
-        console.log(">>> 4c. handleUpdateInventory AWAIT returned:", success);
-    }
+        console.log('>>> 4c. handleUpdateInventory AWAIT returned:', success);
+      }
 
-    console.log(">>> 5. Checking 'success' variable:", success);
+      console.log(">>> 5. Checking 'success' variable:", success);
 
-    if (success) {
-      console.log(">>> 6. Operation SUCCESS. Resetting form, closing dialog, and refetching data.");
-      resetForm();
-      setDialogOpen(false);
-      await fetchInventories(pagination.pageIndex, pagination.pageSize);
-      console.log(">>> 7. fetchInventories call AWAITED.");
-    } else {
-      console.log(">>> 6. Operation FAILED (success is false).");
-    }
+      if (success) {
+        console.log(
+          '>>> 6. Operation SUCCESS. Resetting form, closing dialog, and refetching data.',
+        );
+        resetForm();
+        setDialogOpen(false);
+        await fetchInventories(pagination.pageIndex, pagination.pageSize);
+        console.log('>>> 7. fetchInventories call AWAITED.');
+      } else {
+        console.log('>>> 6. Operation FAILED (success is false).');
+      }
 
-    console.log(">>> 8. Formik onSubmit function reached END");
-  }
-
-
-
+      console.log('>>> 8. Formik onSubmit function reached END');
+    },
   });
-
-  
 
   const table = useReactTable({
     data: inventories,
@@ -483,6 +510,6 @@ const selectedStoreId =
     isDetailDropdown,
     setIsDetailDropdown,
     fetchStoreByAdminId,
-    storeByAdmin
+    storeByAdmin,
   };
 }

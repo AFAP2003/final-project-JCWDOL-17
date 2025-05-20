@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import UseDiscountManagement from '@/hooks/useDiscountManagement';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
 import { FormikProps } from 'formik';
@@ -54,8 +53,6 @@ export default function DiscountManagementForm({
   const [disablePotonganMaks, setDisablePotonganMaks] = useState(false);
   const [disableTipeNilaiDiskon, setDisableTipeNilaiDiskon] = useState(false);
   const { isSessionLoading, user } = UseDiscountManagement();
-
-  
 
   useEffect(() => {
     if (type == 'diskon_normal') {
@@ -164,35 +161,34 @@ export default function DiscountManagementForm({
               <p className="text-xs text-red-600">{formik.errors.deskripsi}</p>
             )}
           </div>
-            
-            {user.role=='SUPER'&&(
-               <div>
-            <label className="mb-1 block text-sm font-medium">Toko</label>
-            <Select
-              value={formik.values.toko}
-              onValueChange={(v) => formik.setFieldValue('toko', v)}
-              disabled={disabled}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih toko" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Pilih Toko</SelectLabel>
-                  {stores.map((store) => (
-                    <SelectItem value={store.id} key={store.id}>
-                      {store.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            {formik.touched.toko && formik.errors.toko && (
-              <p className="text-xs text-red-600">{formik.errors.toko}</p>
-            )}
-          </div>
-            )}
-         
+
+          {user.role == 'SUPER' && (
+            <div>
+              <label className="mb-1 block text-sm font-medium">Toko</label>
+              <Select
+                value={formik.values.toko}
+                onValueChange={(v) => formik.setFieldValue('toko', v)}
+                disabled={disabled}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih toko" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Pilih Toko</SelectLabel>
+                    {stores.map((store) => (
+                      <SelectItem value={store.id} key={store.id}>
+                        {store.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {formik.touched.toko && formik.errors.toko && (
+                <p className="text-xs text-red-600">{formik.errors.toko}</p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium">

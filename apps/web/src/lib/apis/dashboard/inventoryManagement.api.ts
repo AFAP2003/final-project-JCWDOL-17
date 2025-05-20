@@ -8,7 +8,6 @@ import { useState } from 'react';
 export function inventoryManagementAPI() {
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [pagination, setPagination]         = useState({ currentPage: 1, pageSize: 10, totalPages: 1 });
 
   const fetchInventories = async (pageIndex: number, pageSize: number) => {
     setIsLoading(true);
@@ -17,7 +16,7 @@ export function inventoryManagementAPI() {
 
       const inventoryRes = await fetch(
         `${API_BASE_URL}/dashboard/inventories?page=${page}&take=${pageSize}`,
-        {                   
+        {
           method: 'GET',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -48,11 +47,10 @@ export function inventoryManagementAPI() {
       if (values.tambah) {
         quantity = Number(values.tambah);
       } else if (values.kurangi) {
-        // For creation, it might not make sense to reduce from zero,
-        // but we'll include it for consistency
+       
         quantity = Math.max(0, values.sekarang - Number(values.kurangi));
       } else {
-        quantity = 0; // Default if neither has a value
+        quantity = 0; 
       }
       const inventoryRes = await fetch(
         `${API_BASE_URL}/dashboard/inventories`,
@@ -61,7 +59,7 @@ export function inventoryManagementAPI() {
           headers: {
             'Content-Type': 'application/json',
           },
-          credentials:'include',
+          credentials: 'include',
           body: JSON.stringify({
             productId: values.produk,
             storeId: values.toko,
@@ -100,67 +98,75 @@ export function inventoryManagementAPI() {
     }
   };
 
- const handleUpdateInventory = async (id, values) => {
-  try {
-    console.log("Starting inventory update for ID:", id);
-    console.log("Update values:", values);
-    
-    // Simplify and standardize the update payload
-    const updateData = {
-      minStock: Number(values.minStock || values.minimal || 0),
-      addQuantity: Number(values.addQuantity || (values.mode === 'tambah' ? values.tambah : 0) || 0),
-      subtractQuantity: Number(values.subtractQuantity || (values.mode === 'kurangi' ? values.kurangi : 0) || 0),
-    };
-    
-    console.log("Sending update payload:", updateData);
-    
-    const inventoryRes = await fetch(
-      `${API_BASE_URL}/dashboard/inventories/${id}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json', // FIXED: Missing content-type header
-        },
-        credentials: 'include', // FIXED: Missing credentials
-        body: JSON.stringify(updateData),
-      },
-    );
-
-    const responseText = await inventoryRes.text();
-    let inventoryData;
-    
+  const handleUpdateInventory = async (id, values) => {
     try {
-      inventoryData = JSON.parse(responseText);
-    } catch (e) {
-      console.error("Failed to parse response as JSON:", responseText);
-      throw new Error("Invalid response from server");
-    }
+      console.log('Starting inventory update for ID:', id);
+      console.log('Update values:', values);
 
-    console.log("Update API response:", inventoryData);
+      // Simplify and standardize the update payload
+      const updateData = {
+        minStock: Number(values.minStock || values.minimal || 0),
+        addQuantity: Number(
+          values.addQuantity ||
+            (values.mode === 'tambah' ? values.tambah : 0) ||
+            0,
+        ),
+        subtractQuantity: Number(
+          values.subtractQuantity ||
+            (values.mode === 'kurangi' ? values.kurangi : 0) ||
+            0,
+        ),
+      };
 
-    if (inventoryRes.ok) {
-      toast({
-        description: 'Inventory Updated Successfully!',
-      });
-      return true;
-    } else {
-      const errorMessage = inventoryData.message || 'Unknown error';
+      console.log('Sending update payload:', updateData);
+
+      const inventoryRes = await fetch(
+        `${API_BASE_URL}/dashboard/inventories/${id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(updateData),
+        },
+      );
+
+      const responseText = await inventoryRes.text();
+      let inventoryData;
+
+      try {
+        inventoryData = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse response as JSON:', responseText);
+        throw new Error('Invalid response from server');
+      }
+
+      console.log('Update API response:', inventoryData);
+
+      if (inventoryRes.ok) {
+        toast({
+          description: 'Inventory Updated Successfully!',
+        });
+        return true;
+      } else {
+        const errorMessage = inventoryData.message || 'Unknown error';
+        toast({
+          variant: 'destructive',
+          description: `Failed to update inventory: ${errorMessage}`,
+        });
+        console.error('Failed to update inventory:', errorMessage);
+        return false;
+      }
+    } catch (error) {
       toast({
         variant: 'destructive',
-        description: `Failed to update inventory: ${errorMessage}`,
+        description: `Error updating inventory: ${error.message || String(error)}`,
       });
-      console.error('Failed to update inventory:', errorMessage);
+      console.error('Error updating inventory:', error);
       return false;
     }
-  } catch (error) {
-    toast({
-      variant: 'destructive',
-      description: `Error updating inventory: ${error.message || String(error)}`,
-    });
-    console.error('Error updating inventory:', error);
-    return false;
-  }
-}
+  };
 
   const handleDeleteInventory = async (id: string) => {
     try {

@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import UseProductManagement from '@/hooks/useProductManagement';
 import { MyFormValues } from '@/validations/user.validation';
 import { FormikProps } from 'formik';
@@ -128,7 +127,6 @@ export default function ProductManagementForm({
         setDialogOpen(open);
       }}
     >
-      {' '}
       {user.role == 'SUPER' && (
         <DialogTrigger asChild>
           <Button className="w-[150px]">
@@ -334,31 +332,8 @@ export default function ProductManagementForm({
             )}
           </div>
 
-          {/* toko */}
-          {/* <div>
-              <label className="mb-1 block text-sm font-medium">Toko</label>
-              <Select
-                value={formik.values.storeId}
-                onValueChange={v => formik.setFieldValue('storeId', v)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih Toko" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Toko</SelectLabel>
-                    <SelectItem value="1">Jakarta Store</SelectItem>
-                    <SelectItem value="2">Surabaya Store</SelectItem>
-                    <SelectItem value="3">Medan Store</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {formik.touched.storeId && formik.errors.storeId && (
-                <p className="text-xs text-red-600">{formik.errors.storeId}</p>
-              )}
-            </div> */}
-              
-          <DialogFooter className={`flex justify-end gap-2 `} >
+         
+          <DialogFooter className={`flex justify-end gap-2 `}>
             <Button
               variant="outline"
               type="button"
@@ -366,12 +341,15 @@ export default function ProductManagementForm({
                 formik.resetForm();
                 setDialogOpen(false);
               }}
-                            className={isDetailMode ? 'hidden' : 'block'}
+              className={isDetailMode ? 'hidden' : 'block'}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={formik.isSubmitting} 
-            className={isDetailMode ? 'hidden' : 'block'}>
+            <Button
+              type="submit"
+              disabled={formik.isSubmitting}
+              className={isDetailMode ? 'hidden' : 'block'}
+            >
               {formik.isSubmitting && <UploadImageLoadingOverlay />}
 
               {isEditMode ? 'Simpan Perubahan' : 'Tambah Produk'}

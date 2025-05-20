@@ -11,31 +11,29 @@ export default function UserManagementskeleton() {
       </div>
 
       {/* 2. Filters row */}
-     <div className='hidden sm:block'>
-       <div className="flex justify-between ">
-        <div className="">
-          <Skeleton className="h-9 w-40" />
-        </div>
-        <div className="flex gap-4">
-          <Skeleton className="h-9 w-36" />
-          <Skeleton className="h-9 w-36" />
-          <Skeleton className="h-9 w-20" />
+      <div className="hidden sm:block">
+        <div className="flex justify-between ">
+          <div className="">
+            <Skeleton className="h-9 w-40" />
+          </div>
+          <div className="flex gap-4">
+            <Skeleton className="h-9 w-36" />
+            <Skeleton className="h-9 w-36" />
+            <Skeleton className="h-9 w-20" />
+          </div>
         </div>
       </div>
-     </div>
-     
-    <div className='sm:hidden block'>
-       <div className='flex flex-col gap-2 '>
+
+      <div className="sm:hidden block">
+        <div className="flex flex-col gap-2 ">
           <Skeleton className="h-9 w-20 self-end" />
           <Skeleton className="h-9 w-36 self-end" />
-      <div className='flex justify-between'>
-          <Skeleton className="h-9 w-40" />
-          <Skeleton className="h-9 w-36" />
-
+          <div className="flex justify-between">
+            <Skeleton className="h-9 w-40" />
+            <Skeleton className="h-9 w-36" />
+          </div>
+        </div>
       </div>
-      </div>
-
-    </div>
 
       {/* 3. Table body placeholder */}
       <div className="border border-gray-200 rounded overflow-hidden">

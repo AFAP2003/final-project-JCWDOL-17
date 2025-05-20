@@ -45,8 +45,8 @@ export default function UseProductManagement() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
-  const [previews, setPreviews] = useState<string[]>([]); // ✅ typed
-  const [mainIndex, setMainIndex] = useState<number>(0); // ✅ typed
+  const [previews, setPreviews] = useState<string[]>([]); 
+  const [mainIndex, setMainIndex] = useState<number>(0); 
   const [isDetailMode, setIsDetailMode] = useState(false);
   const { data: session, isPending: isSessionLoading } = useSession();
   const user = session?.user;
@@ -94,7 +94,7 @@ export default function UseProductManagement() {
       kategoriId: '',
       isActive: true,
       image: [],
-      keptImages: [], // ✅ Add this
+      keptImages: [], 
       mainIndex: 0,
     },
     validationSchema: getValidationSchema(),
@@ -120,7 +120,6 @@ export default function UseProductManagement() {
       {
         id: 'mainImage',
         header: 'Gambar',
-        // accessorFn now returns only the main image object (or undefined)
         accessorFn: (row) => row.images.find((img) => img.isMain),
         cell: ({ getValue }) => {
           const img = getValue();
@@ -158,20 +157,17 @@ export default function UseProductManagement() {
         },
       },
       { accessorKey: 'sku', header: 'SKU' },
-      // { accessorKey: 'weight', header: 'Berat (kg)' },
       {
         accessorKey: 'inventory',
         header: 'Stok',
         cell: ({ row }) => {
           const inventoryArray = row.original.inventory;
-          
-          if(user.role=='ADMIN'){
-          return inventoryArray?.[0]?.quantity ?? 0;
 
+          if (user.role == 'ADMIN') {
+            return inventoryArray?.[0]?.quantity ?? 0;
           }
 
-
-    return inventoryArray.reduce((sum, inv) => sum + inv.quantity, 0);
+          return inventoryArray.reduce((sum, inv) => sum + inv.quantity, 0);
         },
       },
       {
@@ -355,38 +351,41 @@ export default function UseProductManagement() {
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
-  globalFilterFn: (row, _col, filter) => {
-  const search = String(filter).toLowerCase();
-  const product = row.original;
+    globalFilterFn: (row, _col, filter) => {
+      const search = String(filter).toLowerCase();
+      const product = row.original;
 
-  const nameMatch = product.name?.toLowerCase().includes(search);
-  const descriptionMatch = product.description?.toLowerCase().includes(search);
-  const skuMatch = product.sku?.toLowerCase().includes(search);
-  const priceMatch = String(product.price).includes(search);
-  const weightMatch = String(product.weight).includes(search);
-  const categoryNameMatch = product.category?.name?.toLowerCase().includes(search);
+      const nameMatch = product.name?.toLowerCase().includes(search);
+      const descriptionMatch = product.description
+        ?.toLowerCase()
+        .includes(search);
+      const skuMatch = product.sku?.toLowerCase().includes(search);
+      const priceMatch = String(product.price).includes(search);
+      const weightMatch = String(product.weight).includes(search);
+      const categoryNameMatch = product.category?.name
+        ?.toLowerCase()
+        .includes(search);
 
-  // ✅ NEW: total inventory quantity for stok column
-  const totalInventory =
-    product.inventory?.reduce((sum, inv) => sum + inv.quantity, 0) ?? 0;
-  const inventoryMatch =
-    totalInventory.toString().includes(search); // now searchable
+      const totalInventory =
+        product.inventory?.reduce((sum, inv) => sum + inv.quantity, 0) ?? 0;
+      const inventoryMatch = totalInventory.toString().includes(search); // now searchable
 
-  // ✅ Status column match
-  const statusValue = row.getValue('status');
-  const statusMatch = String(statusValue ?? '').toLowerCase().includes(search);
+      const statusValue = row.getValue('status');
+      const statusMatch = String(statusValue ?? '')
+        .toLowerCase()
+        .includes(search);
 
-  return (
-    nameMatch ||
-    descriptionMatch ||
-    skuMatch ||
-    priceMatch ||
-    weightMatch ||
-    categoryNameMatch ||
-    inventoryMatch || // ✅ stok column match
-    statusMatch
-  );
-},
+      return (
+        nameMatch ||
+        descriptionMatch ||
+        skuMatch ||
+        priceMatch ||
+        weightMatch ||
+        categoryNameMatch ||
+        inventoryMatch || 
+        statusMatch
+      );
+    },
 
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),

@@ -23,7 +23,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import AllSalesChartSkeleton from './allSalesChartSkeleton';
 import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 import { useSession } from '@/lib/auth/client';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface AllSalesChartProps {
   year: string;
@@ -48,15 +47,15 @@ export default function AllSalesChart({
   const [selectedStore, setSelectedStore] = useState<string | 'all'>('all');
   const { data: session, isPending: isSessionLoading } = useSession();
   const user = session?.user;
-if (isSessionLoading) {
+  if (isSessionLoading) {
     return <div></div>;
   }
 
   if (!user) return <div></div>;
   useEffect(() => {
-    fetchMonthlySales(year,selectedStore);
-    fetchStores()
-  }, [year,selectedStore]);
+    fetchMonthlySales(year, selectedStore);
+    fetchStores();
+  }, [year, selectedStore]);
   if (isLoading) {
     return <AllSalesChartSkeleton />;
   }
@@ -67,52 +66,49 @@ if (isSessionLoading) {
     >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Penjualan</h2>
-        <div className='flex gap-4'>
-          {user.role=='SUPER'&&(
-              <Select
-                      value={selectedStore}
-                      onValueChange={setSelectedStore}
-                    >
-                      <SelectTrigger className="w-[130px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Pilih Toko</SelectLabel>
-                          <SelectItem value="all">Semua Toko</SelectItem>
-                          {stores.map((store) => (
-                            <SelectItem value={store.id} key={store.id}>
-                              {store.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+        <div className="flex gap-4">
+          {user.role == 'SUPER' && (
+            <Select value={selectedStore} onValueChange={setSelectedStore}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Pilih Toko</SelectLabel>
+                  <SelectItem value="all">Semua Toko</SelectItem>
+                  {stores.map((store) => (
+                    <SelectItem value={store.id} key={store.id}>
+                      {store.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           )}
-          
-        <Select
-          defaultValue={year}
-          onValueChange={(value) => onYearChange(value)}
-        >
-          <SelectTrigger className="w-[100px]">
-            <SelectValue placeholder={year} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Pilih Tahun</SelectLabel>
-              <SelectItem value="2016">2016</SelectItem>
-              <SelectItem value="2017">2017</SelectItem>
-              <SelectItem value="2018">2018</SelectItem>
-              <SelectItem value="2019">2019</SelectItem>
-              <SelectItem value="2020">2020</SelectItem>
-              <SelectItem value="2021">2021</SelectItem>
-              <SelectItem value="2022">2022</SelectItem>
-              <SelectItem value="2023">2023</SelectItem>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+
+          <Select
+            defaultValue={year}
+            onValueChange={(value) => onYearChange(value)}
+          >
+            <SelectTrigger className="w-[100px]">
+              <SelectValue placeholder={year} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Pilih Tahun</SelectLabel>
+                <SelectItem value="2016">2016</SelectItem>
+                <SelectItem value="2017">2017</SelectItem>
+                <SelectItem value="2018">2018</SelectItem>
+                <SelectItem value="2019">2019</SelectItem>
+                <SelectItem value="2020">2020</SelectItem>
+                <SelectItem value="2021">2021</SelectItem>
+                <SelectItem value="2022">2022</SelectItem>
+                <SelectItem value="2023">2023</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <BarChart

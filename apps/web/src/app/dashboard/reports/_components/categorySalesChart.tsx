@@ -30,7 +30,6 @@ import reportManagementAPI from '@/lib/apis/dashboard/reportManagement.api';
 import CategorySalesChartSkeleton from './categorySalesChartSkeleton';
 import storeManagementAPI from '@/lib/apis/dashboard/storeManagement.api';
 import { useSession } from '@/lib/auth/client';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface CategorySalesChartProps {
   month: string;
@@ -59,15 +58,15 @@ export default function CategorySalesChart({
   const [selectedStore, setSelectedStore] = useState('all');
   const { data: session, isPending: isSessionLoading } = useSession();
   const user = session?.user;
-if (isSessionLoading) {
+  if (isSessionLoading) {
     return <div></div>;
   }
 
   if (!user) return <div></div>;
   useEffect(() => {
-    fetchCategorySales(year, month,selectedStore);
-    fetchStores()
-  }, [year, month,selectedStore]);
+    fetchCategorySales(year, month, selectedStore);
+    fetchStores();
+  }, [year, month, selectedStore]);
   if (isLoading) {
     return <CategorySalesChartSkeleton />;
   }
@@ -79,28 +78,25 @@ if (isSessionLoading) {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Penjualan per Kategori</h2>
         <div className="flex flex-col sm:flex-row gap-4">
-          {user.role=='SUPER'&&(
-<Select
-                                value={selectedStore}
-                                onValueChange={setSelectedStore}
-                              >
-                                <SelectTrigger className="w-[130px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Pilih Toko</SelectLabel>
-                                    <SelectItem value="all">Semua Toko</SelectItem>
-                                    {stores.map((store) => (
-                                      <SelectItem value={store.id} key={store.id}>
-                                        {store.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
+          {user.role == 'SUPER' && (
+            <Select value={selectedStore} onValueChange={setSelectedStore}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Pilih Toko</SelectLabel>
+                  <SelectItem value="all">Semua Toko</SelectItem>
+                  {stores.map((store) => (
+                    <SelectItem value={store.id} key={store.id}>
+                      {store.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           )}
-          
+
           <Select
             defaultValue={month}
             onValueChange={(value) => onMonthChange(value)}

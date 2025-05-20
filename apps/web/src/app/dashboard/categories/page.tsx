@@ -25,7 +25,7 @@ export default function Category() {
     isDetailMode,
     setIsEditMode,
     setIsDetailMode,
-    setEditingCategoryId
+    setEditingCategoryId,
   } = useCategoryManagement();
 
   if (isLoading) {

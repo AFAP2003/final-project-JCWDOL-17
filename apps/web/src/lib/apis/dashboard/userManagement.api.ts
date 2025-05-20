@@ -58,7 +58,7 @@ export function userManagementAPI() {
   const handleCreateUser = async (values) => {
     try {
       const formData = new FormData();
-      formData.append('image', values.image[0]); // the File object
+      formData.append('image', values.image[0]); 
       formData.append('name', values.nama);
       formData.append('email', values.email);
       formData.append('password', values.password);

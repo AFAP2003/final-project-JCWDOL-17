@@ -43,12 +43,12 @@ export default function InventoryManagementFilter({
   handleStoreFilter,
   handleCategoryFilter,
 }: InventoryManagementFilterProps) {
-  const {user,isSessionLoading} = UseInventoryManagement()
-   if (isSessionLoading) {
+  const { user, isSessionLoading } = UseInventoryManagement();
+  if (isSessionLoading) {
     return <div></div>;
-      }
-      
-      if (!user)            return <div></div>;
+  }
+
+  if (!user) return <div></div>;
   return (
     <div className="mb-4 flex items-end justify-between gap-2 sm:gap-0">
       <div className="flex gap-2">
@@ -60,27 +60,26 @@ export default function InventoryManagementFilter({
         />
       </div>
       <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4">
-        {user.role == 'SUPER'&&(
-             <Select onValueChange={handleStoreFilter} defaultValue="all">
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Filter Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Filter Status</SelectLabel>
-              <SelectItem value="all">Semua Toko</SelectItem>
+        {user.role == 'SUPER' && (
+          <Select onValueChange={handleStoreFilter} defaultValue="all">
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Filter Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Filter Status</SelectLabel>
+                <SelectItem value="all">Semua Toko</SelectItem>
 
-              {stores.map((store) => (
-                <SelectItem value={store.name} key={store.id}>
-                  {store.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-
+                {stores.map((store) => (
+                  <SelectItem value={store.name} key={store.id}>
+                    {store.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         )}
-     
+
         <Select onValueChange={handleCategoryFilter} defaultValue="all">
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Filter Status" />

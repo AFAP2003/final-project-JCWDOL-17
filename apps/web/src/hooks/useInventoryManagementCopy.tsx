@@ -95,7 +95,6 @@ export default function UseInventoryManagement() {
         },
       ]
 
-      // only super-admins get the “Toko” column
       if (user?.role === 'SUPER') {
         cols.push({
           id: 'store',
@@ -105,7 +104,6 @@ export default function UseInventoryManagement() {
         })
       }
 
-      // now append the rest of your columns
       cols.push(
         {
           header: 'Harga',

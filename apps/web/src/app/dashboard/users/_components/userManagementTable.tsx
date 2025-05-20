@@ -1,10 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  flexRender,
-  Table as ReactTable,
-} from '@tanstack/react-table';
+import { flexRender, Table as ReactTable } from '@tanstack/react-table';
 import {
   Table,
   TableBody,
@@ -31,7 +28,6 @@ export default function UserManagementTable({
   table,
   columns,
 }: UserManagementTableProps) {
-
   return (
     <>
       {/* Table */}

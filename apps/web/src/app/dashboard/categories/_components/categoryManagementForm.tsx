@@ -9,7 +9,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useCategoryManagement } from '@/hooks/useCategoryManagement';
 import { MyFormValues } from '@/validations/user.validation';
 import { FormikProps } from 'formik';
@@ -63,7 +62,6 @@ export default function CategoryManagementForm({
           setIsDetailMode(false);
         }
         setDialogOpen(open);
-
       }}
     >
       {user.role == 'SUPER' && (
@@ -129,7 +127,9 @@ export default function CategoryManagementForm({
             </div>
           </div>
 
-          <DialogFooter className={`${isDetailMode} ? 'hidden' : 'block' flex justify-end`}>
+          <DialogFooter
+            className={`${isDetailMode} ? 'hidden' : 'block' flex justify-end`}
+          >
             <Button
               variant="outline"
               type="button"
@@ -138,12 +138,10 @@ export default function CategoryManagementForm({
                 setDialogOpen(false);
               }}
               className={isDetailMode ? 'hidden' : 'block'}
-
             >
               Cancel
             </Button>
-            <Button type="submit" className={isDetailMode ? 'hidden' : 'block'}
->
+            <Button type="submit" className={isDetailMode ? 'hidden' : 'block'}>
               {isEditMode ? 'Simpan Perubahan' : 'Tambah Kategori'}
             </Button>
           </DialogFooter>

@@ -14,11 +14,12 @@ export default function productManagementAPI() {
     try {
       const page = pageIndex + 1;
       const productRes = await fetch(
-        `${API_BASE_URL}/dashboard/products?page=${page}&take=${pageSize}`,{
-          method:'GET',
-          credentials:'include',
+        `${API_BASE_URL}/dashboard/products?page=${page}&take=${pageSize}`,
+        {
+          method: 'GET',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-        }
+        },
       );
       const productData = await productRes.json();
 
@@ -104,12 +105,10 @@ export default function productManagementAPI() {
     try {
       const formData = new FormData();
 
-      // Append new image files
       Array.from(values.image).forEach((file) => {
         formData.append('image', file);
       });
 
-      // Append the fields
       formData.append('name', values.nama || '');
       formData.append('description', values.deskripsi || '');
       formData.append('price', String(values.harga || 0));
@@ -118,10 +117,8 @@ export default function productManagementAPI() {
       formData.append('categoryId', values.kategoriId || '');
       formData.append('isActive', String(values.isActive));
 
-      // Pass main image index
       formData.append('mainIndex', String(values.mainIndex || 0));
 
-      // Append keptImages (only if editing)
       if (values.keptImages && Array.isArray(values.keptImages)) {
         values.keptImages.forEach((url) => {
           formData.append('keptImages', url);

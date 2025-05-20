@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { FormikProps } from 'formik';
-import { Eye, EyeOff, Loader2, Plus, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff,  Plus, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +24,6 @@ import { MyFormValues } from '@/validations/user.validation';
 import { genRandomString } from '@/lib/utils';
 import { useState } from 'react';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
-import UploadImageLoadingOverlay from '@/components/dashboard/uploadImageLoadingOverlay';
 
 interface UserManagementFormProps {
   dialogOpen: boolean;
@@ -36,7 +35,6 @@ interface UserManagementFormProps {
   setEditingUserId: (id: string | null) => void;
   previews: string[];
   setPreviews: (any: any) => any[];
-  mainIndex: number;
   setMainIndex: (index: number) => void;
   isDetailMode: boolean;
   setIsDetailMode: (detail: boolean) => void;
@@ -52,7 +50,6 @@ export default function UserManagementForm({
   setEditingUserId,
   previews,
   setPreviews,
-  mainIndex,
   setMainIndex,
   isDetailMode,
   setIsDetailMode,
@@ -174,34 +171,35 @@ export default function UserManagementForm({
           </div>
 
           {isDetailMode && (
-  <div className="space-y-2">
-    <label className="text-sm font-medium">Jenis Kelamin</label>
-    <Input value={formik.values.gender} readOnly disabled />
-  </div>
-)}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Jenis Kelamin</label>
+              <Input value={formik.values.gender} readOnly disabled />
+            </div>
+          )}
 
-{isDetailMode && (
-  <div className="space-y-2">
-    <label className="text-sm font-medium">Telepon</label>
-    <Input value={formik.values.telepon} readOnly disabled />
-  </div>
-)}
+          {isDetailMode && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Telepon</label>
+              <Input value={formik.values.telepon} readOnly disabled />
+            </div>
+          )}
 
-{isDetailMode && (
-  <div className="space-y-2">
-    <label className="text-sm font-medium">Tanggal Lahir</label>
-    <Input
-      value={
-        formik.values.tglLahir
-          ? new Date(formik.values.tglLahir).toLocaleDateString('id-ID')
-          : '-'
-      }
-      readOnly
-      disabled
-    />
-  </div>
-)}
-
+          {isDetailMode && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tanggal Lahir</label>
+              <Input
+                value={
+                  formik.values.tglLahir
+                    ? new Date(formik.values.tglLahir).toLocaleDateString(
+                        'id-ID',
+                      )
+                    : '-'
+                }
+                readOnly
+                disabled
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <label
@@ -281,27 +279,7 @@ export default function UserManagementForm({
             )}
           </div>
 
-          {/* Alamat */}
-          {/* <div className="space-y-2">
-                <label
-                  htmlFor="alamat"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Alamat
-                </label>
-                <Input
-                  id="alamat"
-                  name="alamat"
-                  placeholder="Masukkan alamat"
-                  value={formik.values.alamat}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                />
-                {formik.touched.alamat && formik.errors.alamat && (
-                  <p className="text-xs text-red-600">{formik.errors.alamat}</p>
-                )}
-              </div> */}
-
+        
           <div className="space-y-2">
             <label htmlFor="toko" className="text-sm font-medium text-gray-700">
               Toko

@@ -163,7 +163,7 @@ export function useUserManagement() {
       header: 'Toko',
 
       cell: ({ row }) => {
-    return row.original.store?.name ?? '-';
+        return row.original.store?.name ?? '-';
       },
     },
     // { accessorKey: 'referralCode',
@@ -256,7 +256,7 @@ export function useUserManagement() {
                     setPreviews(user.image ? [user.image] : []);
 
                     setDialogOpen(true);
-                  }} 
+                  }}
                 >
                   Lihat Detail
                 </DropdownMenuCheckboxItem>
@@ -318,20 +318,22 @@ export function useUserManagement() {
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: (row, _columnId, filterValue) => {
-  const searchText = String(filterValue).toLowerCase();
-  const original = row.original;
+      const searchText = String(filterValue).toLowerCase();
+      const original = row.original;
 
-  const name = original.name?.toLowerCase() ?? '';
-  const email = original.email?.toLowerCase() ?? '';
-  const role = original.role?.toLowerCase() ?? '';
-  const referralCode = original.referralCode?.toLowerCase() ?? '';
-  const toko = original.managedStore?.name?.toLowerCase() ?? '';
-  const verifikasi = original.emailVerified ? 'terverifikasi' : 'belum terverifikasi';
+      const name = original.name?.toLowerCase() ?? '';
+      const email = original.email?.toLowerCase() ?? '';
+      const role = original.role?.toLowerCase() ?? '';
+      const referralCode = original.referralCode?.toLowerCase() ?? '';
+      const toko = original.managedStore?.name?.toLowerCase() ?? '';
+      const verifikasi = original.emailVerified
+        ? 'terverifikasi'
+        : 'belum terverifikasi';
 
-  return [name, email, role, referralCode, toko, verifikasi].some((field) =>
-    field.includes(searchText),
-  );
-},
+      return [name, email, role, referralCode, toko, verifikasi].some((field) =>
+        field.includes(searchText),
+      );
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

@@ -6,12 +6,15 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { flexRender, Table as ReactTable} from '@tanstack/react-table';
+import { flexRender, Table as ReactTable } from '@tanstack/react-table';
 interface InventoryManagementTableProps {
   table: ReactTable<any>;
   columns: any[];
 }
-export default function DiscountManagementTable({ table, columns }:InventoryManagementTableProps) {
+export default function DiscountManagementTable({
+  table,
+  columns,
+}: InventoryManagementTableProps) {
   return (
     <div className="rounded-md border border-gray-200 overflow-x-auto w-full">
       <Table className="min-w-full">

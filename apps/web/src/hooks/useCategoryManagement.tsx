@@ -12,7 +12,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { categoryManagementAPI } from '@/lib/apis/dashboard/categoryManagement.api';
@@ -39,9 +38,7 @@ export function useCategoryManagement() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
-    null,
-  );
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
   const [isDetailMode, setIsDetailMode] = useState(false);
@@ -267,6 +264,6 @@ export function useCategoryManagement() {
     isSessionLoading,
     user,
     setIsEditMode,
-    setEditingCategoryId
+    setEditingCategoryId,
   };
 }

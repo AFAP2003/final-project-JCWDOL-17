@@ -43,34 +43,33 @@ export default function Products() {
 
   return (
     <div className="min-h-screen w-full flex flex-col gap-6 p-4">
-      <div className="flex justify-end">
-        
-      </div>
+      <div className="flex justify-end"></div>
 
       {/* header + create dialog */}
       <div className="flex justify-between items-center">
         <h1 className="sm:text-4xl text-2xl font-bold">Produk</h1>
-        <div className='flex gap-10'>
-                  <Link href="/dashboard/categories">
-          <Button className="w-[150px]">          
-            <Plus className="w-4 h-4 mr-1" />
-           Kategori</Button>
-        </Link>
-        <ProductManagementForm
-          categories={categories}
-          formik={formik}
-          dialogOpen={dialogOpen}
-          setDialogOpen={setDialogOpen}
-          isEditMode={isEditMode}
-          setIsEditMode={setIsEditMode}
-          setEditingProductId={setEditingProductId}
-          previews={previews}
-          setPreviews={setPreviews}
-          mainIndex={mainIndex}
-          setMainIndex={setMainIndex}
-          isDetailMode={isDetailMode}
-          setIsDetailMode={setIsDetailMode}
-        />
+        <div className="flex gap-10">
+          <Link href="/dashboard/categories">
+            <Button className="w-[150px]">
+              <Plus className="w-4 h-4 mr-1" />
+              Kategori
+            </Button>
+          </Link>
+          <ProductManagementForm
+            categories={categories}
+            formik={formik}
+            dialogOpen={dialogOpen}
+            setDialogOpen={setDialogOpen}
+            isEditMode={isEditMode}
+            setIsEditMode={setIsEditMode}
+            setEditingProductId={setEditingProductId}
+            previews={previews}
+            setPreviews={setPreviews}
+            mainIndex={mainIndex}
+            setMainIndex={setMainIndex}
+            isDetailMode={isDetailMode}
+            setIsDetailMode={setIsDetailMode}
+          />
         </div>
       </div>
 

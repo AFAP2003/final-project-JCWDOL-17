@@ -18,14 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UseInventoryManagement from '@/hooks/useInventoryManagement';
 import { Product } from '@/lib/interfaces/productManagement.interface';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
 import { FormikProps } from 'formik';
 import { Plus } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface InventoryManagementFormProps {
   dialogOpen: boolean;
@@ -38,7 +37,7 @@ interface InventoryManagementFormProps {
   setEditingInventoryId: (id: string | null) => void;
   isDetailMode: boolean;
   setIsDetailMode: (detail: boolean) => void;
-  isDetailDropdown:boolean
+  isDetailDropdown: boolean;
 }
 export default function InventoryManagementForm({
   dialogOpen,
@@ -51,74 +50,75 @@ export default function InventoryManagementForm({
   setEditingInventoryId,
   isDetailMode,
   setIsDetailMode,
-  isDetailDropdown
+  isDetailDropdown,
 }: InventoryManagementFormProps) {
   const [activeTab, setActiveTab] = useState<'tambah' | 'kurangi'>('tambah');
-const [initialValuesSet, setInitialValuesSet] = useState(false);
-   const {user,isSessionLoading,inventories,storeByAdmin} = UseInventoryManagement()
-     if (isSessionLoading) {
-          return <div></div>;
-        }
-        
-        if (!user)            return <div></div>;
-
-        const availableProducts = products
- useEffect(() => {
-  const productId = formik.values.produk;
-const storeId =
-  user.role === 'ADMIN'
-    ? storeByAdmin?.id // use fetched store ID
-    : formik.values.toko;
-
-  if (!productId || !storeId) {
-    formik.setFieldValue('sekarang', 0);
-    formik.setFieldValue('baru', 0);
-    formik.setFieldValue('minimal', '');
-    return;
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const { user, isSessionLoading, inventories, storeByAdmin } =
+    UseInventoryManagement();
+  if (isSessionLoading) {
+    return <div></div>;
   }
 
-  const inv = inventories.find(
-    (inv) => inv.productId === productId && inv.storeId === storeId
-  );
+  if (!user) return <div></div>;
 
-  const currentQty = inv ? inv.quantity : 0;
-  const minStock = inv ? inv.minStock : '';
+  const availableProducts = products;
+  useEffect(() => {
+    const productId = formik.values.produk;
+    const storeId =
+      user.role === 'ADMIN'
+        ? storeByAdmin?.id 
+        : formik.values.toko;
 
-  formik.setFieldValue('sekarang', currentQty);
-  formik.setFieldValue('baru', currentQty);
-  formik.setFieldValue('minimal', minStock);
-}, [
-  formik.values.produk,
-  formik.values.toko,
-  user.role,
-  user.storeId,
-  inventories,
-]);
+    if (!productId || !storeId) {
+      formik.setFieldValue('sekarang', 0);
+      formik.setFieldValue('baru', 0);
+      formik.setFieldValue('minimal', '');
+      return;
+    }
 
-useEffect(() => {
-  const current = Number(formik.values.sekarang) || 0;
-  const tambah = Number(formik.values.tambah) || 0;
-  const kurangi = Number(formik.values.kurangi) || 0;
+    const inv = inventories.find(
+      (inv) => inv.productId === productId && inv.storeId === storeId,
+    );
 
-  let baru = current;
+    const currentQty = inv ? inv.quantity : 0;
+    const minStock = inv ? inv.minStock : '';
 
-  if (formik.values.mode === 'tambah') {
-    baru = current + tambah;
-  } else if (formik.values.mode === 'kurangi') {
-    baru = Math.max(0, current - kurangi);
-  }
+    formik.setFieldValue('sekarang', currentQty);
+    formik.setFieldValue('baru', currentQty);
+    formik.setFieldValue('minimal', minStock);
+  }, [
+    formik.values.produk,
+    formik.values.toko,
+    user.role,
+    user.storeId,
+    inventories,
+  ]);
 
-  formik.setFieldValue('baru', baru);
-}, [
-  formik.values.sekarang,
-  formik.values.tambah,
-  formik.values.kurangi,
-  formik.values.mode,
-]);
+  useEffect(() => {
+    const current = Number(formik.values.sekarang) || 0;
+    const tambah = Number(formik.values.tambah) || 0;
+    const kurangi = Number(formik.values.kurangi) || 0;
+
+    let baru = current;
+
+    if (formik.values.mode === 'tambah') {
+      baru = current + tambah;
+    } else if (formik.values.mode === 'kurangi') {
+      baru = Math.max(0, current - kurangi);
+    }
+
+    formik.setFieldValue('baru', baru);
+  }, [
+    formik.values.sekarang,
+    formik.values.tambah,
+    formik.values.kurangi,
+    formik.values.mode,
+  ]);
 
   const disabled = isDetailMode;
-  const disableSelect = isEditMode || isDetailMode
- 
+  const disableSelect = isEditMode || isDetailMode;
+
   return (
     <Dialog
       open={dialogOpen}
@@ -127,16 +127,14 @@ useEffect(() => {
         if (open && !isEditMode) {
           formik.resetForm();
           setIsDetailMode(false);
-                    setInitialValuesSet(false);
-
+          setInitialValuesSet(false);
         }
         // closing always clears edit state
         if (!open) {
           setIsEditMode(false);
           setEditingInventoryId(null);
           setIsDetailMode(false);
-                    setInitialValuesSet(false);
-
+          setInitialValuesSet(false);
         }
         setDialogOpen(open);
       }}
@@ -171,7 +169,7 @@ useEffect(() => {
               <Select
                 value={formik.values.produk || undefined}
                 onValueChange={(v) => formik.setFieldValue('produk', v)}
-                disabled={disableSelect }
+                disabled={disableSelect}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih produk" />
@@ -179,7 +177,7 @@ useEffect(() => {
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Produk</SelectLabel>
-                     {availableProducts.length > 0 ? (
+                    {availableProducts.length > 0 ? (
                       availableProducts.map((product) => (
                         <SelectItem value={product.id} key={product.id}>
                           {product.name}
@@ -199,37 +197,37 @@ useEffect(() => {
                 </p>
               )}
             </div>
-           {user.role=='SUPER'&&(
-             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Toko
-              </label>
-              <Select
-                value={formik.values.toko || undefined}
-                onValueChange={(v) => formik.setFieldValue('toko', v)}
-                disabled={disableSelect }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih Toko" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Toko</SelectLabel>
-                    {stores.map((store) => (
-                      <SelectItem value={store.id} key={store.id}>
-                        {store.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {formik.touched.toko && formik.errors.toko && (
-                <p className="text-xs text-red-600">
-                  {formik.errors.toko as string}
-                </p>
-              )}
-            </div>
-           )}
+            {user.role == 'SUPER' && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Toko
+                </label>
+                <Select
+                  value={formik.values.toko || undefined}
+                  onValueChange={(v) => formik.setFieldValue('toko', v)}
+                  disabled={disableSelect}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Pilih Toko" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Toko</SelectLabel>
+                      {stores.map((store) => (
+                        <SelectItem value={store.id} key={store.id}>
+                          {store.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {formik.touched.toko && formik.errors.toko && (
+                  <p className="text-xs text-red-600">
+                    {formik.errors.toko as string}
+                  </p>
+                )}
+              </div>
+            )}
             <Tabs
               className={isDetailMode ? 'hidden' : 'block'}
               defaultValue="tambah"
@@ -333,16 +331,7 @@ useEffect(() => {
                 </p>
               )}
             </div>
-            {/* <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Catatan
-            </label>
-            <textarea
-              placeholder="Masukkan alasan kenapa merubah kuantitas"
-              className="w-full rounded-md border bg-white px-3 py-2 text-sm focus:outline-none "
-              rows={2}
-            />
-          </div> */}
+          
           </div>
 
           <DialogFooter>
