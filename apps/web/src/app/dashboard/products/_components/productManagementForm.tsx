@@ -99,7 +99,7 @@ export default function ProductManagementForm({
   const { isSessionLoading, user } = UseProductManagement();
 
   if (isSessionLoading) {
-    return <Skeleton className="h-9 w-36" />;
+    return <div></div>;
   }
 
   if (!user) return <div></div>;

@@ -55,74 +55,21 @@ export default function InventoryManagementForm({
 }: InventoryManagementFormProps) {
   const [activeTab, setActiveTab] = useState<'tambah' | 'kurangi'>('tambah');
 const [initialValuesSet, setInitialValuesSet] = useState(false);
-   const {user,isSessionLoading,inventories} = UseInventoryManagement()
+   const {user,isSessionLoading,inventories,storeByAdmin} = UseInventoryManagement()
      if (isSessionLoading) {
-          return <Skeleton className="h-9 w-36"/>;
+          return <div></div>;
         }
         
         if (!user)            return <div></div>;
 
         const availableProducts = products
-// Filter available products based on current inventories and selected store
-// const availableProducts = useMemo(() => {
-//   // determine which store we're talking about:
-//   // – ADMINs get their storeId hidden in the form
-//   // – SUPERs pick one into formik.values.toko
-//   const storeId = 
-//     user?.role === 'ADMIN' 
-//       ? user.storeId! 
-//       : formik.values.toko;
-  
-//   // if we don't know what store yet, return empty list
-//   if (!storeId) return [];
-  
-//   // The key issue: We need to get products that DON'T have an inventory entry for THIS store
-  
-//   // Step 1: Get all product IDs that already have inventory entries for this store
-//   const productIdsInThisStore = inventories
-//     .filter(inv => inv.storeId === storeId)
-//     .map(inv => inv.productId);
-  
-//   // Step 2: Filter products that are NOT in the above list
-//   const availableProductsForStore = products.filter(product => 
-//     !productIdsInThisStore.includes(product.id)
-//   );
-  
-//   // Special case: If we're in edit mode or detail mode, include the current product
-//   if ((isEditMode || isDetailMode) && formik.values.produk) {
-//     const currentProduct = products.find(p => p.id === formik.values.produk);
-    
-//     if (currentProduct) {
-//       // Check if it's already in our filtered list
-//       const alreadyIncluded = availableProductsForStore.some(p => p.id === currentProduct.id);
-      
-//       // Only add it if not already included
-//       if (!alreadyIncluded) {
-//         return [currentProduct, ...availableProductsForStore];
-//       }
-//     }
-//   }
-  
-//   return availableProductsForStore;
-// }, [
-//   products,
-//   inventories,
-//   user?.role,
-//   user?.storeId,
-//   formik.values.toko,
-//   formik.values.produk,
-//   isEditMode,
-//   isDetailMode
-// ]);
-  // Effect for calculating stock based on form values
  useEffect(() => {
   const productId = formik.values.produk;
-  // determine store in the same way you do elsewhere:
-  const storeId = user.role === 'ADMIN'
-    ? user.storeId!
+const storeId =
+  user.role === 'ADMIN'
+    ? storeByAdmin?.id // use fetched store ID
     : formik.values.toko;
 
-  // if either is missing, default everything to zero/empty
   if (!productId || !storeId) {
     formik.setFieldValue('sekarang', 0);
     formik.setFieldValue('baru', 0);
@@ -130,24 +77,44 @@ const [initialValuesSet, setInitialValuesSet] = useState(false);
     return;
   }
 
-  // look up the matching inventory record
   const inv = inventories.find(
     (inv) => inv.productId === productId && inv.storeId === storeId
   );
 
   const currentQty = inv ? inv.quantity : 0;
-  // “stok sekarang” = existing quantity or 0
+  const minStock = inv ? inv.minStock : '';
+
   formik.setFieldValue('sekarang', currentQty);
-  // “stok baru” = same as current until user enters an “add” or “kurangi”
   formik.setFieldValue('baru', currentQty);
-  // “minimal” = existing minStock or empty string
-  formik.setFieldValue('minimal', inv ? inv.minStock : '');
+  formik.setFieldValue('minimal', minStock);
 }, [
   formik.values.produk,
   formik.values.toko,
+  user.role,
+  user.storeId,
   inventories,
 ]);
 
+useEffect(() => {
+  const current = Number(formik.values.sekarang) || 0;
+  const tambah = Number(formik.values.tambah) || 0;
+  const kurangi = Number(formik.values.kurangi) || 0;
+
+  let baru = current;
+
+  if (formik.values.mode === 'tambah') {
+    baru = current + tambah;
+  } else if (formik.values.mode === 'kurangi') {
+    baru = Math.max(0, current - kurangi);
+  }
+
+  formik.setFieldValue('baru', baru);
+}, [
+  formik.values.sekarang,
+  formik.values.tambah,
+  formik.values.kurangi,
+  formik.values.mode,
+]);
 
   const disabled = isDetailMode;
   const disableSelect = isEditMode || isDetailMode

@@ -100,66 +100,75 @@ export function inventoryManagementAPI() {
     }
   };
 
- const handleUpdateInventory = async (id, values) => {
-  try {
-    console.log("Starting inventory update for ID:", id);
-    console.log("Update values:", values);
-    
-    // Simplify and standardize the update payload
-    const updateData = {
-      minStock: Number(values.minStock || values.minimal || 0),
-      addQuantity: Number(values.addQuantity || (values.mode === 'tambah' ? values.tambah : 0) || 0),
-      subtractQuantity: Number(values.subtractQuantity || (values.mode === 'kurangi' ? values.kurangi : 0) || 0),
-    };
-    
-    console.log("Sending update payload:", updateData);
-    
-    const inventoryRes = await fetch(
-      `${API_BASE_URL}/dashboard/inventories/${id}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json', // FIXED: Missing content-type header
-        },
-        credentials: 'include', // FIXED: Missing credentials
-        body: JSON.stringify(updateData),
-      },
-    );
+  // In your inventoryManagementAPI.ts
 
-    const responseText = await inventoryRes.text();
-    let inventoryData;
-    
-    try {
-      inventoryData = JSON.parse(responseText);
-    } catch (e) {
-      console.error("Failed to parse response as JSON:", responseText);
-      throw new Error("Invalid response from server");
-    }
+const handleUpdateInventory = async (id, values) => {
+ try {
+   console.log(">>> API: handleUpdateInventory START for ID:", id);
+   console.log(">>> API: Received values:", values);
 
-    console.log("Update API response:", inventoryData);
+   const updateData = {
+     minStock: Number(values.minStock || values.minimal || 0),
+     // Ensure these are numbers, using 0 for empty strings from optional fields
+     addQuantity: Number(values.addQuantity || (values.mode === 'tambah' ? values.tambah : 0) || 0),
+     subtractQuantity: Number(values.subtractQuantity || (values.mode === 'kurangi' ? values.kurangi : 0) || 0),
+   };
 
-    if (inventoryRes.ok) {
-      toast({
-        description: 'Inventory Updated Successfully!',
-      });
-      return true;
-    } else {
-      const errorMessage = inventoryData.message || 'Unknown error';
-      toast({
-        variant: 'destructive',
-        description: `Failed to update inventory: ${errorMessage}`,
-      });
-      console.error('Failed to update inventory:', errorMessage);
-      return false;
-    }
-  } catch (error) {
-    toast({
-      variant: 'destructive',
-      description: `Error updating inventory: ${error.message || String(error)}`,
-    });
-    console.error('Error updating inventory:', error);
-    return false;
-  }
+   console.log(">>> API: Sending update payload:", updateData); // <-- Log payload
+
+   const inventoryRes = await fetch(
+     `${API_BASE_URL}/dashboard/inventories/${id}`,
+     {
+       method: 'PUT',
+       headers: { 'Content-Type': 'application/json' },
+       credentials: 'include',
+       body: JSON.stringify(updateData),
+     },
+   );
+
+   console.log(">>> API: Received response status:", inventoryRes.status); // <-- Log status
+   // Try to read response text even if not OK, might contain error details
+   const responseText = await inventoryRes.text();
+   console.log(">>> API: Received response text:", responseText);
+
+   let inventoryData = null;
+   try {
+     // Attempt to parse JSON only if there's text and it looks like JSON
+     if (responseText && responseText.trim().startsWith('{')) {
+        inventoryData = JSON.parse(responseText);
+        console.log(">>> API: Parsed response JSON:", inventoryData);
+     } else {
+         console.log(">>> API: Response text is not JSON or empty.");
+     }
+   } catch (e) {
+     console.warn(">>> API: Could not parse response as JSON:", e);
+   }
+
+
+   if (inventoryRes.ok) {
+     console.log(">>> API: Response OK (status 2xx). Returning true.");
+     // The toast is shown here
+     toast({ description: 'Inventory Updated Successfully!' });
+     return true; // Indicate success back to onSubmit
+   } else {
+     console.error(">>> API: Response NOT OK (status not 2xx). Returning false.");
+     const errorMessage = inventoryData?.message || responseText || `Status: ${inventoryRes.status}`;
+     toast({
+       variant: 'destructive',
+       description: `Failed to update inventory: ${errorMessage}`,
+     });
+     return false; // Indicate failure back to onSubmit
+   }
+ } catch (error) {
+   console.error('>>> API: ERROR caught in handleUpdateInventory:', error); // <-- Log errors caught by catch
+   toast({
+     variant: 'destructive',
+     description: `Error updating inventory: ${error.message || String(error)}`,
+   });
+   return false; // Indicate failure
+ } finally {
+     console.log(">>> API: handleUpdateInventory END"); // <-- Log end regardless of success/fail
+ }
 }
 
   const handleDeleteInventory = async (id: string) => {

@@ -9,6 +9,7 @@ import ProductManagementForm from './_components/productManagementForm';
 import ProductManagementPagination from './_components/productManagementPagination';
 import ProductManagementskeleton from './_components/productManagementSkeleton';
 import ProductManagementTable from './_components/productManagementTable';
+import { Plus } from 'lucide-react';
 export default function Products() {
   const {
     formik,
@@ -43,15 +44,18 @@ export default function Products() {
   return (
     <div className="min-h-screen w-full flex flex-col gap-6 p-4">
       <div className="flex justify-end">
-        <Link href="/dashboard/categories">
-          <Button className="w-[150px]">Kategori</Button>
-        </Link>
+        
       </div>
 
       {/* header + create dialog */}
       <div className="flex justify-between items-center">
         <h1 className="sm:text-4xl text-2xl font-bold">Produk</h1>
-
+        <div className='flex gap-10'>
+                  <Link href="/dashboard/categories">
+          <Button className="w-[150px]">          
+            <Plus className="w-4 h-4 mr-1" />
+           Kategori</Button>
+        </Link>
         <ProductManagementForm
           categories={categories}
           formik={formik}
@@ -67,6 +71,7 @@ export default function Products() {
           isDetailMode={isDetailMode}
           setIsDetailMode={setIsDetailMode}
         />
+        </div>
       </div>
 
       {/* filter row */}

@@ -39,7 +39,7 @@ export default function CategoryManagementForm({
   const { isSessionLoading, user } = useCategoryManagement();
 
   if (isSessionLoading) {
-    return <Skeleton className="h-9 w-36" />;
+    return <div></div>;
   }
 
   if (!user) return <div></div>;

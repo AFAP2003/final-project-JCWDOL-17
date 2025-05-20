@@ -60,7 +60,7 @@ export default function StockReport({
   const [pageIndex, setPageIndex] = useState(1);
 
   if (isSessionLoading) {
-    return <Skeleton className="h-9 w-36" />;
+    return <div></div>;
   }
 
   if (!user) return <div></div>;

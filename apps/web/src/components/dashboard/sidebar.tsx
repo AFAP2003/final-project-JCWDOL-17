@@ -65,7 +65,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
 
   const { data: session, isPending } = useSession();
   if (isPending) {
-    return <Skeleton className="h-9 w-36" />;
+    return <div></div>;
   }
 
   const { user } = session;

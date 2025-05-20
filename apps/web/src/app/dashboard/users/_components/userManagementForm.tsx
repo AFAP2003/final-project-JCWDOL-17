@@ -25,7 +25,6 @@ import { genRandomString } from '@/lib/utils';
 import { useState } from 'react';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
 import UploadImageLoadingOverlay from '@/components/dashboard/uploadImageLoadingOverlay';
-import { Badge } from '@/components/ui/badge';
 
 interface UserManagementFormProps {
   dialogOpen: boolean;

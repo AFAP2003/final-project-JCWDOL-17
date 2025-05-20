@@ -8,7 +8,7 @@ export const inventoryManagementRouter =()=>{
 
     router.get('/inventories',withAuthentication,inventoryManagementController.getInventories)
     router.post('/inventories',withAuthentication,inventoryManagementController.createInventory)
-    router.put('/inventories/:id',inventoryManagementController.updateInventory)
+    router.put('/inventories/:id',withAuthentication,inventoryManagementController.updateInventory)
     router.delete('/inventories/:id',inventoryManagementController.deleteInventory)
     return router
 }

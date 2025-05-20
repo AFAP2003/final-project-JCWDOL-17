@@ -2,14 +2,13 @@ import { pagination } from '@/helpers/pagination';
 import { Inventory } from '@/interfaces/inventoryManagement.interface';
 import { prismaclient } from '@/prisma';
 class InventoryManagementRepository {
-  async getInventories(page = 1, take = 10, adminId?: string) {
-    const where = adminId ? { store: { adminId } } : {};
+  async getInventories(page = 1, take = 10, storeId?: string) {
+const where = storeId ? { storeId } : {};
     const total = await prismaclient.inventory.count({ where });
 
     const { skip, take: realTake } = pagination(page, take);
     const data = await prismaclient.inventory.findMany({
       where,
-
       skip,
       take: realTake,
       include: {
@@ -28,17 +27,11 @@ class InventoryManagementRepository {
 
   
 
-  async createInventory(inventoryData: Inventory,adminId?:string) {
-    const store = await prismaclient.store.findUnique({
-      where:{adminId}
-    })
-    if (!store) {
-    throw new Error(`No store found for admin ${adminId}`);
-  }
-
+  async createInventory(inventoryData: Inventory) {
+    // Simplified: directly use the provided storeId
+    // The controller handles role-specific logic
     const inv = await prismaclient.inventory.create({
-      data: {...inventoryData,
-        storeId:store.id}
+      data: inventoryData
     });
 
     if (inv.quantity > 0) {
@@ -47,7 +40,7 @@ class InventoryManagementRepository {
           inventoryId: inv.id,
           type: 'ADDITION',
           quantity: inv.quantity,
-          createdBy: 'andi',
+          createdBy: 'system',
         },
       });
     }
@@ -56,7 +49,7 @@ class InventoryManagementRepository {
 
   async updateInventory(
     id: string,
-    inventoryData: Inventory,
+    inventoryData: Partial<Inventory>,
     addQuantity = 0,
     subtractQuantity = 0,
   ) {
@@ -65,7 +58,8 @@ class InventoryManagementRepository {
 
     let newQty = current.quantity + addQuantity - subtractQuantity;
     if (newQty < 0) newQty = 0;
-    // 1) overwrite everything in inventoryData (but this might not touch quantity!)
+    
+    // Update the inventory with specified data plus the quantity calculation
     const inv = await prismaclient.inventory.update({
       where: { id },
       data: {
@@ -74,32 +68,32 @@ class InventoryManagementRepository {
       },
     });
 
-    // 2) write ADDITION journal
+    // Create journal entries for stock movements
     if (addQuantity > 0) {
       await prismaclient.stockJournal.create({
         data: {
           inventoryId: inv.id,
           quantity: addQuantity,
           type: 'ADDITION',
-          createdBy: 'andi',
+          createdBy: 'system',
         },
       });
     }
 
-    // 3) write SUBTRACTION journal
     if (subtractQuantity > 0) {
       await prismaclient.stockJournal.create({
         data: {
           inventoryId: inv.id,
           quantity: subtractQuantity,
           type: 'SUBTRACTION',
-          createdBy: 'andi',
+          createdBy: 'system',
         },
       });
     }
 
     return inv;
   }
+
 
   async deleteInventory(id: string) {
     return await prismaclient.$transaction(async (tx) => {

@@ -1,4 +1,5 @@
 import { getSession, getSessionAdmin } from '@/helpers/session-helper';
+import { prismaclient } from '@/prisma';
 import inventoryManagementService from '@/services/inventoryManagement.service';
 import { NextFunction, Request, Response } from 'express';
 
@@ -10,15 +11,28 @@ class InventoryManagementController {
 
       const { user } = getSession(req);
       console.log('the result of session user: ', user);
-      let storeFilter: string | undefined;
+       let storeId: string | undefined;
 
-      const adminId = user.role === 'ADMIN' ? user.id : undefined;
+      if (user.role === 'ADMIN') {
+        const store = await prismaclient.store.findUnique({
+          where: { adminId: user.id },
+        });
+
+        if (!store) {
+          return res.status(404).send({
+            success: false,
+            message: 'Store not found for this admin',
+          });
+        }
+
+        storeId = store.id;
+      }
       
       const { total, data } =
         await inventoryManagementService.listAllInventories(
           page,
           take,
-          adminId,
+          storeId,
         );
 
       res.status(200).send({
@@ -37,17 +51,30 @@ class InventoryManagementController {
     }
   }
 
-  
-
-  async createInventory(req: Request, res: Response, next: NextFunction) {
+   async createInventory(req: Request, res: Response, next: NextFunction) {
     try {
       const { user } = getSession(req);
-      const adminId = user.role === 'ADMIN' ? user.id : undefined;
+      
+      // For ADMIN users, we'll override storeId with their assigned store
+      if (user.role === 'ADMIN') {
+        const store = await prismaclient.store.findUnique({
+          where: { adminId: user.id },
+        });
 
-      const data = await inventoryManagementService.createNewInventory(
-        req.body,
-        adminId
-      );
+        if (!store) {
+          return res.status(404).send({
+            success: false,
+            message: 'Store not found for this admin',
+          });
+        }
+        
+        // Override storeId with admin's store
+        req.body.storeId = store.id;
+      }
+      
+      // For SUPER users, use the provided storeId
+      const data = await inventoryManagementService.createNewInventory(req.body);
+      
       res.status(200).send({
         success: true,
         message: 'Inventory created successfully',
@@ -61,12 +88,44 @@ class InventoryManagementController {
   async updateInventory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { productId, storeId, minStock } = req.body;
+      const { minStock } = req.body;
       const addQuantity = Number(req.body.addQuantity) || 0;
       const subtractQuantity = Number(req.body.subtractQuantity) || 0;
+      
+      // Get current inventory to check permissions
+      const currentInventory = await prismaclient.inventory.findUnique({
+        where: { id },
+        include: { store: true }
+      });
+      
+      if (!currentInventory) {
+        return res.status(404).send({
+          success: false,
+          message: 'Inventory not found',
+        });
+      }
+      
+      // Get user session
+      const { user } = getSession(req);
+      
+      // For ADMIN users, verify they're updating their own store's inventory
+      if (user.role === 'ADMIN') {
+        const store = await prismaclient.store.findUnique({
+          where: { adminId: user.id },
+        });
+        
+        if (!store || store.id !== currentInventory.storeId) {
+          return res.status(403).send({
+            success: false,
+            message: 'Not authorized to update this inventory',
+          });
+        }
+      }
+      
+      // Update the inventory
       const data = await inventoryManagementService.updateInventoryById(
         id,
-        { productId, storeId, minStock },
+        { minStock },
         addQuantity,
         subtractQuantity,
       );

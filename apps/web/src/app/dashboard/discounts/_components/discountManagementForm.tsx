@@ -82,7 +82,7 @@ export default function DiscountManagementForm({
   }, [type]);
 
   if (isSessionLoading) {
-    return <Skeleton className="h-9 w-36" />;
+    return <div></div>;
   }
 
   if (!user) return <div></div>;

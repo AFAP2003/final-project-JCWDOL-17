@@ -45,7 +45,7 @@ export default function InventoryManagementFilter({
 }: InventoryManagementFilterProps) {
   const {user,isSessionLoading} = UseInventoryManagement()
    if (isSessionLoading) {
-        return <Skeleton className="h-9 w-36"/>;
+    return <div></div>;
       }
       
       if (!user)            return <div></div>;

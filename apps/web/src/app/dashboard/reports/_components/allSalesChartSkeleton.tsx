@@ -5,7 +5,7 @@ import UseProductManagement from '@/hooks/useProductManagement';
 export default function AllSalesChartSkeleton() {
   const {user,isSessionLoading} = UseProductManagement()
    if (isSessionLoading) {
-    return <Skeleton className="h-9 w-36" />;
+    return <div></div>;
   }
   
   if (!user) return <div></div>;

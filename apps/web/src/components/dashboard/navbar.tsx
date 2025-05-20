@@ -24,7 +24,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
     const { data: session, isPending } = useSession();
     if (isPending) {
     return (
-        <Skeleton className="h-9 w-36" />
+       <div></div>
 
     );
   }
@@ -75,11 +75,10 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuLabel>Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Profile</DropdownMenuItem>
           <DropdownMenuItem className="text-[#ef4444]" onClick={async()=>{
             await signOut()
             router.push('/admin/auth/signin')
-
+          
           }}>
             Log out
           </DropdownMenuItem>
