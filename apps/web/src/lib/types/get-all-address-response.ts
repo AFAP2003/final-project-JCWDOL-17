@@ -1,7 +1,7 @@
 export type GetAllAddressResponse = {
   addresses: {
     id: string;
-    isDefault?: boolean;
+    isDefault: boolean;
     label: string;
     address: string;
     city: string;

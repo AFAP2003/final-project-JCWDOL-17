@@ -72,7 +72,7 @@ Table Verification {
 
 Table Address {
   id String [pk]
-  isDefault Boolean [unique]
+  isDefault Boolean [not null, default: false]
   label String [not null]
   address String [not null]
   city String [not null]
