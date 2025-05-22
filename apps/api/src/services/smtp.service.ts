@@ -6,6 +6,10 @@ import { currentDate } from '@/helpers/datetime';
 import { aesEncrypt } from '@/helpers/encrypt-decrypt';
 import { genRandomString } from '@/helpers/gen-random-string';
 import { prismaclient } from '@/prisma';
+import {
+  VERIFICATION_EMAIL_QUEUE_NAME,
+  verificationEmailQueue,
+} from '@/queues';
 import { mailerclient } from '@/smtp';
 import { TemplateName } from '@/types/template.type';
 import { addHours, format } from 'date-fns';
@@ -131,7 +135,7 @@ export class SMTPService {
         const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
-        const verifrecord = await prismaclient.verification.findMany({
+        const verirRecords = await prismaclient.verification.findMany({
           where: {
             metadata: {
               path: ['email'],
@@ -139,11 +143,11 @@ export class SMTPService {
             },
           },
         });
-        if (verifrecord.length >= 3) {
+        if (verirRecords.length >= 3) {
           throw new TooManyRequestError();
         }
 
-        await prismaclient.verification.create({
+        const verifrecord = await prismaclient.verification.create({
           data: {
             expiresAt: satuJamKedepan,
             identifier: VerificationIdentifier.SignupConfirmation,
@@ -156,7 +160,13 @@ export class SMTPService {
           },
         });
 
-        // TODO: Setup Worker for removing after 1 hour
+        // Spawn new worker
+        await verificationEmailQueue.add(
+          VERIFICATION_EMAIL_QUEUE_NAME,
+          { verificationId: verifrecord.id },
+          { delay: satuJamKedepan.getTime() - currentDate().getTime() },
+          // { delay: 2 * 60 * 1000 }, // 2 minutes
+        );
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}`;
 
@@ -174,7 +184,7 @@ export class SMTPService {
       }
 
       case AuthEmailType.SigninConfirmation: {
-        const veriftokens = await prismaclient.verification.findMany({
+        const verirRecords = await prismaclient.verification.findMany({
           where: {
             identifier: VerificationIdentifier.SigninConfirmation,
             metadata: {
@@ -186,7 +196,7 @@ export class SMTPService {
             },
           },
         });
-        if (veriftokens.length >= 3) {
+        if (verirRecords.length >= 3) {
           throw new TooManyRequestError();
         }
 
@@ -194,7 +204,7 @@ export class SMTPService {
         const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
-        await prismaclient.verification.create({
+        const verifrecord = await prismaclient.verification.create({
           data: {
             expiresAt: satuJamKedepan,
             identifier: VerificationIdentifier.SigninConfirmation,
@@ -207,7 +217,13 @@ export class SMTPService {
           },
         });
 
-        // TODO: Setup Worker for removing after 1 hour
+        // Spawn new worker
+        await verificationEmailQueue.add(
+          VERIFICATION_EMAIL_QUEUE_NAME,
+          { verificationId: verifrecord.id },
+          { delay: satuJamKedepan.getTime() - currentDate().getTime() },
+          // { delay: 2 * 60 * 1000 }, // 2 minutes
+        );
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}`;
 
@@ -237,7 +253,7 @@ export class SMTPService {
         const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
-        await prismaclient.verification.create({
+        const verifrecord = await prismaclient.verification.create({
           data: {
             expiresAt: satuJamKedepan,
             identifier: VerificationIdentifier.AnonymusSignin,
@@ -248,7 +264,13 @@ export class SMTPService {
           },
         });
 
-        // TODO: Setup Worker for removing after 1 hour
+        // Spawn new worker
+        await verificationEmailQueue.add(
+          VERIFICATION_EMAIL_QUEUE_NAME,
+          { verificationId: verifrecord.id },
+          // { delay: satuJamKedepan.getTime() - currentDate().getTime() },
+          { delay: 2 * 60 * 1000 }, // 2 minutes
+        );
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.AnonymusSignin}`;
 
@@ -269,7 +291,7 @@ export class SMTPService {
       }
 
       case AuthEmailType.ResetPassword: {
-        const verifTokenExist = await prismaclient.verification.findMany({
+        const verifRecords = await prismaclient.verification.findMany({
           where: {
             identifier: VerificationIdentifier.ResetPassword,
             metadata: {
@@ -282,7 +304,7 @@ export class SMTPService {
           },
         });
 
-        if (verifTokenExist.length >= 3) {
+        if (verifRecords.length >= 3) {
           throw new TooManyRequestError();
         }
 
@@ -290,7 +312,7 @@ export class SMTPService {
         const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
-        await prismaclient.verification.create({
+        const verifrecord = await prismaclient.verification.create({
           data: {
             expiresAt: satuJamKedepan,
             identifier: VerificationIdentifier.ResetPassword,
@@ -301,7 +323,13 @@ export class SMTPService {
           },
         });
 
-        // TODO: Setup Worker for removing after 1 hour
+        // Spawn new worker
+        await verificationEmailQueue.add(
+          VERIFICATION_EMAIL_QUEUE_NAME,
+          { verificationId: verifrecord.id },
+          { delay: satuJamKedepan.getTime() - currentDate().getTime() },
+          // { delay: 2 * 60 * 1000 }, // 2 minutes
+        );
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.ResetPassword}`;
 
@@ -320,7 +348,7 @@ export class SMTPService {
       }
 
       case AuthEmailType.NewPassword: {
-        const verifTokenExist = await prismaclient.verification.findMany({
+        const verifRecords = await prismaclient.verification.findMany({
           where: {
             identifier: VerificationIdentifier.NewPassword,
             metadata: {
@@ -333,7 +361,7 @@ export class SMTPService {
           },
         });
 
-        if (verifTokenExist.length >= 3) {
+        if (verifRecords.length >= 3) {
           throw new TooManyRequestError();
         }
 
@@ -341,7 +369,7 @@ export class SMTPService {
         const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
-        await prismaclient.verification.create({
+        const verifrecord = await prismaclient.verification.create({
           data: {
             expiresAt: satuJamKedepan,
             identifier: VerificationIdentifier.NewPassword,
@@ -352,7 +380,13 @@ export class SMTPService {
           },
         });
 
-        // TODO: Setup Worker for removing after 1 hour
+        // Spawn new worker
+        await verificationEmailQueue.add(
+          VERIFICATION_EMAIL_QUEUE_NAME,
+          { verificationId: verifrecord.id },
+          { delay: satuJamKedepan.getTime() - currentDate().getTime() },
+          // { delay: 2 * 60 * 1000 }, // 2 minutes
+        );
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.NewPassword}`;
 
@@ -371,7 +405,7 @@ export class SMTPService {
       }
 
       case AuthEmailType.ResetEmail: {
-        const verifTokenExist = await prismaclient.verification.findMany({
+        const verifRecords = await prismaclient.verification.findMany({
           where: {
             identifier: VerificationIdentifier.ResetEmail,
             metadata: {
@@ -384,7 +418,7 @@ export class SMTPService {
           },
         });
 
-        if (verifTokenExist.length >= 3) {
+        if (verifRecords.length >= 3) {
           throw new TooManyRequestError();
         }
 
@@ -392,7 +426,7 @@ export class SMTPService {
         const token = genRandomString(25);
         const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
 
-        await prismaclient.verification.create({
+        const verifrecord = await prismaclient.verification.create({
           data: {
             expiresAt: satuJamKedepan,
             identifier: VerificationIdentifier.ResetEmail,
@@ -404,7 +438,13 @@ export class SMTPService {
           },
         });
 
-        // TODO: Setup Worker for removing after 1 hour
+        // Spawn new worker
+        await verificationEmailQueue.add(
+          VERIFICATION_EMAIL_QUEUE_NAME,
+          { verificationId: verifrecord.id },
+          { delay: satuJamKedepan.getTime() - currentDate().getTime() },
+          // { delay: 2 * 60 * 1000 }, // 2 minutes
+        );
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}`;
 

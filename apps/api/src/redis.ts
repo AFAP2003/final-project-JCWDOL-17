@@ -2,12 +2,14 @@ import Redis from 'ioredis';
 import { createClient } from 'redis';
 import { Repository, Schema } from 'redis-om';
 import { URL } from 'url';
-import { REDIS_URL } from './config';
+import { REDIS_STACK_URL, REDIS_URL } from './config';
 
-export const redisIO = () => new Redis(REDIS_URL);
+export const redisIO = new Redis(REDIS_URL, {
+  maxRetriesPerRequest: null,
+});
 
 export const redisOM = async () => {
-  const redisUrl = new URL(REDIS_URL);
+  const redisUrl = new URL(REDIS_STACK_URL);
   if (!client) {
     client = createClient({
       username: redisUrl.username,

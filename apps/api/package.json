@@ -7,9 +7,9 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "scripts": {
-    "dev": "cross-env NODE_ENV=development nodemon",
+    "dev": "cross-env NODE_ENV=development concurrently -k \"nodemon\" \"ts-node-dev -r tsconfig-paths/register src/worker.ts\"",
     "build": "rimraf dist && tsc && tsc-alias && copy-folder src/templates dist/templates",
-    "serve": "npm run build && cross-env NODE_ENV=production node dist/index.js",
+    "serve": "npm run build && cross-env NODE_ENV=production concurrently -k \"node dist/index.js\" \"node dist/workers.js\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "gen:template": "ts-node scripts/gen-template.ts",
     "prisma:restart": "npm run prisma:migrate:reset && npm run prisma:push && npm run prisma:seed",
@@ -28,6 +28,7 @@
     "@types/crypto-js": "^4.2.2",
     "axios": "^1.8.4",
     "better-auth": "^1.2.4",
+    "bullmq": "^5.53.0",
     "cloudinary": "^2.6.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -60,6 +61,7 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.15.3",
     "@types/nodemailer": "^6.4.17",
+    "concurrently": "^9.1.2",
     "copy-folder-util": "^1.1.5",
     "nodemon": "^3.1.9",
     "pg": "^8.14.1",
