@@ -268,8 +268,8 @@ export class SMTPService {
         await verificationEmailQueue.add(
           VERIFICATION_EMAIL_QUEUE_NAME,
           { verificationId: verifrecord.id },
-          // { delay: satuJamKedepan.getTime() - currentDate().getTime() },
-          { delay: 2 * 60 * 1000 }, // 2 minutes
+          { delay: satuJamKedepan.getTime() - currentDate().getTime() },
+          // { delay: 2 * 60 * 1000 }, // 2 minutes
         );
 
         const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.AnonymusSignin}`;
