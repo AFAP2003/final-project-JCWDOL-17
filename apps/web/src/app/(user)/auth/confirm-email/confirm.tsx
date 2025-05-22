@@ -27,10 +27,8 @@ export default function Confirm({ token }: Props) {
 
   const { mutate: confirm, isPending } = useMutation({
     mutationFn: async () => {
-      const { data } = await apiclient.post('/auth/signin', {
+      const { data } = await apiclient.post('/auth/confirm-email', {
         token: token,
-        withEmailConfirmation: true,
-        signinMethod: 'CREDENTIAL',
       });
       return data;
     },
@@ -43,7 +41,7 @@ export default function Confirm({ token }: Props) {
           description: 'Invalid or expired token',
           variant: 'destructive',
         });
-        router.push('/admin/auth/signin');
+        router.push('/auth/signin');
         return;
       }
 
@@ -55,7 +53,7 @@ export default function Confirm({ token }: Props) {
     },
 
     onSuccess: () => {
-      router.push('/dashboard');
+      router.push('/');
     },
   });
 
@@ -66,11 +64,9 @@ export default function Confirm({ token }: Props) {
         <CardHeader className="space-y-2 pb-6">
           <AuthLogo shoudLink={false} />
 
-          <CardTitle className="text-2xl font-bold">
-            Confirm My Sign In
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold">Confirm My Email</CardTitle>
           <CardDescription className="text-sm">
-            Confirm your signin and start manage your store.
+            Confirm your email and start shopping.
           </CardDescription>
         </CardHeader>
 

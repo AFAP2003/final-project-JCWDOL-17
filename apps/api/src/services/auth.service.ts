@@ -1,7 +1,10 @@
 import { auth } from '@/auth';
-import { BASE_FRONTEND_URL, CRYPTO_SECRET } from '@/config';
+import { BASE_FRONTEND_URL } from '@/config';
 import { AccountLinkDTO } from '@/dtos/account-link.dto';
+import { CheckPasswordDTO } from '@/dtos/check-password.dto';
+import { ConfirmEmailDTO } from '@/dtos/confirm-email.dto';
 import { ForgotPasswordDTO } from '@/dtos/forgot-password.dto';
+import { ResendConfirmEmailDTO } from '@/dtos/resend-confirm-email.dto';
 import { ResetPasswordDTO } from '@/dtos/reset-password.dto';
 import { RevokeSessionDTO } from '@/dtos/revoke-session.dto';
 import { SigninCredConfirmDTO, SigninDTO } from '@/dtos/signin.dto';
@@ -16,11 +19,8 @@ import {
   UnprocessableEntityError,
 } from '@/errors';
 import { BadTokenError } from '@/errors/400-bad-token.error';
-import { TooManyRequestError } from '@/errors/400-too-many-request.error';
 import { createZodError } from '@/helpers/create-zod-error';
 import { currentDate } from '@/helpers/datetime';
-import { aesEncrypt } from '@/helpers/encrypt-decrypt';
-import { genRandomString } from '@/helpers/gen-random-string';
 import { genReferralCode } from '@/helpers/gen-referral-code';
 import { genVoucherCode } from '@/helpers/gen-voucher-code';
 import { prismaclient } from '@/prisma';
@@ -28,49 +28,11 @@ import { UserSession } from '@/types/user-session.type';
 import { UserRole } from '@prisma/client';
 import { APIError } from 'better-auth/api';
 import { fromNodeHeaders } from 'better-auth/node';
-import { add, addHours, format } from 'date-fns';
+import { add } from 'date-fns';
 import { Request } from 'express';
-import { UAParser } from 'ua-parser-js';
 import { z } from 'zod';
 import { SMTPService } from './smtp.service';
 import { UserService } from './user.service';
-
-type SendAuthEmailParam =
-  | {
-      type: AuthEmailType.SignupConfirmation;
-      data: {
-        receiverEmail: string;
-        name: string;
-        referralCode?: string | undefined;
-        baseCallback: string;
-      };
-    }
-  | {
-      type: AuthEmailType.SigninNotification;
-      data: {
-        receiverEmail: string;
-        userId: string;
-        sessionToken: string;
-        baseCallback: string;
-      };
-    }
-  | {
-      type: AuthEmailType.SigninConfirmation;
-      data: {
-        receiverEmail: string;
-        baseCallback: string;
-        password: string;
-        role: 'USER' | 'ADMIN' | 'SUPER';
-      };
-    }
-  | {
-      type: AuthEmailType.ResetPassword | AuthEmailType.NewPassword;
-      data: {
-        receiverEmail: string;
-        userId: string;
-        baseCallback: string;
-      };
-    };
 
 export class AuthService {
   private userService = new UserService();
@@ -95,7 +57,7 @@ export class AuthService {
         );
     }
 
-    const { url } = await this.sendAuthEmail({
+    const { url } = await this.smtpService.sendAuthEmail({
       type: AuthEmailType.SignupConfirmation,
       data: {
         baseCallback: `${BASE_FRONTEND_URL}/auth/signup/set-password`,
@@ -118,6 +80,9 @@ export class AuthService {
               expiresAt: {
                 gt: currentDate(),
               },
+            },
+            orderBy: {
+              createdAt: 'desc',
             },
           });
 
@@ -290,7 +255,7 @@ export class AuthService {
       );
     }
 
-    const { url } = await this.sendAuthEmail({
+    const { url } = await this.smtpService.sendAuthEmail({
       type: AuthEmailType.SigninConfirmation,
       data: {
         baseCallback: `${BASE_FRONTEND_URL}/admin/auth/signin/confirm`,
@@ -307,6 +272,7 @@ export class AuthService {
     switch (dto.signinMethod) {
       case 'CREDENTIAL': {
         if (!dto.withEmailConfirmation) {
+          // If login not to verify email (user)
           const user = await prismaclient.user.findUnique({
             where: {
               email: dto.email,
@@ -359,7 +325,7 @@ export class AuthService {
               req,
             );
 
-            const { url } = await this.sendAuthEmail({
+            const { url } = await this.smtpService.sendAuthEmail({
               type: AuthEmailType.SigninNotification,
               data: {
                 baseCallback: `${BASE_FRONTEND_URL}/auth/reset-password`,
@@ -374,6 +340,7 @@ export class AuthService {
               response,
               signinMethod: 'CREDENTIAL' as const,
               resetUrl: url,
+              emailVerified: true as const,
             };
           } catch (error: any) {
             throw new InternalSeverError(
@@ -381,6 +348,7 @@ export class AuthService {
             );
           }
         } else {
+          // If login need to verify email (admin)
           const veriftoken = await prismaclient.verification.findFirst({
             where: {
               identifier: VerificationIdentifier.SigninConfirmation,
@@ -388,6 +356,9 @@ export class AuthService {
               expiresAt: {
                 gt: currentDate(),
               },
+            },
+            orderBy: {
+              createdAt: 'desc',
             },
           });
 
@@ -462,7 +433,7 @@ export class AuthService {
       );
     }
 
-    const { url } = await this.sendAuthEmail({
+    const { url } = await this.smtpService.sendAuthEmail({
       type: AuthEmailType.ResetPassword,
       data: {
         baseCallback: `${BASE_FRONTEND_URL}/auth/reset-password`,
@@ -484,6 +455,9 @@ export class AuthService {
         expiresAt: {
           gt: currentDate(),
         },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
@@ -579,7 +553,7 @@ export class AuthService {
         });
         if (!user) throw new NotFoundError();
 
-        const { url } = await this.sendAuthEmail({
+        const { url } = await this.smtpService.sendAuthEmail({
           type: AuthEmailType.NewPassword,
           data: {
             baseCallback: `${BASE_FRONTEND_URL}/auth/reset-password`,
@@ -629,6 +603,128 @@ export class AuthService {
     }
   };
 
+  checkPassword = async (
+    dto: z.infer<typeof CheckPasswordDTO>,
+    userId: string,
+  ) => {
+    const user = await prismaclient.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        accounts: {
+          select: {
+            id: true,
+            password: true,
+          },
+          where: {
+            providerId: 'credential',
+          },
+        },
+      },
+    });
+
+    if (!user || user.accounts.length <= 0) {
+      throw new BadRequestError(
+        'This user dont have credential account associated with',
+      );
+    }
+
+    const account = user.accounts[0];
+    if (!account.password) {
+      throw new InternalSeverError(
+        `User with account id ${account.id} should have hash password`,
+      );
+    }
+    const match = await this.verifyPassword(account.password, dto.password);
+    return match;
+  };
+
+  confirmEmail = async (dto: z.infer<typeof ConfirmEmailDTO>, req: Request) => {
+    const veriftoken = await prismaclient.verification.findFirst({
+      where: {
+        identifier: VerificationIdentifier.ResetEmail,
+        value: dto.token,
+        expiresAt: {
+          gt: currentDate(),
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (!veriftoken) throw new BadTokenError(dto.token);
+
+    const { userId, password } = veriftoken.metadata as {
+      userId: string;
+      password?: string;
+    };
+
+    const user = await prismaclient.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) throw new BadTokenError(dto.token);
+
+    const updated = await prismaclient.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        emailVerified: true,
+      },
+    });
+
+    if (password) {
+      try {
+        const { headers, response } = await this.signinWithCredential(
+          {
+            email: updated.email,
+            password: password,
+          },
+          req,
+        );
+
+        await prismaclient.verification.delete({
+          where: {
+            id: veriftoken.id,
+          },
+        });
+        return { headers, updated, withPassword: true as const };
+      } catch (error: any) {}
+    } else {
+      await prismaclient.verification.delete({
+        where: {
+          id: veriftoken.id,
+        },
+      });
+
+      return { updated, withPassword: false as const };
+    }
+  };
+
+  resendConfirmEmail = async (dto: z.infer<typeof ResendConfirmEmailDTO>) => {
+    const user = await prismaclient.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+    });
+    if (!user) throw new NotFoundError();
+
+    const { url } = await this.smtpService.sendAuthEmail({
+      type: AuthEmailType.ResetEmail,
+      data: {
+        baseCallback: `${BASE_FRONTEND_URL}/auth/confirm-email`,
+        receiverEmail: user.email,
+        userId: user.id,
+      },
+    });
+
+    return { url };
+  };
+
   private signinWithCredential = async (
     data: {
       email: string;
@@ -670,252 +766,4 @@ export class AuthService {
       password: password,
     });
   };
-
-  private async sendAuthEmail(param: SendAuthEmailParam) {
-    switch (param.type) {
-      case AuthEmailType.SignupConfirmation: {
-        const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString(25);
-        const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
-
-        const verifrecord = await prismaclient.verification.findMany({
-          where: {
-            metadata: {
-              path: ['email'],
-              equals: param.data.receiverEmail,
-            },
-          },
-        });
-        if (verifrecord.length >= 3) {
-          throw new TooManyRequestError();
-        }
-
-        await prismaclient.verification.create({
-          data: {
-            expiresAt: satuJamKedepan,
-            identifier: VerificationIdentifier.SignupConfirmation,
-            value: token,
-            metadata: {
-              email: param.data.receiverEmail,
-              name: param.data.name,
-              referralCode: param.data.referralCode,
-            },
-          },
-        });
-
-        // TODO: Setup Worker for removing after 1 hour
-
-        const url = `${param.data.baseCallback}?token=${exchangetoken}`;
-
-        this.smtpService.sendMail({
-          tmplname: 'signup-confirmation',
-          to: param.data.receiverEmail,
-          subject: 'Signup Confirmation',
-          data: {
-            url: url,
-            expiredAt: format(satuJamKedepan, 'yyyy-MM-dd HH:mm:ss'),
-            currentYear: currentDate().getFullYear(),
-          },
-        });
-        return { url };
-      }
-
-      case AuthEmailType.SigninConfirmation: {
-        const veriftokens = await prismaclient.verification.findMany({
-          where: {
-            identifier: VerificationIdentifier.SigninConfirmation,
-            metadata: {
-              path: ['email'],
-              equals: param.data.receiverEmail,
-            },
-            expiresAt: {
-              gt: currentDate(),
-            },
-          },
-        });
-        if (veriftokens.length >= 3) {
-          throw new TooManyRequestError();
-        }
-
-        const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString(25);
-        const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
-
-        await prismaclient.verification.create({
-          data: {
-            expiresAt: satuJamKedepan,
-            identifier: VerificationIdentifier.SigninConfirmation,
-            metadata: {
-              email: param.data.receiverEmail,
-              password: param.data.password,
-              role: param.data.role,
-            },
-            value: token,
-          },
-        });
-
-        // TODO: Setup Worker for removing after 1 hour
-
-        const url = `${param.data.baseCallback}?token=${exchangetoken}`;
-
-        this.smtpService.sendMail({
-          tmplname: 'signin-confirmation',
-          subject: 'Signin Confirmation',
-          to: param.data.receiverEmail,
-          data: {
-            receiver: param.data.receiverEmail,
-            url: url,
-            expiredAt: format(satuJamKedepan, 'yyyy-MM-dd HH:mm:ss'),
-            currentYear: currentDate().getFullYear(),
-          },
-        });
-        return { url };
-      }
-
-      case AuthEmailType.SigninNotification: {
-        const session = await prismaclient.session.findUnique({
-          where: {
-            token: param.data.sessionToken,
-          },
-        });
-
-        const uainfo = UAParser(session?.userAgent || '');
-        const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString(25);
-        const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
-
-        await prismaclient.verification.create({
-          data: {
-            expiresAt: satuJamKedepan,
-            identifier: VerificationIdentifier.AnonymusSignin,
-            metadata: {
-              userId: param.data.userId,
-            },
-            value: token,
-          },
-        });
-
-        // TODO: Setup Worker for removing after 1 hour
-
-        const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.AnonymusSignin}`;
-
-        this.smtpService.sendMail({
-          tmplname: 'signin-notification',
-          subject: 'Signin Notification',
-          to: param.data.receiverEmail,
-          data: {
-            receiver: param.data.receiverEmail,
-            signinAt: session?.createdAt,
-            device: `${uainfo.os.name}/${uainfo.browser.name}`,
-            url: url,
-            expiredAt: format(satuJamKedepan, 'yyyy-MM-dd HH:mm:ss'),
-            currentYear: currentDate().getFullYear(),
-          },
-        });
-        return { url };
-      }
-
-      case AuthEmailType.ResetPassword: {
-        const verifTokenExist = await prismaclient.verification.findMany({
-          where: {
-            identifier: VerificationIdentifier.ResetPassword,
-            metadata: {
-              path: ['userId'],
-              equals: param.data.userId,
-            },
-            expiresAt: {
-              gt: currentDate(),
-            },
-          },
-        });
-
-        if (verifTokenExist.length >= 3) {
-          throw new TooManyRequestError();
-        }
-
-        const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString(25);
-        const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
-
-        await prismaclient.verification.create({
-          data: {
-            expiresAt: satuJamKedepan,
-            identifier: VerificationIdentifier.ResetPassword,
-            metadata: {
-              userId: param.data.userId,
-            },
-            value: token,
-          },
-        });
-
-        // TODO: Setup Worker for removing after 1 hour
-
-        const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.ResetPassword}`;
-
-        this.smtpService.sendMail({
-          tmplname: 'reset-password',
-          subject: 'Reset Password',
-          to: param.data.receiverEmail,
-          data: {
-            receiver: param.data.receiverEmail,
-            url: url,
-            expiredAt: format(satuJamKedepan, 'yyyy-MM-dd HH:mm:ss'),
-            currentYear: currentDate().getFullYear(),
-          },
-        });
-        return { url };
-      }
-
-      case AuthEmailType.NewPassword: {
-        const verifTokenExist = await prismaclient.verification.findMany({
-          where: {
-            identifier: VerificationIdentifier.NewPassword,
-            metadata: {
-              path: ['userId'],
-              equals: param.data.userId,
-            },
-            expiresAt: {
-              gt: currentDate(),
-            },
-          },
-        });
-
-        if (verifTokenExist.length >= 3) {
-          throw new TooManyRequestError();
-        }
-
-        const satuJamKedepan = addHours(currentDate(), 1);
-        const token = genRandomString(25);
-        const exchangetoken = aesEncrypt(token, CRYPTO_SECRET);
-
-        await prismaclient.verification.create({
-          data: {
-            expiresAt: satuJamKedepan,
-            identifier: VerificationIdentifier.NewPassword,
-            metadata: {
-              userId: param.data.userId,
-            },
-            value: token,
-          },
-        });
-
-        // TODO: Setup Worker for removing after 1 hour
-
-        const url = `${param.data.baseCallback}?token=${exchangetoken}&intend=${VerificationIdentifier.NewPassword}`;
-
-        this.smtpService.sendMail({
-          tmplname: 'new-password',
-          subject: 'Set New Password',
-          to: param.data.receiverEmail,
-          data: {
-            receiver: param.data.receiverEmail,
-            url: url,
-            expiredAt: format(satuJamKedepan, 'yyyy-MM-dd HH:mm:ss'),
-            currentYear: currentDate().getFullYear(),
-          },
-        });
-        return { url };
-      }
-    }
-  }
 }

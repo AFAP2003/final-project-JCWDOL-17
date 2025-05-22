@@ -4,4 +4,5 @@ export enum AuthEmailType {
   ResetPassword = 'ResetPassword',
   NewPassword = 'NewPassword',
   SigninNotification = 'SigninNotification',
+  ResetEmail = 'ResetEmail',
 }

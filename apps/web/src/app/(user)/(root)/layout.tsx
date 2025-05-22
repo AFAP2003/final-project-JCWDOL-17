@@ -2,6 +2,7 @@ import Footer from '@/components/footer';
 // import LocoScroll from '@/components/loco-scroll';
 import Navbar from '@/components/navbar';
 import PageWrapper from '@/components/page-wrapper';
+import { AuthEmailProvider } from '@/context/auth-email-provider';
 import { CartProvider } from '@/context/cart-provider';
 import { CheckoutProvider } from '@/context/checkout-provider';
 import { LocationProvider } from '@/context/location-provider';
@@ -23,11 +24,13 @@ export default function UserLayout({ children }: Props) {
             <CheckoutProvider>
               <OrderProvider>
                 {/* <LocoScroll> */}
-                <div className="min-h-screen flex flex-col">
-                  <Navbar />
-                  <PageWrapper>{children}</PageWrapper>
-                  <Footer />
-                </div>
+                <AuthEmailProvider>
+                  <div className="min-h-screen flex flex-col">
+                    <Navbar />
+                    <PageWrapper>{children}</PageWrapper>
+                    <Footer />
+                  </div>
+                </AuthEmailProvider>
                 {/* </LocoScroll> */}
               </OrderProvider>
             </CheckoutProvider>

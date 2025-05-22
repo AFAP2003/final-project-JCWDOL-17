@@ -10,8 +10,10 @@ const publicRoutes = [
   '/auth/signup',
   '/auth/signup/set-password',
   '/auth/signin',
+  '/auth/signin/check-verified',
   '/auth/reset-password',
   '/auth/forgot-password',
+  '/auth/confirm-email',
   '/admin/auth/signin/*',
   '/admin/auth/signin/confirm',
   // Wajib Delete Before merge
@@ -32,6 +34,13 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request, {});
   const currentPath = request.nextUrl.pathname;
   //const pathIsPublic = publicRoutes.find((route) => route === currentPath);
+
+  // TODO: fix it email redirect on /auth/confirm-email
+  // For now just handle it like this:
+  if (currentPath === '/auth/confirm-email') {
+    return NextResponse.next();
+  }
+
   const pathIsPublic = publicRoutes.find((route) => {
     // Handle wildcard routes
     if (route.endsWith('/*')) {
@@ -86,11 +95,15 @@ export async function middleware(request: NextRequest) {
       }
 
       const { user } = session as unknown as Session;
-
       const role = user?.role;
+
       switch (role) {
         case 'USER': {
-          if (currentPath.startsWith('/dashboard') && !pathIsPublic) {
+          if (!user.emailVerified && !pathIsPublic) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/auth/signin';
+            return NextResponse.redirect(url);
+          } else if (currentPath.startsWith('/dashboard') && !pathIsPublic) {
             const url = request.nextUrl.clone();
             url.pathname = '/admin/auth/signin';
             return NextResponse.redirect(url);

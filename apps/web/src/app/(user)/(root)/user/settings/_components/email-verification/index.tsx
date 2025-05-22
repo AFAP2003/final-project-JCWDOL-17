@@ -1,7 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useAuthEmail } from '@/context/auth-email-provider';
 import { ArrowRight, MailCheckIcon } from 'lucide-react';
+import { useEffect } from 'react';
 
 type Props = {
   show: boolean;
@@ -10,6 +12,7 @@ type Props = {
   disabled: boolean;
   cooldownTime: string;
   rawCooldownTime: number;
+  // restartCooldown: () => void;
 };
 
 export default function EmailVerification({
@@ -19,11 +22,23 @@ export default function EmailVerification({
   disabled,
   cooldownTime,
   rawCooldownTime,
+  // restartCooldown,
 }: Props) {
+  const { setIsShowing } = useAuthEmail();
+
+  useEffect(() => {
+    setIsShowing(show);
+  }, [setIsShowing, show]);
+
   if (!show) return null;
 
   return (
-    <div className="fixed left-0 top-0 bg-white size-full z-50 flex flex-col gap-2 items-center justify-center rounded-md">
+    <div
+      className="fixed left-0 top-0 bg-white size-full flex flex-col gap-2 items-center justify-center rounded-md"
+      style={{
+        zIndex: 10000000000,
+      }}
+    >
       <div className="size-[48px]">
         <MailCheckIcon
           size="48px"
@@ -46,6 +61,7 @@ export default function EmailVerification({
       <Button
         onClick={async () => {
           resend(email);
+          // restartCooldown();
         }}
         disabled={rawCooldownTime > 0 || disabled}
         className="h-[40px] bg-neutral-600 hover:bg-neutral-600/90 transition-all duration-300"

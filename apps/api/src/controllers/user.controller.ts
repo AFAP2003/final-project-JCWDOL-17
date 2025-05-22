@@ -3,6 +3,7 @@ import { AddressDeleteDTO } from '@/dtos/address-delete.dto';
 import { AddressGetAllDTO } from '@/dtos/address-get-all.dto';
 import { AddressUpdateDTO } from '@/dtos/address-update.dto';
 import { UserUpdateBioDTO } from '@/dtos/user-update-bio-dto';
+import { UserUpdateEmailDTO } from '@/dtos/user-update-email.dto';
 import {
   ApiError,
   InternalSeverError,
@@ -45,6 +46,28 @@ export class UserController {
     try {
       const { user } = await this.userService.updateBio(dto, session.user.id);
       res.json(user);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  updateEmail = async (req: Request, res: Response) => {
+    const session = getSession(req);
+    const { data: dto, error } = UserUpdateEmailDTO.safeParse(req.body);
+    if (error) {
+      throw new UnprocessableEntityError(formatZodError(error));
+    }
+
+    try {
+      const result = await this.userService.updateEmail(dto, session.user.id);
+      res.json({
+        message: `Verification email has been sent to ${session.user.email}`,
+        url: result.url,
+      });
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;

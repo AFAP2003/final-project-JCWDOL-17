@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { redirect } from 'next/navigation';
 import SectionHeading from '../section-heading';
 import DialogForm from './dialog-form';
+import DialogFormEmail from './dialog-form-email';
 import LoadingSkeleton from './loading-skeleton';
 import Profile from './profile';
 
@@ -116,6 +117,9 @@ export default function TabContentBiodata() {
                       </span>
                     )}
                   </span>
+                  {user.signupMethod.includes('CREDENTIAL') && (
+                    <DialogFormEmail />
+                  )}
                 </div>
 
                 <div className="text-neutral-500 font-medium flex w-full items-center">

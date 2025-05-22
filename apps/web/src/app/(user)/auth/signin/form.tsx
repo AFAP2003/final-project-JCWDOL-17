@@ -91,7 +91,7 @@ export default function SigninForm({ searchParams }: Props) {
         return await apiclient.post('/auth/signin', {
           signinMethod: payload.method,
           role: 'USER',
-          callbackURL: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/`,
+          callbackURL: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/auth/signin/check-verified`,
           errorCallback: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/auth/signin`,
         });
       }
@@ -100,7 +100,7 @@ export default function SigninForm({ searchParams }: Props) {
         return await apiclient.post('/auth/signin', {
           signinMethod: payload.method,
           role: 'USER',
-          callbackURL: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/`,
+          callbackURL: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/auth/signin/check-verified`,
           errorCallback: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/auth/signin`,
         });
       }
@@ -127,7 +127,7 @@ export default function SigninForm({ searchParams }: Props) {
     onSuccess: (response) => {
       if (response.data.signinMethod === 'CREDENTIAL') {
         form.reset();
-        router.push('/');
+        router.push('/auth/signin/check-verified');
         return;
       }
 

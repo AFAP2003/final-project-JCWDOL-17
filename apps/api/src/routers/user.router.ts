@@ -27,6 +27,12 @@ export class UserRouter {
       asynchandler(this.controller.updateBio),
     );
 
+    this.router.patch(
+      '/email',
+      withAuthentication,
+      asynchandler(this.controller.updateEmail),
+    );
+
     this.router.post(
       '/profile',
       withAuthentication,
