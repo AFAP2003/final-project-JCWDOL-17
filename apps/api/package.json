@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development concurrently -k \"nodemon\" \"ts-node-dev -r tsconfig-paths/register src/worker.ts\"",
     "build": "rimraf dist && tsc && tsc-alias && copy-folder src/templates dist/templates",
-    "serve": "npm run build && cross-env NODE_ENV=production concurrently -k \"node dist/index.js\" \"node dist/workers.js\"",
+    "serve": "cross-env NODE_ENV=production concurrently -k \"node dist/index.js\" \"node dist/workers.js\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "gen:template": "ts-node scripts/gen-template.ts",
     "prisma:restart": "npm run prisma:migrate:reset && npm run prisma:push && npm run prisma:seed",
