@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { Toaster } from '@/components/ui/toaster';
 import QueryProvider from '@/context/query-provider';
 import type { Metadata } from 'next';

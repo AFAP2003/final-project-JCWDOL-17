@@ -253,7 +253,7 @@ export default function DialogForm(props: Props) {
                   name="label"
                   render={({ field }) => (
                     <InputFormItemFloating
-                      field={field}
+                      field={field as any}
                       id="label"
                       label="Label Address"
                       showCount

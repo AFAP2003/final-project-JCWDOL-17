@@ -54,6 +54,8 @@ export type CheckoutContextType = {
   applyVoucher: () => Promise<void>;
   initializePayment: (orderId: string) => Promise<void>;
   resetCheckout: () => void;
+  setVoucherDiscount: any;
+  setAppliedVoucher: any;
 };
 
 export interface MidtransConfig {

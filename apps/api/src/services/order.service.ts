@@ -220,7 +220,7 @@ export class OrderService {
 
     const total = await prismaclient.order.count({ where });
 
-    const orders = await prismaclient.order.findMany({
+    const orders = (await prismaclient.order.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       skip,
@@ -241,11 +241,11 @@ export class OrderService {
         store: true,
         paymentProofs: true,
       },
-    });
+    })) as any;
 
     const ordersWithDistance = await Promise.all(
       orders.map(async (order) => {
-        let distance = null;
+        let distance: any | null = null;
 
         if (
           order.store.latitude &&
@@ -846,6 +846,7 @@ export class OrderService {
     order: any,
     paymentProofId: string,
     adminId: string,
+    notes?: string,
   ) {
     const paymentProof = order.paymentProofs.find(
       (proof: any) =>

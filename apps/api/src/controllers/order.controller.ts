@@ -199,7 +199,7 @@ export class OrderController {
       // Store admins can only see orders for their store
       // Super admins can see all orders or filter by specific store
       const effectiveStoreId =
-        user.role === 'SUPER' ? (requestedStoreId as string) : storeId;
+        user.role === ('SUPER' as any) ? (requestedStoreId as string) : storeId;
 
       const filters: any = {
         status: status as string,
@@ -211,7 +211,7 @@ export class OrderController {
 
       const orders = await this.orderService.getAdminOrders(
         filters,
-        Number(page),
+        Number(page).toString(),
         Number(limit),
       );
 

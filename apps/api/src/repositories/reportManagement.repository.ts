@@ -120,7 +120,7 @@ class ReportManagementRepository {
       },
     });
 
-    const totalsByProduct = items.reduce((acc, item) => {
+    const totalsByProduct: Record<string, any> = items.reduce((acc, item) => {
       const name = item.product.name;
       acc[name] = acc[name] || { unitsSold: 0, revenue: 0 };
       acc[name].unitsSold += item.quantity;

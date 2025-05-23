@@ -512,6 +512,8 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
         resetCheckout,
         appliedVoucher,
         voucherDiscount,
+        setVoucherDiscount,
+        setAppliedVoucher,
       }}
     >
       {children}

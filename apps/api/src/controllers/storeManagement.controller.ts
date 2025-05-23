@@ -33,7 +33,7 @@ class StoreManagementController {
         success: true,
         data: store,
       });
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({
         success: false,
         message: error.message || 'Internal server error',

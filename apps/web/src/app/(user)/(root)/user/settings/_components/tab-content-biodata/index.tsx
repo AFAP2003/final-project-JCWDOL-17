@@ -16,7 +16,7 @@ export default function TabContentBiodata() {
   if (isPending) return <LoadingSkeleton />;
   if (!data) redirect('/auth/signin');
 
-  const { user } = data;
+  const user = data?.user;
 
   return (
     <Card className="p-6">

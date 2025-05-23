@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils';
 import { ReactNode, useEffect, useState } from 'react';
-import { ControllerRenderProps } from 'react-hook-form';
 import { useDebounceValue } from 'usehooks-ts';
 import { FormItem, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
@@ -8,7 +7,7 @@ import { Label } from '../ui/label';
 
 type Props<T extends readonly unknown[] = unknown[]> =
   | {
-      field: ControllerRenderProps<any>;
+      field: any;
       id: string;
       label: string;
       showCount: false;
@@ -16,7 +15,7 @@ type Props<T extends readonly unknown[] = unknown[]> =
       withSuggestion: false;
     }
   | {
-      field: ControllerRenderProps<any>;
+      field: any;
       id: string;
       label: string;
       showCount: false;
@@ -28,7 +27,7 @@ type Props<T extends readonly unknown[] = unknown[]> =
       debounce: number;
     }
   | {
-      field: ControllerRenderProps<any>;
+      field: any;
       id: string;
       label: string;
       showCount: true;
@@ -37,7 +36,7 @@ type Props<T extends readonly unknown[] = unknown[]> =
       withSuggestion: false;
     }
   | {
-      field: ControllerRenderProps<any>;
+      field: any;
       id: string;
       label: string;
       showCount: true;

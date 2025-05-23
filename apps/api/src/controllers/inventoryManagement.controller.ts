@@ -1,4 +1,4 @@
-import { getSession, getSessionAdmin } from '@/helpers/session-helper';
+import { getSession } from '@/helpers/session-helper';
 import { prismaclient } from '@/prisma';
 import inventoryManagementService from '@/services/inventoryManagement.service';
 import { NextFunction, Request, Response } from 'express';
@@ -127,7 +127,7 @@ class InventoryManagementController {
       // Update the inventory
       const data = await inventoryManagementService.updateInventoryById(
         id,
-        { minStock },
+        { minStock } as any,
         addQuantity,
         subtractQuantity,
       );

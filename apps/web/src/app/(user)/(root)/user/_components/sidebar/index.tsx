@@ -23,7 +23,7 @@ export default function UserSidebar() {
   if (isPending) return <LoadingSkeleton />;
   if (!data) redirect('/auth/signin');
 
-  const { user } = data;
+  const user = data?.user;
 
   return (
     <Card className="w-full min-w-[254px] h-[700px] hidden lg:flex shrink-0 flex-col rounded-lg overflow-hidden border border-neutral-200 bg-white/80 shadow-sm">

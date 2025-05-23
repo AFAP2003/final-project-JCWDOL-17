@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useCart } from '@/context/cart-provider';
 import { useCheckout } from '@/context/checkout-provider';
+import { toast } from '@/hooks/use-toast';
 import { useSession } from '@/lib/auth/client';
 import { PaymentMethod } from '@/lib/enums';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -38,7 +39,6 @@ import {
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { toast } from '@/hooks/use-toast';
 
 export default function Checkout() {
   const router = useRouter();
@@ -73,6 +73,8 @@ export default function Checkout() {
     setVoucherCode,
     handleSubmit,
     applyVoucher,
+    setAppliedVoucher,
+    setVoucherDiscount,
   } = useCheckout();
 
   const selectedAddress = addresses.find(
@@ -414,7 +416,9 @@ export default function Checkout() {
                 <div className="flex justify-between text-xs text-green-700 mt-2 pt-2 border-t border-green-200">
                   <span>
                     Valid until:{' '}
-                    {new Date(appliedVoucher.validUntil).toLocaleDateString()}
+                    {new Date(
+                      appliedVoucher.validUntil as any,
+                    ).toLocaleDateString()}
                   </span>
                   <Button
                     type="button"
