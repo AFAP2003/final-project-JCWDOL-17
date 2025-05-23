@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+// export const dynamic = 'force-dynamic';
 
 import { Toaster } from '@/components/ui/toaster';
 import QueryProvider from '@/context/query-provider';

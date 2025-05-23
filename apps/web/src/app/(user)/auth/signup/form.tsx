@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { FcGoogle } from 'react-icons/fc';
 import { SiDiscord } from 'react-icons/si';
@@ -76,6 +76,7 @@ export default function SignupForm({ searchParams }: Props) {
   const router = useRouter();
   const [showNotification, setShowNotification] = useState(false);
   const { cooldownTime, rawCooldownTime, restartCooldown } = useCooldown(120);
+  const [isRedirecting, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -141,7 +142,9 @@ export default function SignupForm({ searchParams }: Props) {
     onSuccess: (response) => {
       if (response?.data?.signupMethod === 'SOCIAL') {
         const url = response.data.url;
-        router.replace(url);
+        startTransition(() => {
+          router.replace(url);
+        });
         return;
       }
 
@@ -159,7 +162,9 @@ export default function SignupForm({ searchParams }: Props) {
         "Your account isn't linked. Log in with your signup method to link it later in settings.",
       variant: 'destructive',
     });
-    router.push('/auth/signup');
+    startTransition(() => {
+      router.push('/auth/signup');
+    });
   }
 
   return (
@@ -273,11 +278,11 @@ export default function SignupForm({ searchParams }: Props) {
                   <Button
                     type="submit"
                     className="w-full gap-2 transition-all"
-                    disabled={isPending}
+                    disabled={isPending || isRedirecting}
                     size="lg"
                   >
-                    Sign Up with Email
-                    {isPending ? (
+                    {isRedirecting ? 'Redirecting ' : 'Sign Up with Email'}
+                    {isPending || isRedirecting ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     ) : (
                       <ArrowRight className="h-4 w-4" />
@@ -302,7 +307,7 @@ export default function SignupForm({ searchParams }: Props) {
                   onClick={() => {
                     signup({ method: 'GOOGLE' });
                   }}
-                  disabled={isPending}
+                  disabled={isPending || isRedirecting}
                   variant="outline"
                   className="group flex w-full items-center justify-center gap-2 border-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900"
                 >
