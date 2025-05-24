@@ -80,25 +80,15 @@ export class SMTPService {
     if (!TEMPLATE_CONTAINER) SMTPService.compileTemplate();
   }
 
-  /**
-   * Sends an email using the specified template and parameters.
-   *
-   * @param {SendParams} param - The parameters required to send an email.
-   * @param {string} param.to - Recipient's email address.
-   * @param {string} param.subject - Email subject line.
-   * @param {TemplateName} param.tmplname - The name of the email template to use.
-   * @param {Record<string, any>} param.data - Data to populate the template.
-   *
-   * @throws {Error} If the template does not exist.
-   */
   public sendMail = async (param: SendParams) => {
     const template = TEMPLATE_CONTAINER![param.tmplname];
     const html = template(param.data);
-    return await mailerclient.sendMail({
+    const mail = await mailerclient.sendMail({
       to: param.to,
       subject: param.subject,
       html: html,
     });
+    return mail;
   };
 
   private static compileTemplate = () => {
@@ -168,7 +158,7 @@ export class SMTPService {
           // { delay: 2 * 60 * 1000 }, // 2 minutes
         );
 
-        const url = `${param.data.baseCallback}?token=${exchangetoken}`;
+        const url = `${'https://gogrocery.mooo.com'}?token=${exchangetoken}`;
 
         this.sendMail({
           tmplname: 'signup-confirmation',
