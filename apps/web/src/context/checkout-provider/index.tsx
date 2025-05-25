@@ -23,9 +23,8 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const { data: session } = useSession();
   const token = session?.session?.token;
   const { items, subtotal, clearCart } = useCart();
-
-  const [addresses, setAddresses] = useState([]);
-  const [shippingMethods, setShippingMethods] = useState([]);
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [selectedShippingId, setSelectedShippingId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState(
@@ -37,15 +36,15 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [shippingCost, setShippingCost] = useState(0);
-  const [nearestStore, setNearestStore] = useState(null);
-  const [shippingDistance, setShippingDistance] = useState(null);
-  const [serviceDetails, setServiceDetails] = useState(null);
+  const [nearestStore, setNearestStore] = useState<any>(null);
+  const [shippingDistance, setShippingDistance] = useState<number | null>(null);
+  const [serviceDetails, setServiceDetails] = useState<any>(null);
   const [stockAvailability, setStockAvailability] = useState({
     available: true,
     missingItems: [],
   });
   const [calculatingShipping, setCalculatingShipping] = useState(false);
-  const [shippingError, setShippingError] = useState(null);
+  const [shippingError, setShippingError] = useState<string | null>(null); // Fix type
 
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
@@ -70,7 +69,8 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (addressesData.length > 0) {
           const defaultAddress =
-            addressesData.find((addr) => addr.isDefault) || addressesData[0];
+            addressesData.find((addr: any) => addr.isDefault) ||
+            addressesData[0]; //
           setSelectedAddressId(defaultAddress.id);
         }
 
@@ -150,7 +150,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
           setShippingCost(shippingData.shippingCost);
         } else {
           const selectedMethod = shippingMethods.find(
-            (m) => m.id === selectedShippingId,
+            (m: any) => m.id === selectedShippingId,
           );
           if (selectedMethod) setShippingCost(selectedMethod.baseCost);
         }
@@ -169,7 +169,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
         );
 
         const selectedMethod = shippingMethods.find(
-          (m) => m.id === selectedShippingId,
+          (m: any) => m.id === selectedShippingId,
         );
         if (selectedMethod) setShippingCost(selectedMethod.baseCost);
 
@@ -214,13 +214,12 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setIsSubmitting(true);
 
-      // Create the order payload - specifically handle the voucher ID properly
       const orderPayload = {
         addressId: selectedAddressId,
         shippingMethodId: selectedShippingId,
         paymentMethod: paymentMethod,
         notes: notes || undefined,
-        // Use voucherId directly instead of the code - this is the key change
+
         vouchers: appliedVoucher ? [appliedVoucher.id] : [],
       };
 
@@ -256,7 +255,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch (error: any) {
       console.error('Checkout error:', error);
-      // More detailed error logging
+
       if (error.response?.data) {
         console.error('Error details:', error.response.data);
       }
@@ -299,12 +298,11 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
       const voucherData = response.data.voucher;
       const discountAmount = Number(voucherData.discount) || 0;
 
-      // Validate for product-specific vouchers
       if (
         voucherData.type === 'PRODUCT_SPECIFIC' &&
         voucherData.products?.length > 0
       ) {
-        const voucherProductIds = voucherData.products.map((p) => p.id);
+        const voucherProductIds = voucherData.products.map((p: any) => p.id);
         const eligibleItems = items.filter((item) =>
           voucherProductIds.includes(item.product.id),
         );
@@ -344,7 +342,6 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      // Set the voucher with its full data, including the ID
       setVoucherDiscount(discountAmount);
       setAppliedVoucher(voucherData);
 
@@ -400,7 +397,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
     if (typeof window === 'undefined') return;
 
     const invokeSnap = () => {
-      window.snap.pay(token, {
+      (window as any).snap.pay(token, {
         onSuccess: () => handlePaymentSuccess(orderId),
         onPending: () => handlePaymentPending(orderId),
         onError: () => handlePaymentError(orderId),
@@ -408,7 +405,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     };
 
-    if (window.snap) {
+    if ((window as any).snap) {
       invokeSnap();
     } else {
       const existingScript = document.querySelector(

@@ -1,50 +1,24 @@
-import { LucideIcon } from 'lucide-react';
+import { Order } from '../interfaces/orders';
 
-export interface OrderItem {
-  id: string;
-  productName: string;
-  quantity: number;
-  price: number;
-  subtotal: number;
-}
-
-export interface ShippingAddress {
-  recipient: string;
-  address: string;
-  phoneNumber?: string;
-}
-
-export interface Order {
-  id: string;
-  orderNumber: string;
-  status: OrderStatus;
-  total: number;
-  subtotal: number;
-  shippingCost: number;
-  createdAt: string;
-  paymentMethod: 'BANK_TRANSFER' | 'PAYMENT_GATEWAY';
-  paymentStatus: 'PENDING' | 'PAID' | 'FAILED';
-  shippingMethod: string;
-  trackingNumber?: string;
-  items: OrderItem[];
-  shippingAddress: ShippingAddress;
-}
-
-export type OrderStatus =
-  | 'WAITING_PAYMENT'
-  | 'WAITING_PAYMENT_CONFIRMATION'
-  | 'PROCESSING'
-  | 'SHIPPED'
-  | 'CONFIRMED'
-  | 'CANCELLED';
-
-export interface OrderStatusConfig {
-  label: string;
-  color: string;
-  icon: LucideIcon;
-}
-
-export interface OrderStatusBadgeProps {
-  status: OrderStatus | string;
-  className?: string;
-}
+export type OrderContextType = {
+  orders: Order[];
+  activeOrders: Order[];
+  completedOrders: Order[];
+  cancelledOrders: Order[];
+  currentOrder: Order | null;
+  isLoading: boolean;
+  isSubmitting: boolean;
+  activeTab: string;
+  paymentProofFile: File | null;
+  paymentProofPreview: string | null;
+  uploadingPaymentProof: boolean;
+  fetchOrders: () => Promise<void>;
+  fetchOrderDetails: (orderNumber: string) => Promise<Order | undefined>;
+  cancelOrder: (orderId: string) => Promise<Order | undefined>;
+  confirmOrder: (orderId: string) => Promise<Order | undefined>;
+  setActiveTab: (tab: string) => void;
+  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  uploadPaymentProof: (orderId: string) => Promise<Order | undefined>;
+  searchOrders: (query: string) => Promise<any>;
+  initializePayment: (orderId: string) => Promise<any>;
+};

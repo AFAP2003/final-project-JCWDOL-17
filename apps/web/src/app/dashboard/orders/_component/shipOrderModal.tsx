@@ -32,14 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import orderManagementAPI from '@/lib/apis/dashboard/orderManagement.api';
-
-interface ShipOrderModalProps {
-  order: any;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  isPending?: boolean;
-  onSuccess?: () => void;
-}
+import { ShipOrderModalProps } from '@/lib/interfaces/orders';
 
 export default function ShipOrderModal({
   order,
@@ -117,7 +110,7 @@ export default function ShipOrderModal({
 
   const handleShipOrderConfirm = async () => {
     setConfirmDialogOpen(false);
-    if (!trackingNumber.trim()) return;
+    if (!trackingNumber.trim() || !order) return;
 
     setLoading(true);
     try {

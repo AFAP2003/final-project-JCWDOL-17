@@ -28,16 +28,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { OrderStatus } from '@/lib/enums';
-
-interface OrderManagementFilterProps {
-  globalFilter: string;
-  handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleStatusFilter: (value: string) => void;
-  handleWarehouseFilter: (value: string) => void;
-  handleDateRangeFilter: (dateRange: { from: Date; to: Date }) => void;
-  table: Table<any>;
-  warehouses: Array<{ id: string; name: string }>;
-}
+import { OrderManagementFilterProps } from '@/lib/interfaces/orders';
 
 export default function OrderManagementFilter({
   globalFilter,
@@ -133,12 +124,20 @@ export default function OrderManagementFilter({
                 to: date.to || undefined,
               }}
               onSelect={(selectedDate) => {
-                setDate(selectedDate);
-                if (selectedDate?.from && selectedDate?.to) {
-                  handleDateRangeFilter({
-                    from: selectedDate.from,
-                    to: selectedDate.to,
+                if (selectedDate) {
+                  setDate({
+                    from: selectedDate.from || null,
+                    to: selectedDate.to || null,
                   });
+
+                  if (selectedDate?.from && selectedDate?.to) {
+                    handleDateRangeFilter({
+                      from: selectedDate.from,
+                      to: selectedDate.to,
+                    });
+                  }
+                } else {
+                  setDate({ from: null, to: null });
                 }
               }}
               numberOfMonths={2}
@@ -167,7 +166,7 @@ export default function OrderManagementFilter({
                 >
                   {typeof column.columnDef.header === 'string'
                     ? column.columnDef.header
-                    : flexRender(column.columnDef.header, column.getContext())}
+                    : column.id}
                 </DropdownMenuCheckboxItem>
               ))}
           </DropdownMenuContent>

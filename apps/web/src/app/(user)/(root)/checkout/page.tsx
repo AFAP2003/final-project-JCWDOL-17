@@ -150,7 +150,6 @@ export default function Checkout() {
       <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Delivery Address Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -216,8 +215,6 @@ export default function Checkout() {
             )}
           </CardContent>
         </Card>
-
-        {/* Nearest Store Card */}
         {nearestStore && (
           <Card>
             <CardHeader>
@@ -246,7 +243,6 @@ export default function Checkout() {
           </Card>
         )}
 
-        {/* Error and Warning Alerts */}
         {shippingError && (
           <Alert variant="default">
             <AlertTriangle className="h-4 w-4" />
@@ -271,8 +267,6 @@ export default function Checkout() {
               </AlertDescription>
             </Alert>
           )}
-
-        {/* Shipping Method Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -347,7 +341,6 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
-        {/* Voucher Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -441,7 +434,6 @@ export default function Checkout() {
             </div>
           )}
         </Card>
-        {/* Payment Method Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -504,7 +496,6 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
-        {/* Order Notes Card */}
         <Card>
           <CardHeader>
             <CardTitle>Order Notes (Optional)</CardTitle>
@@ -519,8 +510,6 @@ export default function Checkout() {
             />
           </CardContent>
         </Card>
-
-        {/* Order Summary Card */}
         <Card>
           <CardHeader>
             <CardTitle>Order Summary</CardTitle>

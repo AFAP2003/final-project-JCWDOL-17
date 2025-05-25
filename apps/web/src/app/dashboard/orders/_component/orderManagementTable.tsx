@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { flexRender, Table as ReactTable } from '@tanstack/react-table';
+import { flexRender } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Eye, CheckCircle, TruckIcon, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -20,34 +20,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
-
-const statusStyles = {
-  WAITING_PAYMENT: { variant: 'outline', label: 'Menunggu Pembayaran' },
-  WAITING_PAYMENT_CONFIRMATION: {
-    variant: 'secondary',
-    label: 'Menunggu Konfirmasi',
-  },
-  PROCESSING: { variant: 'default', label: 'Diproses' },
-  SHIPPED: { variant: 'info', label: 'Dikirim' },
-  CONFIRMED: { variant: 'success', label: 'Selesai' },
-  CANCELLED: { variant: 'destructive', label: 'Dibatalkan' },
-};
-
-const paymentStatusStyles = {
-  PENDING: { variant: 'outline', label: 'Tertunda' },
-  PAID: { variant: 'success', label: 'Lunas' },
-  FAILED: { variant: 'destructive', label: 'Gagal' },
-  REFUNDED: { variant: 'warning', label: 'Dikembalikan' },
-};
-
-interface OrderManagementTableProps {
-  table: ReactTable<any>;
-  columns: any[];
-  onViewOrder: (order: any) => void;
-  onConfirmPayment: (order: any) => void;
-  onShipOrder: (order: any) => void;
-  onCancelOrder: (order: any) => void;
-}
+import {
+  Order,
+  OrderManagementTableProps,
+  OrderStatus,
+} from '@/lib/interfaces/orders';
+import { PaymentStatus } from '@/lib/enums';
+import { paymentStatusStyles, statusStyles } from '@/lib/constants/order';
 
 export default function OrderManagementTable({
   table,
@@ -57,20 +36,20 @@ export default function OrderManagementTable({
   onShipOrder,
   onCancelOrder,
 }: OrderManagementTableProps) {
-  const renderStatusBadge = (status) => {
+  const renderStatusBadge = (status: OrderStatus) => {
     const style = statusStyles[status] || { variant: 'default', label: status };
-    return <Badge variant={style.variant}>{style.label}</Badge>;
+    return <Badge variant={style.variant as any}>{style.label}</Badge>;
   };
 
-  const renderPaymentStatusBadge = (status) => {
+  const renderPaymentStatusBadge = (status: PaymentStatus) => {
     const style = paymentStatusStyles[status] || {
       variant: 'default',
       label: status,
     };
-    return <Badge variant={style.variant}>{style.label}</Badge>;
+    return <Badge variant={style.variant as any}>{style.label}</Badge>;
   };
 
-  const getAvailableActions = (order) => {
+  const getAvailableActions = (order: Order) => {
     const actions = [];
 
     actions.push({
@@ -153,7 +132,7 @@ export default function OrderManagementTable({
                   if (cell.column.id === 'status') {
                     return (
                       <TableCell key={cell.id}>
-                        {renderStatusBadge(cell.getValue())}
+                        {renderStatusBadge(cell.getValue() as OrderStatus)}
                       </TableCell>
                     );
                   }
@@ -161,7 +140,9 @@ export default function OrderManagementTable({
                   if (cell.column.id === 'paymentStatus') {
                     return (
                       <TableCell key={cell.id}>
-                        {renderPaymentStatusBadge(cell.getValue())}
+                        {renderPaymentStatusBadge(
+                          cell.getValue() as PaymentStatus,
+                        )}
                       </TableCell>
                     );
                   }

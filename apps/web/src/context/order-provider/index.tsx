@@ -4,30 +4,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiclient } from '@/lib/apiclient';
 import { useSession } from '@/lib/auth/client';
 import { toast } from '@/hooks/use-toast';
-import { OrderStatus, PaymentMethod, PaymentStatus } from '@/lib/enums';
-
-type OrderContextType = {
-  orders: any[];
-  activeOrders: any[];
-  completedOrders: any[];
-  cancelledOrders: any[];
-  currentOrder: any;
-  isLoading: boolean;
-  isSubmitting: boolean;
-  activeTab: string;
-  paymentProofFile: File | null;
-  paymentProofPreview: string | null;
-  uploadingPaymentProof: boolean;
-  fetchOrders: () => Promise<void>;
-  fetchOrderDetails: (orderNumber: string) => Promise<void>;
-  cancelOrder: (orderId: string) => Promise<void>;
-  confirmOrder: (orderId: string) => Promise<void>;
-  setActiveTab: (tab: string) => void;
-  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  uploadPaymentProof: (orderId: string) => Promise<void>;
-  searchOrders: (query: string) => Promise<void>;
-  initializePayment: (orderId: string) => Promise<void>;
-};
+import { OrderContextType } from '@/lib/types/orders';
+import { Order } from '@/lib/interfaces/orders';
 
 const OrderContext = createContext<OrderContextType | null>(null);
 
@@ -35,13 +13,11 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { data: session } = useSession();
-
-  const [orders, setOrders] = useState([]);
-  const [currentOrder, setCurrentOrder] = useState(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
-
   const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
   const [paymentProofPreview, setPaymentProofPreview] = useState<string | null>(
     null,
@@ -79,7 +55,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
       const response = await apiclient.get('/orders');
       setOrders(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching orders:', error);
       toast({
         description: 'Failed to load your orders',
         variant: 'destructive',
@@ -98,7 +73,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
       setCurrentOrder(response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching order details:', error);
       toast({
         description: 'Failed to load order details',
         variant: 'destructive',
@@ -126,8 +100,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       return response.data;
-    } catch (error) {
-      console.error('Error cancelling order:', error);
+    } catch (error: any) {
       toast({
         description:
           error.response?.data?.error?.message || 'Failed to cancel order',
@@ -154,8 +127,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       return response.data;
-    } catch (error) {
-      console.error('Error confirming order:', error);
+    } catch (error: any) {
       toast({
         description:
           error.response?.data?.error?.message || 'Failed to confirm order',
@@ -237,8 +209,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       return response.data;
-    } catch (error) {
-      console.error('Error uploading payment proof:', error);
+    } catch (error: any) {
       toast({
         description:
           error.response?.data?.error?.message ||
@@ -261,7 +232,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
       setOrders(response.data.data || []);
       return response.data;
     } catch (error) {
-      console.error('Error searching orders:', error);
       toast({
         description: 'Failed to search orders',
         variant: 'destructive',
@@ -281,12 +251,10 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({
       if (response.data.redirectUrl) {
         window.location.href = response.data.redirectUrl;
       } else if (response.data.token) {
-        console.log('Payment token received:', response.data.token);
       }
 
       return response.data;
-    } catch (error) {
-      console.error('Error initializing payment:', error);
+    } catch (error: any) {
       toast({
         description:
           error.response?.data?.error?.message ||

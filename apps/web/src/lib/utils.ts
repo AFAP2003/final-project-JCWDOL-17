@@ -27,7 +27,18 @@ export function genRandomString() {
   return uuidv4().replace(/-/g, '').substring(0, 25);
 }
 
-export function toISO(d?:string){
-  return   d ? new Date(d).toISOString() : null;
+export function toISO(d?: string) {
+  return d ? new Date(d).toISOString() : null;
+}
 
+export function getImageUrl(filepath: string) {
+  if (filepath.startsWith('http')) {
+    return filepath;
+  }
+
+  if (filepath.startsWith('/')) {
+    return filepath;
+  }
+
+  return `/${filepath}`;
 }

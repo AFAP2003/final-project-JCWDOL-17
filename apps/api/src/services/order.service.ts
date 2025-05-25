@@ -244,7 +244,7 @@ export class OrderService {
     })) as any;
 
     const ordersWithDistance = await Promise.all(
-      orders.map(async (order) => {
+      orders.map(async (order: any) => {
         let distance: any | null = null;
 
         if (
