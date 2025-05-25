@@ -168,7 +168,7 @@ export class AddressService {
       a."userId" = ${session.user.id} AND
       a."isActive" = true
       ${searchterm}
-    ORDER BY a."createdAt" DESC
+    ORDER BY a."isDefault" DESC, a."createdAt" DESC
     OFFSET ${(dto.page - 1) * dto.pageSize}
     LIMIT ${dto.pageSize}`;
 

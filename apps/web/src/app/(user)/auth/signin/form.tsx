@@ -294,6 +294,7 @@ export default function SigninForm({ searchParams }: Props) {
               <span>Google</span>
             </Button>
             <Button
+              disabled={isPending || isRedirecting}
               onClick={() =>
                 signin({
                   method: 'DISCORD',

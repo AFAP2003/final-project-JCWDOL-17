@@ -14,7 +14,6 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Skeleton } from '../ui/skeleton';
 type SidebarProps = {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
@@ -71,12 +70,11 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   const router = useRouter();
 
   const itemsToRender = sidebarItem.filter((item) => {
+    if (item.href === '/dashboard/stores' && session?.user.role === 'ADMIN') {
+      return false;
+    }
+
     if (item.href === '/dashboard/users' && session?.user.role === 'ADMIN') {
-      return router.push('/dashboard/products');
-    } else if (
-      item.href === '/dashboard/stores' &&
-      session?.user.role === 'ADMIN'
-    ) {
       return false;
     }
     return true;
@@ -100,21 +98,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
           alt="app logo"
         />
         <div className="flex flex-col sm:gap-14 gap-6 mt-10">
-          {/* {sidebarItem.map((item) => (
-            <Link
-              key={item.title}
-              className="flex gap-4 text-black hover:bg-gray-100 p-4 hover:rounded-md"
-              href={item.href}
-              onClick={() => setSidebarOpen(false)} // close sidebar on nav
-            >
-              <item.icon className="w-5 h-5" />
-              {item.title}
-            </Link>
-          ))} */}
-
           {itemsToRender.map((item) => {
             const isStore = item.title === 'Toko';
-
             return (
               <Link
                 key={item.title}

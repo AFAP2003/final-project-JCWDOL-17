@@ -121,9 +121,16 @@ export async function middleware(request: NextRequest) {
           if (role === 'ADMIN' && currentPath.startsWith('/dashboard/stores')) {
             const url = request.nextUrl.clone();
             url.pathname = '/admin/auth/signin';
-            url.searchParams.append('role', 'super');
+            url.searchParams.append('role', 'SUPER');
             return NextResponse.redirect(url);
           }
+          if (role === 'ADMIN' && currentPath.startsWith('/dashboard/users')) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/admin/auth/signin';
+            url.searchParams.append('role', 'ADMIN');
+            return NextResponse.redirect(url);
+          }
+
           break;
         }
       }

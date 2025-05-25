@@ -20,7 +20,7 @@ import { signOut, useSession } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
-  const { data: session, isPending } = useSession();
+  const { data: session, isPending, refetch } = useSession();
   if (isPending) {
     return <div></div>;
   }
@@ -82,8 +82,11 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-[#ef4444]"
-            onClick={async () => {
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
               await signOut();
+              refetch();
               router.push('/admin/auth/signin');
             }}
           >

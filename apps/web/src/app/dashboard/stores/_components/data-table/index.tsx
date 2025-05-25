@@ -144,14 +144,17 @@ export function DataTable<TData, TValue>({
       </div>
 
       <Table>
-        <TableHeader className="!rounded-xl border bg-neutral-50">
+        <TableHeader className="!rounded-xl border bg-neutral-50 w-fit">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-neutral-50">
               {headerGroup.headers.map((header) => (
                 <TableHead
                   key={header.id}
                   className="whitespace-nowrap text-neutral-700 px-3"
-                  style={{ width: `${header.getSize()}px` }}
+                  style={{
+                    width: `${header.getSize()}px`,
+                    maxWidth: `${header.getSize()}px`,
+                  }}
                 >
                   {header.isPlaceholder
                     ? null
@@ -174,9 +177,12 @@ export function DataTable<TData, TValue>({
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
-                    style={{ width: `${cell.column.getSize()}px` }}
+                    style={{
+                      width: `${cell.column.getSize()}px`,
+                      maxWidth: `${cell.column.getSize()}px`,
+                    }}
                     key={cell.id}
-                    className="whitespace-nowrap px-3"
+                    className="px-3 whitespace-nowrap overflow-clip"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>

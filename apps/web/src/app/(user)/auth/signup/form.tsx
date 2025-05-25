@@ -318,6 +318,7 @@ export default function SignupForm({ searchParams }: Props) {
                   onClick={() => {
                     signup({ method: 'DISCORD' });
                   }}
+                  disabled={isPending || isRedirecting}
                   variant="outline"
                   className="group flex w-full items-center justify-center gap-2 border-slate-200 transition-all"
                 >

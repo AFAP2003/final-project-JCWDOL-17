@@ -10,8 +10,6 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { cn } from '@/lib/utils';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import qs from 'query-string';
 
 type Props = {
   metadata?: {
@@ -21,14 +19,17 @@ type Props = {
     lastPage: number;
     totalRecord: number;
   };
+  onNext: () => void;
+  onPrev: () => void;
   className?: string;
 };
 
-export default function PaginationButton({ metadata, className }: Props) {
-  const searchparams = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
-
+export default function PaginationState({
+  metadata,
+  onNext,
+  onPrev,
+  className,
+}: Props) {
   if (!metadata) return null;
   if (metadata.totalRecord === 0) return null;
 
@@ -43,9 +44,7 @@ export default function PaginationButton({ metadata, className }: Props) {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              router.push(
-                `${pathname}?${generateQuery(searchparams.toString(), currentPage - 1)}`,
-              );
+              onPrev();
             }}
             className={cn(
               'hover:bg-neutral-50 hover:text-neutral-700 cursor-pointer',
@@ -74,9 +73,7 @@ export default function PaginationButton({ metadata, className }: Props) {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              router.push(
-                `${pathname}?${generateQuery(searchparams.toString(), currentPage + 1)}`,
-              );
+              onNext();
             }}
             className={cn(
               'hover:bg-neutral-50 hover:text-neutral-700 cursor-pointer',
@@ -89,14 +86,14 @@ export default function PaginationButton({ metadata, className }: Props) {
   );
 }
 
-function generateQuery(searchparams: string, targetpage: number) {
-  const query = qs.parse(searchparams);
-  query['page'] = `${targetpage}`;
-  return qs.stringify(query, {
-    skipEmptyString: true,
-    skipNull: true,
-  });
-}
+// function generateQuery(searchparams: string, targetpage: number) {
+//   const query = qs.parse(searchparams);
+//   query['page'] = `${targetpage}`;
+//   return qs.stringify(query, {
+//     skipEmptyString: true,
+//     skipNull: true,
+//   });
+// }
 
 function disabledClass(isDisabled: boolean) {
   return isDisabled ? 'pointer-events-none opacity-50 text-brand-blue-900' : '';
