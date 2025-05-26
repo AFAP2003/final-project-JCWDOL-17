@@ -52,7 +52,30 @@ export default function Products() {
         {/* header + create dialog */}
         <div className="flex justify-between items-center">
           <h1 className="sm:text-4xl text-2xl font-bold">Produk</h1>
-          <div className="flex gap-10">
+          <div className="hidden sm:flex  sm:gap-10 ">
+            <Link href="/dashboard/categories">
+              <Button className="w-[150px]">
+                <Plus className="w-4 h-4 mr-1" />
+                Kategori
+              </Button>
+            </Link>
+            <ProductManagementForm
+              categories={categories}
+              formik={formik}
+              dialogOpen={dialogOpen}
+              setDialogOpen={setDialogOpen}
+              isEditMode={isEditMode}
+              setIsEditMode={setIsEditMode}
+              setEditingProductId={setEditingProductId}
+              previews={previews}
+              setPreviews={setPreviews}
+              mainIndex={mainIndex}
+              setMainIndex={setMainIndex}
+              isDetailMode={isDetailMode}
+              setIsDetailMode={setIsDetailMode}
+            />
+          </div>
+          <div className="sm:hidden flex flex-col  gap-4 ">
             <Link href="/dashboard/categories">
               <Button className="w-[150px]">
                 <Plus className="w-4 h-4 mr-1" />

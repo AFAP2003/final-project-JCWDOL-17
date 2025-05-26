@@ -8,17 +8,17 @@ class UserManagementRepository {
     const where = search
       ? {
           OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { email: { contains: search, mode: 'insensitive' } },
+            { name: { contains: search, mode: 'insensitive' as any } },
+            { email: { contains: search, mode: 'insensitive' as any } },
           ],
         }
       : {};
 
     if (role && role !== 'all') {
-      where.role = role;
+    (where as any).role = role;
     }
     if (verified && verified !== 'all') {
-      where.emailVerified = verified === 'true';
+      (where as any).emailVerified = verified === 'true';
     }
     const total = await prismaclient.user.count({ where });
     const { skip, take: realTake } = pagination(page, take);

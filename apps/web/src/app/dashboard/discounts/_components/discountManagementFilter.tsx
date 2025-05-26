@@ -47,7 +47,7 @@ export default function DiscountManagementFilter({
 }: DiscountManagementFilterProps) {
   return (
     <div className="mb-4 flex items-end justify-between">
-      <div className="flex gap-2 w-full sm:w-auto">
+      <div className="flex flex-col gap-4 w-full sm:w-auto lg:flex lg:flex-row lg:gap-">
         <div className="relative w-full sm:w-auto">
           <Input
             placeholder="Cari..."

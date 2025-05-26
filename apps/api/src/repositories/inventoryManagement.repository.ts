@@ -41,8 +41,8 @@ class InventoryManagementRepository {
     // Search logic
     if (search) {
       where.product.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' as any } },
+        { sku: { contains: search, mode: 'insensitive' as any} },
       ];
     }
 

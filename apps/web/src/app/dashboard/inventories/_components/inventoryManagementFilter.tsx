@@ -61,7 +61,7 @@ export default function InventoryManagementFilter({
   if (!user) return <div></div>;
   return (
     <div className="mb-4 flex items-end justify-between gap-2 sm:gap-0">
-      <div className="flex gap-2 w-full sm:w-auto">
+      <div className="flex flex-col gap-4 w-full sm:w-auto lg:flex lg:flex-row lg:gap-2">
         <div className="relative w-full sm:w-auto">
           <Input
             placeholder="Cari..."

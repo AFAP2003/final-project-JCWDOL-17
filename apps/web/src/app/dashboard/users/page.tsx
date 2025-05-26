@@ -6,6 +6,8 @@ import UserManagementForm from './_components/userManagementForm';
 import UserManagementPagination from './_components/userManagementPagination';
 import OverlaySpinner from '@/components/overlay/loadingOverlay';
 import UserManagementskeleton from './_components/userManagementSkeleton';
+import { useSession } from '@/lib/auth/client';
+import UserManagementTable from './_components/userManagementTable';
 
 export default function UserManagement() {
   const {

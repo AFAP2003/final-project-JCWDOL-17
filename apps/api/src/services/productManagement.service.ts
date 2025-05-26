@@ -1,5 +1,4 @@
 import { CreateProductDTO } from '@/interfaces/productManagement.interface';
-import { CreateProductDTO } from '@/interfaces/productManagement.interface';
 import productManagementRepository from '@/repositories/productManagement.repository';
 
 class ProductManagementService {

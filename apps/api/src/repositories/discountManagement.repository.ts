@@ -26,8 +26,8 @@ class DiscountManagementRepository {
     if (search) {
       andConditions.push({
         OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search, mode: 'insensitive' as any} },
+          { description: { contains: search, mode: 'insensitive' as any} },
         ],
       });
     }

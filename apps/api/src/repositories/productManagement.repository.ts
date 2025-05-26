@@ -15,8 +15,8 @@ class ProductManagementRepository {
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' as any} },
+        { sku: { contains: search, mode: 'insensitive' as any} },
       ];
     }
     if (categoryId && categoryId !== 'all') {
