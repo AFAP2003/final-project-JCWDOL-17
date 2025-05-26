@@ -1,4 +1,3 @@
-import UploadImageLoadingOverlay from '@/components/dashboard/uploadImageLoadingOverlay';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -129,13 +128,19 @@ export default function ProductManagementForm({
     >
       {user.role == 'SUPER' && (
         <DialogTrigger asChild>
-          <Button className="w-[150px]">
+          <Button
+            className="w-[150px]"
+            onClick={() => {
+              // ALWAYS clear form state before opening “add” mode
+              setIsEditMode(false);
+              setIsDetailMode(false);
+              formik.resetForm();
+              setPreviews([]);
+              setMainIndex(0);
+            }}
+          >
             <Plus className="w-4 h-4 mr-1" />
-            {isDetailMode
-              ? 'Lihat Produk'
-              : isEditMode
-                ? 'Edit Produk'
-                : 'Tambah Produk'}
+            Tambah Produk
           </Button>
         </DialogTrigger>
       )}
@@ -332,7 +337,6 @@ export default function ProductManagementForm({
             )}
           </div>
 
-         
           <DialogFooter className={`flex justify-end gap-2 `}>
             <Button
               variant="outline"
@@ -345,13 +349,7 @@ export default function ProductManagementForm({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={formik.isSubmitting}
-              className={isDetailMode ? 'hidden' : 'block'}
-            >
-              {formik.isSubmitting && <UploadImageLoadingOverlay />}
-
+            <Button type="submit" className={isDetailMode ? 'hidden' : 'block'}>
               {isEditMode ? 'Simpan Perubahan' : 'Tambah Produk'}
             </Button>
           </DialogFooter>

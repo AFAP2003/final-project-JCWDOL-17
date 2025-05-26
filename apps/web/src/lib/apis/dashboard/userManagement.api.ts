@@ -8,32 +8,42 @@ import { useState } from 'react';
 export function userManagementAPI() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const fetchUsers = async (pageIndex: number, pageSize: number) => {
+  const fetchUsers = async (
+    pageIndex: number,
+    pageSize: number,
+    searchTerm: string = '',
+    role: string,
+    verified: string,
+  ) => {
     setIsLoading(true);
     try {
       const page = pageIndex + 1;
-      const userRes = await fetch(
-        `${API_BASE_URL}/dashboard/users?page=${page}&take=${pageSize}`,
-      );
-      const userData = await userRes.json();
-
-      if (userRes.ok) {
-        setUsers(userData.data);
-        console.log('Users fetched successfully: ', userData);
-        return userData;
-      } else {
-        console.error(
-          'Failed to fetch users:',
-          userData.message || 'Unknown Error',
-        );
+      let url = `${API_BASE_URL}/dashboard/users?page=${page}&take=${pageSize}`;
+      if (searchTerm) {
+        url += `&search=${encodeURIComponent(searchTerm)}`;
       }
-    } catch (error) {
-      console.log('Error fetching data: ', error);
+      if (role !== 'all') {
+        url += `&role=${role}`;
+      }
+      if (verified !== 'all') {
+        url += `&verified=${verified}`;
+      }
+
+      const res = await fetch(url);
+      const json = await res.json();
+
+      if (res.ok) {
+        setUsers(json.data);
+        return json;
+      } else {
+        console.error('Failed to fetch users:', json.message);
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
     } finally {
       setIsLoading(false);
     }
   };
-
   const fetchUserById = async (id: string) => {
     setIsLoading(true);
     try {
@@ -55,10 +65,13 @@ export function userManagementAPI() {
     }
   };
 
-  const handleCreateUser = async (values) => {
+  const handleCreateUser = async (values, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       const formData = new FormData();
-      formData.append('image', values.image[0]); 
+      if (values.image && values.image.length > 0) {
+        formData.append('image', values.image[0]);
+      }
       formData.append('name', values.nama);
       formData.append('email', values.email);
       formData.append('password', values.password);
@@ -67,7 +80,6 @@ export function userManagementAPI() {
       formData.append('emailVerified', String(values.verifikasi));
       const userRes = await fetch(`${API_BASE_URL}/dashboard/users`, {
         method: 'POST',
-
         body: formData,
       });
 
@@ -76,20 +88,20 @@ export function userManagementAPI() {
       if (userRes.ok) {
         console.log('User Created Successfully: ', userData);
         toast({
-          description: 'User Created Successfully !',
+          description: 'User Berhasil Dibuat !',
         });
         return true;
       } else if (userRes.status === 400) {
         toast({
           variant: 'destructive',
-          description: 'Email already exist.',
+          description: 'Email Sudah Terdaftar. Gunakan Email lain !',
         });
         console.error('Failed to create user: Duplicate Email', userData);
         return false;
       } else {
         toast({
           variant: 'destructive',
-          description: 'Failed to Create User.',
+          description: 'Gagal Membuat User.',
         });
         console.error(
           'Failed to create user:',
@@ -100,14 +112,17 @@ export function userManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error creating user.',
+        description: 'Error Membuat User.',
       });
       console.error('Error creating user:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleUpdateUser = async (id: string, values) => {
+  const handleUpdateUser = async (id: string, values, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       const formData = new FormData();
       if (values.image && values.image[0]) {
@@ -130,14 +145,14 @@ export function userManagementAPI() {
 
       if (userRes.ok) {
         toast({
-          description: 'User Updated Successfully !',
+          description: 'User Berhasil Diperbarui !',
         });
         console.log('User Updated Successfully: ', userData);
         return true;
       } else {
         toast({
           variant: 'destructive',
-          description: 'Failed to Create User.',
+          description: 'User Gagal Diberbarui.',
         });
         console.error(
           'Failed to update user:',
@@ -148,14 +163,17 @@ export function userManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error updating user.',
+        description: 'Error Memperbarui User.',
       });
       console.error('Error updating user:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleDeleteUser = async (id: string) => {
+  const handleDeleteUser = async (id: string, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       const userRes = await fetch(`${API_BASE_URL}/dashboard/users/${id}`, {
         method: 'DELETE',
@@ -165,14 +183,14 @@ export function userManagementAPI() {
 
       if (userRes.ok) {
         toast({
-          description: 'User Deleted Successfully !',
+          description: 'User Berhasil Dihapus !',
         });
         console.log('User deleted successfully:', userData);
         return true;
       } else {
         toast({
           variant: 'destructive',
-          description: 'Failed to Delete User.',
+          description: 'Gagal Menghapus User.',
         });
         console.error(
           'Failed to delete user:',
@@ -182,9 +200,11 @@ export function userManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error deleting user.',
+        description: 'Error Menghapus User.',
       });
       console.error('Error deleting user:', error);
+    } finally {
+      setIsProcessing(false);
     }
   };
   return {

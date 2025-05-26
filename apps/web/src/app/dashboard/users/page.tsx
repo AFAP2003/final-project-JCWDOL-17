@@ -7,6 +7,7 @@ import UserManagementForm from './_components/userManagementForm';
 import UserManagementPagination from './_components/userManagementPagination';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { useSession } from '@/lib/auth/client';
+import OverlaySpinner from '@/components/overlay/loadingOverlay';
 
 export default function UserManagement() {
   const {
@@ -16,7 +17,6 @@ export default function UserManagement() {
     isEditMode,
     formik,
     table,
-    globalFilter,
     handleSearchChange,
     handleVerificationFilter,
     handleDeleteUser,
@@ -28,12 +28,16 @@ export default function UserManagement() {
     columns,
     previews,
     setPreviews,
-    mainIndex,
     setMainIndex,
     isDetailMode,
     setIsDetailMode,
+    searchTerm,
+    clearAllFilters,
+    selectedUserRole,
+    selectedVerification,
+    isProcessing,
   } = useUserManagement();
-  const { data: session, isPending } = useSession();
+  const { data: session } = useSession();
 
   if (isLoading) {
     return <UserManagementskeleton />;
@@ -41,6 +45,7 @@ export default function UserManagement() {
   const { user } = session;
   return (
     <>
+      {isProcessing && <OverlaySpinner />}
       {user.role === 'SUPER' && (
         <div className="min-h-screen w-full flex flex-col gap-6 p-4">
           <div className="flex justify-between items-center">
@@ -62,11 +67,14 @@ export default function UserManagement() {
           </div>
 
           <UserManagementFilter
-            globalFilter={globalFilter}
+            searchTerm={searchTerm}
+            selectedUserRole={selectedUserRole}
+            selectedVerification={selectedVerification}
             handleSearchChange={handleSearchChange}
+            handleRoleFilter={handleRoleFilter}
             handleVerificationFilter={handleVerificationFilter}
             table={table}
-            handleRoleFilter={handleRoleFilter}
+            clearAllFilters={clearAllFilters}
           />
 
           <UserManagementTable

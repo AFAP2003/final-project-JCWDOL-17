@@ -1,6 +1,7 @@
 import { getSession } from '@/helpers/session-helper';
 import { MediaService } from '@/services/media.service';
 import productManagementService from '@/services/productManagement.service';
+import { Prisma } from '@prisma/client';
 import { NextFunction, Request, Response } from 'express';
 
 class ProductManagementController {
@@ -8,15 +9,19 @@ class ProductManagementController {
     try {
       const page = parseInt(req.query.page as string, 10) || 1;
       const take = parseInt(req.query.take as string, 10) || 10;
-      const { user } = getSession(req)
-        const adminId = user.role === 'ADMIN'
-      ? user.id // or however you look up storeId from user
-      : undefined
+      const search = (req.query.search as string) ?? '';
+      const categoryId = (req.query.categoryId as string) ?? '';
+      const status = (req.query.status as string) ?? '';
+      const { user } = getSession(req);
+      const adminId = user.role === 'ADMIN' ? user.id : undefined;
 
       const { total, data } = await productManagementService.listAllProducts(
         page,
         take,
-        adminId
+        adminId,
+        search,
+        categoryId,
+        status,
       );
 
       res.status(200).send({
@@ -127,18 +132,14 @@ class ProductManagementController {
         }
       }
       const files = (req.files as Express.Multer.File[]) || [];
-      console.log('Files :', files);
       const uploadedUrls =
         files.length > 0
           ? await mediaService.uploadImages({
               files: files.map((f) => f.buffer),
             })
           : [];
-      console.log('Uploaded Url: ', uploadedUrls);
 
-      console.log('Kept Images: ', keptImages);
       const mainImageIndex = parseInt(req.body.mainIndex, 10) || 0;
-      console.log('Main Image Index: ', mainImageIndex);
       const payload = {
         ...req.body,
         newImages: uploadedUrls,
@@ -187,6 +188,16 @@ class ProductManagementController {
         data,
       });
     } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        return res.status(409).send({
+          success: false,
+          message:
+            'Cannot delete product: there are inventory records tied to it. Remove inventory entries first.',
+        });
+      }
       next(error);
     }
   }

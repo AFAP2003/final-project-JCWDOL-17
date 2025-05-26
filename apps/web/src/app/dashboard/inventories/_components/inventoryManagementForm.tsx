@@ -37,7 +37,6 @@ interface InventoryManagementFormProps {
   setEditingInventoryId: (id: string | null) => void;
   isDetailMode: boolean;
   setIsDetailMode: (detail: boolean) => void;
-  isDetailDropdown: boolean;
 }
 export default function InventoryManagementForm({
   dialogOpen,
@@ -50,7 +49,6 @@ export default function InventoryManagementForm({
   setEditingInventoryId,
   isDetailMode,
   setIsDetailMode,
-  isDetailDropdown,
 }: InventoryManagementFormProps) {
   const [activeTab, setActiveTab] = useState<'tambah' | 'kurangi'>('tambah');
   const [initialValuesSet, setInitialValuesSet] = useState(false);
@@ -66,9 +64,7 @@ export default function InventoryManagementForm({
   useEffect(() => {
     const productId = formik.values.produk;
     const storeId =
-      user.role === 'ADMIN'
-        ? storeByAdmin?.id 
-        : formik.values.toko;
+      user.role === 'ADMIN' ? storeByAdmin?.id : formik.values.toko;
 
     if (!productId || !storeId) {
       formik.setFieldValue('sekarang', 0);
@@ -123,14 +119,15 @@ export default function InventoryManagementForm({
     <Dialog
       open={dialogOpen}
       onOpenChange={(open) => {
-        // if opening fresh (not edit), reset all fields
-        if (open && !isEditMode) {
-          formik.resetForm();
+        if (open) {
+          // always reset to “create” mode on open:
+          setIsEditMode(false);
+          setEditingInventoryId(null);
           setIsDetailMode(false);
+          formik.resetForm();
           setInitialValuesSet(false);
-        }
-        // closing always clears edit state
-        if (!open) {
+        } else {
+          // also clear when closing:
           setIsEditMode(false);
           setEditingInventoryId(null);
           setIsDetailMode(false);
@@ -331,7 +328,6 @@ export default function InventoryManagementForm({
                 </p>
               )}
             </div>
-          
           </div>
 
           <DialogFooter>

@@ -21,7 +21,6 @@ import {
   ColumnDef,
   ColumnFiltersState,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
@@ -38,11 +37,16 @@ export function useCategoryManagement() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null,
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
   const [isDetailMode, setIsDetailMode] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const { data: session, isPending: isSessionLoading } = useSession();
+  const [isProcessing, setIsProcessing] = useState(false);
   const user = session?.user;
 
   const {
@@ -55,8 +59,8 @@ export function useCategoryManagement() {
   } = categoryManagementAPI();
 
   const fetchCategories = useCallback(
-    (pageIndex: number, pageSize: number) => {
-      return apiFetchCategories(pageIndex, pageSize).then((json) => {
+    (pageIndex: number, pageSize: number, search: string) => {
+      return apiFetchCategories(pageIndex, pageSize, search).then((json) => {
         if (json?.pagination) {
           setPageCount(json.pagination.totalPages);
         }
@@ -67,8 +71,21 @@ export function useCategoryManagement() {
   );
 
   useEffect(() => {
-    fetchCategories(pagination.pageIndex, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPagination((p) => ({ ...p, pageIndex: 0 })); // reset **once** after typing stops
+    }, 1000); // ← 300ms debounce
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchCategories(
+      pagination.pageIndex,
+      pagination.pageSize,
+      debouncedSearchTerm,
+    );
+  }, [pagination.pageIndex, pagination.pageSize, debouncedSearchTerm]);
 
   const formik = useFormik({
     initialValues: {
@@ -81,14 +98,22 @@ export function useCategoryManagement() {
     onSubmit: async (values, { resetForm }) => {
       let success = false;
       if (isEditMode && editingCategoryId) {
-        success = await handleUpdateCategory(editingCategoryId, values);
+        success = await handleUpdateCategory(
+          editingCategoryId,
+          values,
+          setIsProcessing,
+        );
       } else {
-        success = await handleCreateCategory(values);
+        success = await handleCreateCategory(values, setIsProcessing);
       }
       if (success) {
         resetForm();
         setDialogOpen(false);
-        fetchCategories(pagination.pageIndex, pagination.pageSize);
+        fetchCategories(
+          pagination.pageIndex,
+          pagination.pageSize,
+          debouncedSearchTerm,
+        );
       }
     },
   });
@@ -174,7 +199,7 @@ export function useCategoryManagement() {
                     <AlertDialogCancel>Batal</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
-                        handleDeleteCategory(category.id);
+                        handleDeleteCategory(category.id, setIsProcessing);
                       }}
                     >
                       Hapus
@@ -205,40 +230,36 @@ export function useCategoryManagement() {
     state: {
       sorting,
       pagination,
-      columnFilters,
       columnVisibility,
-      globalFilter,
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _columnId, filterValue) => {
-      const searchText = String(filterValue).toLowerCase();
-      const cellValues = [
-        String(row.getValue('id') ?? ''),
-        String(row.getValue('name') ?? ''),
-        String(row.getValue('description') ?? ''),
-      ];
-      return cellValues.some((v) => v.toLowerCase().includes(searchText));
-    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setGlobalFilter(e.target.value);
+    setSearchTerm(e.target.value);
   };
 
-  const handleDeleteCategory = async (id: string) => {
-    const ok = await apiDeleteCategory(id);
+  const handleDeleteCategory = async (id: string, setIsProcessing) => {
+    const ok = await apiDeleteCategory(id, setIsProcessing);
     if (ok) {
-      await fetchCategories(pagination.pageIndex, pagination.pageSize);
+      await fetchCategories(
+        pagination.pageIndex,
+        pagination.pageSize,
+        debouncedSearchTerm,
+      );
     }
     return ok;
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
   return {
@@ -265,5 +286,8 @@ export function useCategoryManagement() {
     user,
     setIsEditMode,
     setEditingCategoryId,
+    clearAllFilters,
+    searchTerm,
+    isProcessing,
   };
 }

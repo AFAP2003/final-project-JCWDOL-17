@@ -17,40 +17,71 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Eye, X } from 'lucide-react';
 import { flexRender, Table } from '@tanstack/react-table';
 import { Discount } from '@/lib/interfaces/discountManagement.interface';
 
 interface DiscountManagementFilterProps {
-  globalFilter: string;
   handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleStatusFilter: (value: string) => void;
   handleTypeFilter: (value: string) => void;
   handleTypeValueFilter: (value: string) => void;
   table: Table<Discount>;
+  searchTerm: string;
+  clearAllFilters: () => void;
+  selectedStatus: string;
+  selectedType: string;
+  selectedValueType: string;
 }
 export default function DiscountManagementFilter({
-  globalFilter,
   handleSearchChange,
   handleStatusFilter,
   handleTypeFilter,
   handleTypeValueFilter,
   table,
+  searchTerm,
+  clearAllFilters,
+  selectedStatus,
+  selectedValueType,
+  selectedType,
 }: DiscountManagementFilterProps) {
   return (
     <div className="mb-4 flex items-end justify-between">
-      <div className="flex gap-2">
-        <Input
-          placeholder="Cari..."
-          value={globalFilter}
-          onChange={handleSearchChange}
-          className="h-9 w-[140px] sm:w-[200px]"
-        />
+      <div className="flex gap-2 w-full sm:w-auto">
+        <div className="relative w-full sm:w-auto">
+          <Input
+            placeholder="Cari..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="order-2 h-9 w-full sm:w-[200px] text-sm sm:order-1 pr-8"
+          />
+          {searchTerm && (
+            <button
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              onClick={() =>
+                handleSearchChange({
+                  target: { value: '' },
+                } as React.ChangeEvent<HTMLInputElement>)
+              }
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearAllFilters}
+          className="text-xs"
+        >
+          Atur Ulang Filter
+        </Button>
       </div>
 
       <div className="flex flex-col-reverse lg:flex-row gap-2">
         {/* Tipe filter */}
-        <Select onValueChange={handleTypeFilter} defaultValue="all">
+        <Select onValueChange={handleTypeFilter} value={selectedType}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="Pilih Tipe" />
           </SelectTrigger>
@@ -65,7 +96,7 @@ export default function DiscountManagementFilter({
           </SelectContent>
         </Select>
 
-        <Select onValueChange={handleTypeValueFilter} defaultValue="all">
+        <Select onValueChange={handleTypeValueFilter} value={selectedValueType}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="Pilih Tipe" />
           </SelectTrigger>
@@ -96,7 +127,7 @@ export default function DiscountManagementFilter({
           </Select> */}
 
         {/* Status filter */}
-        <Select onValueChange={handleStatusFilter} defaultValue="all">
+        <Select onValueChange={handleStatusFilter} value={selectedStatus}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="Pilih Status" />
           </SelectTrigger>

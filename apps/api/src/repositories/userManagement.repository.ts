@@ -4,10 +4,26 @@ import { User } from '@/interfaces/userManagement.interface';
 import { prismaclient } from '@/prisma';
 
 class UserManagementRepository {
-  async getUsers(page = 1, take = 1) {
-    const total = await prismaclient.user.count();
+  async getUsers(page = 1, take = 1, search = '', role = '', verified = '') {
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : {};
+
+    if (role && role !== 'all') {
+      where.role = role;
+    }
+    if (verified && verified !== 'all') {
+      where.emailVerified = verified === 'true';
+    }
+    const total = await prismaclient.user.count({ where });
     const { skip, take: realTake } = pagination(page, take);
     const data = await prismaclient.user.findMany({
+      where,
       include: {
         store: true,
         addresses: true,

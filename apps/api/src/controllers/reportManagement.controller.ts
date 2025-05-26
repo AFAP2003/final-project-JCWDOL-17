@@ -6,9 +6,9 @@ import { NextFunction, Request, Response } from 'express';
 class ReportManagementController {
   async getMonthlySales(req: Request, res: Response, next: NextFunction) {
     try {
-        const { user } = getSession(req);
+      const { user } = getSession(req);
       let effectiveStoreId: string | 'all';
-     if (user.role === 'ADMIN') {
+      if (user.role === 'ADMIN') {
         const store = await prismaclient.store.findUnique({
           where: { adminId: user.id },
         });
@@ -22,11 +22,19 @@ class ReportManagementController {
       } else {
         // For any other roles, you might want to deny access or default to 'all'
         // For safety, let's deny or make it very specific if other roles exist
-        return res.status(403).send({ success: false, message: 'Unauthorized role for stock report' });
+        return res
+          .status(403)
+          .send({
+            success: false,
+            message: 'Unauthorized role for stock report',
+          });
         // Or if they should see all by default: effectiveStoreId = 'all';
       }
       const year = parseInt(req.query.year as string, 10);
-      const data = await reportManagementService.fetchAllMonthlySales(year,effectiveStoreId);
+      const data = await reportManagementService.fetchAllMonthlySales(
+        year,
+        effectiveStoreId,
+      );
       res.status(200).send({
         success: true,
         message: 'Monthly Sales for All Products Fetched Successfully',
@@ -39,9 +47,9 @@ class ReportManagementController {
 
   async getCategorySales(req: Request, res: Response, next: NextFunction) {
     try {
-          const { user } = getSession(req);
+      const { user } = getSession(req);
       let effectiveStoreId: string | 'all';
-     if (user.role === 'ADMIN') {
+      if (user.role === 'ADMIN') {
         const store = await prismaclient.store.findUnique({
           where: { adminId: user.id },
         });
@@ -55,17 +63,22 @@ class ReportManagementController {
       } else {
         // For any other roles, you might want to deny access or default to 'all'
         // For safety, let's deny or make it very specific if other roles exist
-        return res.status(403).send({ success: false, message: 'Unauthorized role for stock report' });
+        return res
+          .status(403)
+          .send({
+            success: false,
+            message: 'Unauthorized role for stock report',
+          });
         // Or if they should see all by default: effectiveStoreId = 'all';
       }
       const year = parseInt(req.query.year as string, 10);
       const month = parseInt(req.query.month as string, 10);
-      const storeId = req.query.storeId as string || 'all'
+      const storeId = (req.query.storeId as string) || 'all';
 
       const data = await reportManagementService.fetchCategorySales(
         year,
         month,
-        storeId
+        storeId,
       );
       res.status(200).send({
         success: true,
@@ -79,9 +92,9 @@ class ReportManagementController {
 
   async getProductSales(req: Request, res: Response, next: NextFunction) {
     try {
-          const { user } = getSession(req);
+      const { user } = getSession(req);
       let effectiveStoreId: string | 'all';
-     if (user.role === 'ADMIN') {
+      if (user.role === 'ADMIN') {
         const store = await prismaclient.store.findUnique({
           where: { adminId: user.id },
         });
@@ -95,14 +108,23 @@ class ReportManagementController {
       } else {
         // For any other roles, you might want to deny access or default to 'all'
         // For safety, let's deny or make it very specific if other roles exist
-        return res.status(403).send({ success: false, message: 'Unauthorized role for stock report' });
+        return res
+          .status(403)
+          .send({
+            success: false,
+            message: 'Unauthorized role for stock report',
+          });
         // Or if they should see all by default: effectiveStoreId = 'all';
       }
       const year = parseInt(req.query.year as string, 10);
       const month = parseInt(req.query.month as string, 10);
-      const storeId = req.query.storeId as string || 'all'
+      const storeId = (req.query.storeId as string) || 'all';
 
-      const data = await reportManagementService.fetchProductSales(year, month,storeId);
+      const data = await reportManagementService.fetchProductSales(
+        year,
+        month,
+        storeId,
+      );
 
       res.status(200).send({
         success: true,
@@ -134,7 +156,12 @@ class ReportManagementController {
       } else {
         // For any other roles, you might want to deny access or default to 'all'
         // For safety, let's deny or make it very specific if other roles exist
-        return res.status(403).send({ success: false, message: 'Unauthorized role for stock report' });
+        return res
+          .status(403)
+          .send({
+            success: false,
+            message: 'Unauthorized role for stock report',
+          });
         // Or if they should see all by default: effectiveStoreId = 'all';
       }
 
@@ -144,15 +171,20 @@ class ReportManagementController {
       const take = parseInt(req.query.take as string, 10) || 10;
 
       if (isNaN(year) || isNaN(month)) {
-        return res.status(400).send({ success: false, message: 'Invalid year or month parameters' });
+        return res
+          .status(400)
+          .send({
+            success: false,
+            message: 'Invalid year or month parameters',
+          });
       }
-      
+
       const { total, data } = await reportManagementService.fetchStockReport(
         page,
         take,
         year,
         month,
-        effectiveStoreId, // Pass the correctly determined storeId
+        effectiveStoreId,
       );
       res.status(200).send({
         success: true,

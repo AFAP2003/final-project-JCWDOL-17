@@ -1,4 +1,4 @@
-import { getSession, getSessionAdmin } from '@/helpers/session-helper';
+import { getSession } from '@/helpers/session-helper';
 import { prismaclient } from '@/prisma';
 import inventoryManagementService from '@/services/inventoryManagement.service';
 import { NextFunction, Request, Response } from 'express';
@@ -8,10 +8,13 @@ class InventoryManagementController {
     try {
       const page = parseInt(req.query.page as string, 10) || 1;
       const take = parseInt(req.query.take as string, 10) || 10;
-
+      const search = (req.query.search as string) ?? '';
+      const storeId = (req.query.storeId as string) ?? '';
+      const categoryId = (req.query.categoryId as string) ?? '';
+      const status = (req.query.status as string) ?? '';
       const { user } = getSession(req);
       console.log('the result of session user: ', user);
-      let storeId: string | undefined;
+      let adminStoreId: string | undefined;
 
       if (user.role === 'ADMIN') {
         const store = await prismaclient.store.findUnique({
@@ -25,14 +28,18 @@ class InventoryManagementController {
           });
         }
 
-        storeId = store.id;
+        adminStoreId = store.id;
       }
 
       const { total, data } =
         await inventoryManagementService.listAllInventories(
           page,
           take,
+          adminStoreId,
+          search,
           storeId,
+          categoryId,
+          status,
         );
 
       res.status(200).send({

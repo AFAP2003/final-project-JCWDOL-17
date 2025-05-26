@@ -1,7 +1,7 @@
 import * as Yup from 'yup';
 
 export interface MyFormValues {
-  gambar: string;
+  gambar: FileList | null;
   nama: string;
   email: string;
   password: string;
@@ -16,10 +16,10 @@ export const getValidationSchema = (isEditMode: boolean) =>
   ? Yup.mixed().notRequired() // <- allow skipping image during edit
   : Yup
       .mixed<FileList>()
-      .required('Foto wajib diupload')
-      .test('fileSize', 'Ukuran file maksimal 1MB', value => !value || (value[0]?.size ?? 0) <= 1024 * 1024)
-      .test('fileType', 'Format foto tidak valid', value => !value || ['image/jpeg','image/png','image/gif'].includes(value[0]?.type)),
-
+      .required('Foto wajib diupload'),
+      // .test('fileSize', 'Ukuran file maksimal 1MB', value => !value || (value[0]?.size ?? 0) <= 1024 * 1024)
+      // .test('fileType', 'Format foto tidak valid', value => !value || ['image/jpeg','image/png','image/gif'].includes(value[0]?.type)),
+    nama:Yup.string().required('Nama wajib diisi'),
     email: Yup.string()
       .trim()
       .max(50)

@@ -2,25 +2,72 @@ import { pagination } from '@/helpers/pagination';
 import { Inventory } from '@/interfaces/inventoryManagement.interface';
 import { prismaclient } from '@/prisma';
 class InventoryManagementRepository {
-  async getInventories(page = 1, take = 10, storeId?: string) {
-    const where = storeId ? { storeId } : {};
-    const total = await prismaclient.inventory.count({ where });
+  async getInventories(
+    page = 1,
+    take = 10,
+    adminStoreId?: string,
+    search = '',
+    filterStoreId?: string,
+    categoryId?: string,
+    status?: string,
+  ) {
+    const where: any = {};
 
-    const { skip, take: realTake } = pagination(page, take);
-    const data = await prismaclient.inventory.findMany({
+    // Store filtering logic
+    if (adminStoreId) {
+      where.storeId = adminStoreId;
+    } else if (filterStoreId && filterStoreId !== 'all') {
+      // Find store by name and get its ID
+      const store = await prismaclient.store.findFirst({
+        where: { name: filterStoreId },
+      });
+      if (store) {
+        where.storeId = store.id;
+      }
+    }
+
+    where.product = {};
+
+    // Category filtering logic - find category by name
+    if (categoryId && categoryId !== 'all') {
+      const category = await prismaclient.category.findFirst({
+        where: { name: categoryId },
+      });
+      if (category) {
+        where.product.categoryId = category.id;
+      }
+    }
+
+    // Search logic
+    if (search) {
+      where.product.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const allData = await prismaclient.inventory.findMany({
       where,
-      skip,
-      take: realTake,
       include: {
-        product: {
-          include: {
-            category: true,
-            images: true,
-          },
-        },
+        product: { include: { category: true, images: true } },
         store: true,
       },
     });
+
+    let filtered = allData;
+    if (status && status !== 'all') {
+      filtered = allData.filter((inv) => {
+        if (status === 'Stok Habis') return inv.quantity === 0;
+        if (status === 'Stok Rendah')
+          return inv.quantity > 0 && inv.quantity <= inv.minStock;
+        if (status === 'Stok Tersedia') return inv.quantity > inv.minStock;
+        return true;
+      });
+    }
+
+    const total = filtered.length;
+    const { skip, take: realTake } = pagination(page, take);
+    const data = filtered.slice(skip, skip + realTake);
 
     return { total, data };
   }

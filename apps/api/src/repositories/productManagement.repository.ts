@@ -1,9 +1,29 @@
-import { pagination } from '@/helpers/pagination';
 import { CreateProductDTO } from '@/interfaces/productManagement.interface';
 import { prismaclient } from '@/prisma';
 
 class ProductManagementRepository {
-  async getProducts(page = 1, take = 10, adminId: string) {
+  async getProducts(
+    page: number = 1,
+    take: number = 10,
+    adminId?: string,
+    search: string = '',
+    categoryId: string = '',
+    status: string = '',
+  ) {
+    // 1️⃣ Build the Prisma “where” for name/sku search + category filter
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (categoryId && categoryId !== 'all') {
+      where.categoryId = categoryId;
+    }
+
+    // 2️⃣ If user is ADMIN, scope inventory to their store
     let storeId: string | undefined;
     if (adminId) {
       const store = await prismaclient.store.findUnique({
@@ -12,22 +32,43 @@ class ProductManagementRepository {
       if (!store) throw new Error(`No store found for admin ${adminId}`);
       storeId = store.id;
     }
-
     const whereInventory = storeId ? { storeId } : {};
 
-    const total = await prismaclient.product.count();
-    const { skip, take: realTake } = pagination(page, take);
-    const data = await prismaclient.product.findMany({
+    // 3️⃣ Pull in *every* matching product + its inventory/category/images
+    const all = await prismaclient.product.findMany({
+      where,
       include: {
-        inventory: {
-          where: whereInventory,
-        },
+        inventory: { where: whereInventory },
         category: true,
         images: true,
       },
-      skip,
-      take: realTake,
     });
+
+    // 4️⃣ Apply your status logic in JS
+    const filtered = all.filter((p) => {
+      if (!status || status === 'all') return true;
+
+      const totalQty = p.inventory.reduce((sum, i) => sum + i.quantity, 0);
+      const minStock = p.inventory.reduce(
+        (min, i) => Math.min(min, i.minStock),
+        Infinity,
+      );
+
+      switch (status) {
+        case 'Stok Habis':
+          return totalQty === 0;
+        case 'Stok Rendah':
+          return totalQty > 0 && totalQty < minStock;
+        case 'Stok Tersedia':
+          return totalQty >= minStock;
+        default:
+          return true;
+      }
+    });
+
+    const total = filtered.length;
+    const start = (page - 1) * take;
+    const data = filtered.slice(start, start + take);
 
     return { total, data };
   }

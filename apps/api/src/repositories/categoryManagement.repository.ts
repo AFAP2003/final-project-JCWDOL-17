@@ -3,11 +3,20 @@ import { Category } from '@/interfaces/categoryManagement.interface';
 import { prismaclient } from '@/prisma';
 
 class CategoryManagementRepository {
-  async getCategories(page = 1, take = 10) {
-    const total = await prismaclient.category.count();
+  async getCategories(page = 1, take = 10, search = '') {
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : {};
+    const total = await prismaclient.category.count({ where });
 
     const { skip, take: realTake } = pagination(page, take);
     const data = await prismaclient.category.findMany({
+      where,
       skip,
       take: realTake,
     });
