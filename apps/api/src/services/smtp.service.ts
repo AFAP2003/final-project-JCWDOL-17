@@ -158,7 +158,7 @@ export class SMTPService {
           // { delay: 2 * 60 * 1000 }, // 2 minutes
         );
 
-        const url = `${'https://gogrocery.mooo.com'}?token=${exchangetoken}`;
+        const url = `${param.data.baseCallback}?token=${exchangetoken}`;
 
         this.sendMail({
           tmplname: 'signup-confirmation',
