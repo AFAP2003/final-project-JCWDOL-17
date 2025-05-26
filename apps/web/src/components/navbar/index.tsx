@@ -129,6 +129,7 @@ function TabletNavbar() {
   const { isFullNavbar } = useNavbar();
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const isLogin = !isPending && session?.user && session.user.role === 'USER';
 
@@ -169,11 +170,19 @@ function TabletNavbar() {
           <div className="flex w-full h-full justify-between items-center gap-3">
             {/* Center Content */}
             <div className="grow flex justify-center items-center gap-4 w-full max-w-xl">
-              <SearchBox />
+              <SearchBox
+                onSearchStart={() => setIsSearching(true)}
+                onSearchEnd={() => setIsSearching(false)}
+              />
             </div>
 
             {/* Right Content */}
-            <div className="flex items-center justify-center gap-2">
+            <div
+              className={cn(
+                'flex items-center justify-center gap-2 transition-all',
+                isSearching && 'opacity-50 w-0 overflow-clip',
+              )}
+            >
               <CartButton />
 
               <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>

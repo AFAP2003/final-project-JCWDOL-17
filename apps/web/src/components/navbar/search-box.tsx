@@ -12,7 +12,12 @@ import { useDebounceValue } from 'usehooks-ts';
 import { Input } from '../ui/input';
 import { Separator } from '../ui/separator';
 
-export default function SearchBox() {
+type Props = {
+  onSearchStart?: () => void;
+  onSearchEnd?: () => void;
+};
+
+export default function SearchBox(props: Props) {
   const searchParams = useSearchParams();
   const path = usePathname();
   const router = useRouter();
@@ -50,6 +55,20 @@ export default function SearchBox() {
         <Search className="absolute left-2 text-neutral-600" />
         <Input
           value={query}
+          onFocus={() => {
+            if (props.onSearchStart) {
+              props.onSearchStart();
+            }
+            if (!isSearchPage) {
+              setShowResult(true);
+            }
+          }}
+          onBlur={() => {
+            if (props.onSearchEnd) {
+              props.onSearchEnd();
+            }
+            setShowResult(false);
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               setShowResult(false);

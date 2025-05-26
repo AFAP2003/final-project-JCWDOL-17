@@ -97,6 +97,7 @@ export default function Map(props: Props) {
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setInputSearch(e.target.value);
+      setIsInitial(false);
     },
     [],
   );
@@ -140,7 +141,7 @@ export default function Map(props: Props) {
     fetchLocation(
       {
         name: dbInputSearch,
-        resultSize: 5,
+        resultSize: 4,
       },
       {
         onSuccess: (data) => {

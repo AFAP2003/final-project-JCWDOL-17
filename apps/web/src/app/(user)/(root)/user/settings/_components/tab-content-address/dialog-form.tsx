@@ -205,7 +205,7 @@ export default function DialogForm(props: Props) {
 
         <Separator className="bg-neutral-500 mb-3" />
 
-        <ScrollArea className="sm:h-[500px] h-[360px] sm:px-12">
+        <ScrollArea className="sm:h-[600px] h-[360px] sm:px-12">
           <Form {...form}>
             <form
               ref={formRef}

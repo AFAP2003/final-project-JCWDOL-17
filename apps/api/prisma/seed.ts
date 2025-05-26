@@ -135,7 +135,7 @@ async function SEED_USER() {
   const datas = [
     {
       email: 'luffy.gogrocery@mailinator.com',
-      name: 'Monkey D. Luffy',
+      name: 'Monkey D Luffy',
     },
     {
       email: 'naruto.gogrocery@mailinator.com',
