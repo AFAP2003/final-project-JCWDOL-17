@@ -24,7 +24,6 @@ import {
   ColumnDef,
   ColumnFiltersState,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
@@ -50,16 +49,38 @@ export default function UseDiscountManagement() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingDiscountId, setEditingDiscountId] = useState<string | null>(null);
+  const [editingDiscountId, setEditingDiscountId] = useState<string | null>(
+    null,
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
   const [isDetailMode, setIsDetailMode] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedValueType, setSelectedValueType] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
   const { data: session, isPending: isSessionLoading } = useSession();
+  const [isProcessing, setIsProcessing] = useState(false);
   const user = session?.user;
 
   const fetchDiscounts = useCallback(
-    (pageIndex: number, pageSize: number) => {
-      return apiFetchDiscounts(pageIndex, pageSize).then((json) => {
+    (
+      pageIndex: number,
+      pageSize: number,
+      search: string,
+      type: string,
+      valueType: string,
+      status: string,
+    ) => {
+      return apiFetchDiscounts(
+        pageIndex,
+        pageSize,
+        search,
+        type,
+        valueType,
+        status,
+      ).then((json) => {
         if (json?.pagination) {
           setPageCount(json.pagination.totalPages);
         }
@@ -70,8 +91,31 @@ export default function UseDiscountManagement() {
   );
 
   useEffect(() => {
-    fetchDiscounts(pagination.pageIndex, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    fetchDiscounts(
+      pagination.pageIndex,
+      pagination.pageSize,
+      debouncedSearchTerm,
+      selectedType,
+      selectedValueType,
+      selectedStatus,
+    );
+  }, [
+    pagination.pageIndex,
+    pagination.pageSize,
+    debouncedSearchTerm,
+    selectedType,
+    selectedValueType,
+    selectedStatus,
+  ]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPagination((p) => ({ ...p, pageIndex: 0 })); // reset **once** after typing stops
+    }, 1000); // ← 300ms debounce
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchStores();
@@ -82,7 +126,6 @@ export default function UseDiscountManagement() {
     x.setHours(0, 0, 0, 0);
     return x;
   }
-
 
   const formik = useFormik({
     initialValues: {
@@ -102,15 +145,26 @@ export default function UseDiscountManagement() {
       let success = false;
 
       if (isEditMode && editingDiscountId) {
-        success = await handleUpdateDiscount(editingDiscountId, values);
+        success = await handleUpdateDiscount(
+          editingDiscountId,
+          values,
+          setIsProcessing,
+        );
       } else {
-        success = await handleCreateDiscount(values);
+        success = await handleCreateDiscount(values, setIsProcessing);
       }
 
       if (success) {
         resetForm();
         setDialogOpen(false);
-        fetchDiscounts(pagination.pageIndex, pagination.pageSize);
+        fetchDiscounts(
+          pagination.pageIndex,
+          pagination.pageSize,
+          debouncedSearchTerm,
+          selectedType,
+          selectedValueType,
+          selectedStatus,
+        );
       }
     },
   });
@@ -153,13 +207,26 @@ export default function UseDiscountManagement() {
       {
         id: 'tipe_nilai_diskon',
         header: 'Tipe Nilai',
-        accessorFn: (row) => (row.isPercentage ? 'Persentase' : 'Nominal'),
+        accessorFn: (row) => {
+          // If the discount type is BUY_X_GET_Y (“Beli 1 Gratis 1”)
+          // we show a dash instead of Persentase/Nominal
+          if (row.type === 'BUY_X_GET_Y') return '-';
+          return row.isPercentage ? 'Persentase' : 'Nominal';
+        },
+        cell: ({ row }) => {
+          if (row.original.type === 'BUY_X_GET_Y') return '-';
+          return row.original.isPercentage ? 'Persentase' : 'Nominal';
+        },
         filterFn: 'equalsString',
       },
       {
-        accessorKey: 'value',
+        id: 'nilai_diskon',
         header: 'Nilai Diskon',
+        accessorFn: (row) => row.value, // still needed for sorting
         cell: ({ row }) => {
+          // If the discount type is Beli 1 Gratis 1, show a dash
+          if (row.original.type === 'BUY_X_GET_Y') return '-';
+
           const num = Number(row.original.value);
           return row.original.isPercentage
             ? `${num.toLocaleString()}%`
@@ -296,7 +363,7 @@ export default function UseDiscountManagement() {
                     <DropdownMenuCheckboxItem
                       className="text-red-600"
                       onClick={() => {
-                        handleDeleteDiscount(d.id);
+                        handleDeleteDiscount(d.id, setIsProcessing);
                       }}
                     >
                       Hapus
@@ -338,88 +405,56 @@ export default function UseDiscountManagement() {
     state: {
       sorting,
       pagination,
-      columnFilters,
       columnVisibility,
-      globalFilter,
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _col, filterValue) => {
-      const q = String(filterValue).toLowerCase();
-
-      const searchObj = {
-        name: row.original.name || '',
-        description: row.original.description || '',
-        tipe_diskon:
-          row.original.type === 'NO_RULES_DISCOUNT'
-            ? 'Diskon Normal'
-            : row.original.type === 'WITH_MAX_PRICE'
-              ? 'Diskon Syarat'
-              : row.original.type === 'BUY_X_GET_Y'
-                ? 'Beli 1 Gratis 1'
-                : row.original.type || '',
-        tipe_nilai_diskon: row.original.isPercentage ? 'Persentase' : 'Nominal',
-        value: String(row.original.value ?? ''),
-        minPurchase: String(row.original.minPurchase ?? ''),
-        maxDiscount: String(row.original.maxDiscount ?? ''),
-        startDate: new Date(row.original.startDate).toLocaleDateString('id-ID'),
-        endDate: row.original.endDate
-          ? new Date(row.original.endDate).toLocaleDateString('id-ID')
-          : '',
-        status: (() => {
-          const toDateOnly = (d: Date) => (d.setHours(0, 0, 0, 0), d);
-          const today = toDateOnly(new Date());
-          const start = toDateOnly(new Date(row.original.startDate));
-          const end = row.original.endDate
-            ? toDateOnly(new Date(row.original.endDate))
-            : null;
-          if (start > today) return 'Inaktif';
-          if (end && end < today) return 'Kadaluwarsa';
-          return 'Aktif';
-        })(),
-        kode_voucher: row.original.kode_voucher ?? '',
-        batas_penggunaan: String(row.original.batas_penggunaan ?? ''),
-      };
-
-      return Object.values(searchObj).some((v) =>
-        String(v).toLowerCase().includes(q),
-      );
-    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setGlobalFilter(e.target.value);
+    setSearchTerm(e.target.value);
 
   const handleStatusFilter = (value: string) => {
-    if (value === 'all') table.getColumn('status')?.setFilterValue(undefined);
-    else table.getColumn('status')?.setFilterValue(value);
+    setSelectedStatus(value);
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
   const handleTypeFilter = (value: string) => {
-    if (value === 'all')
-      table.getColumn('tipe_diskon')?.setFilterValue(undefined);
-    else table.getColumn('tipe_diskon')?.setFilterValue(value);
+    setSelectedType(value);
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
   const handleTypeValueFilter = (value: string) => {
-    if (value === 'all')
-      table.getColumn('tipe_nilai_diskon')?.setFilterValue(undefined);
-    else table.getColumn('tipe_nilai_diskon')?.setFilterValue(value);
+    setSelectedValueType(value);
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
-  const handleDeleteDiscount = async (id: string) => {
-    const ok = await apiDeleteDiscount(id);
+  const handleDeleteDiscount = async (id: string, setIsProcessing) => {
+    const ok = await apiDeleteDiscount(id, setIsProcessing);
     if (ok) {
-      await fetchDiscounts(pagination.pageIndex, pagination.pageSize);
+      await fetchDiscounts(
+        pagination.pageIndex,
+        pagination.pageSize,
+        debouncedSearchTerm,
+        selectedType,
+        selectedValueType,
+        selectedStatus,
+      );
     }
     return ok;
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setSelectedType('');
+    setSelectedStatus('');
+    setSelectedValueType('');
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
   return {
@@ -453,5 +488,11 @@ export default function UseDiscountManagement() {
     setIsDetailMode,
     isSessionLoading,
     user,
+    clearAllFilters,
+    selectedStatus,
+    selectedType,
+    selectedValueType,
+    searchTerm,
+    isProcessing,
   };
 }

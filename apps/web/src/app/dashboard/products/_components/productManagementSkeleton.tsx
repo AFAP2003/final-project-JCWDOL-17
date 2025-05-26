@@ -16,10 +16,17 @@ export default function ProductManagementskeleton() {
       <div className="flex justify-between">
         <div className="flex gap-10">
           <Skeleton className="h-10 w-32 " />
-          <Skeleton className="h-10 w-32 " />
         </div>
+        <div className='hidden lg:flex lg:gap-10 '>
+        <Skeleton className="h-10 w-36 " />
 
         {user.role == 'SUPER' && <Skeleton className="h-10 w-36 " />}
+        </div>
+       <div className='lg:hidden flex gap-4 '>
+        <Skeleton className="h-10 w-36 " />
+
+        {user.role == 'SUPER' && <Skeleton className="h-10 w-36 " />}
+        </div>
       </div>
 
       {/* 2. Filters row */}

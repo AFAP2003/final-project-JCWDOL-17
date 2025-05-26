@@ -2,18 +2,79 @@ import { pagination } from '@/helpers/pagination';
 import { Discount } from '@/interfaces/discountManagement.interface';
 import { prismaclient } from '@/prisma';
 class DiscountManagementRepository {
-  async getDiscounts(page = 1, take = 10, adminId?: string) {
-    const where = adminId ? { store: { adminId } } : {};
+  async getDiscounts(
+    page = 1,
+    take = 10,
+    adminId?: string,
+    search = '',
+    type = '',
+    valueType = '',
+    status = '',
+  ) {
+    // Normalize “today” to local 00:00:00
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const andConditions: any[] = [];
+
+    // Admin-scoped
+    if (adminId) {
+      andConditions.push({ store: { adminId } });
+    }
+
+    // Search by name or description
+    if (search) {
+      andConditions.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' as any} },
+          { description: { contains: search, mode: 'insensitive' as any} },
+        ],
+      });
+    }
+
+    // Type filter
+    if (type && type !== 'all') {
+      andConditions.push({ type });
+    }
+
+    // Value type filter
+    if (valueType && valueType !== 'all') {
+      andConditions.push({ isPercentage: valueType === 'Persentase' });
+    }
+
+    // Status filter
+    if (status && status !== 'all') {
+      if (status === 'Aktif') {
+        andConditions.push({
+          AND: [
+            { startDate: { lte: today } },
+            {
+              OR: [{ endDate: null }, { endDate: { gte: today } }],
+            },
+          ],
+        });
+      } else if (status === 'Inaktif') {
+        // not started yet
+        andConditions.push({ startDate: { gt: today } });
+      } else if (status === 'Kadaluwarsa') {
+        // started already
+        andConditions.push({ startDate: { lte: today } });
+        // expired before today
+        andConditions.push({ endDate: { lt: today } });
+      }
+    }
+
+    const where = andConditions.length ? { AND: andConditions } : {};
+
+    // Count + fetch
     const total = await prismaclient.discount.count({ where });
     const { skip, take: realTake } = pagination(page, take);
-
     const data = await prismaclient.discount.findMany({
       where,
       skip,
       take: realTake,
-      include: {
-        store: true,
-      },
+      include: { store: true },
+      orderBy: { createdAt: 'desc' },
     });
 
     return { total, data };

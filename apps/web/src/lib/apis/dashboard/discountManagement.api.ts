@@ -10,18 +10,55 @@ export function discountManagementAPI() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchDiscounts = async (pageIndex: number, pageSize: number) => {
+  const fetchDiscounts = async (
+    pageIndex: number,
+    pageSize: number,
+    search: string = '',
+    type: string = '',
+    valueType: string = '',
+    status: string = '',
+  ) => {
     setIsLoading(true);
     try {
       const page = pageIndex + 1;
-      const discountRes = await fetch(
-        `${API_BASE_URL}/dashboard/discounts?page=${page}&take=${pageSize}`,
-        {
-          method: 'GET',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
+      let url = `${API_BASE_URL}/dashboard/discounts?page=${page}&take=${pageSize}`;
+
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+
+      // Map frontend type values to backend values
+      if (type && type !== 'all') {
+        let backendType = '';
+        switch (type) {
+          case 'Diskon Normal':
+            backendType = 'NO_RULES_DISCOUNT';
+            break;
+          case 'Diskon Syarat':
+            backendType = 'WITH_MAX_PRICE';
+            break;
+          case 'Beli 1 Gratis 1':
+            backendType = 'BUY_X_GET_Y';
+            break;
+          default:
+            backendType = type;
+        }
+        url += `&type=${encodeURIComponent(backendType)}`;
+      }
+
+      if (valueType && valueType !== 'all') {
+        url += `&valueType=${encodeURIComponent(valueType)}`;
+      }
+
+      if (status && status !== 'all') {
+        url += `&status=${encodeURIComponent(status)}`;
+      }
+
+      console.log('Fetching discounts with URL:', url); // Debug log
+
+      const discountRes = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
       const discountData = await discountRes.json();
 
       if (discountRes.ok) {
@@ -40,8 +77,8 @@ export function discountManagementAPI() {
       setIsLoading(false);
     }
   };
-
-  const handleCreateDiscount = async (values) => {
+  const handleCreateDiscount = async (values, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       const discountRes = await fetch(`${API_BASE_URL}/dashboard/discounts`, {
         method: 'POST',
@@ -75,13 +112,13 @@ export function discountManagementAPI() {
       if (discountRes.ok) {
         console.log('Discount Created Successfully: ', discountData);
         toast({
-          description: 'Discount Created Successfully !',
+          description: 'Diskon Berhasil Dibuat !',
         });
         return true;
       } else {
         toast({
           variant: 'destructive',
-          description: 'Failed to Create Discount.',
+          description: 'Gagal Membuat Diskon.',
         });
         console.error(
           'Failed to create Discount:',
@@ -92,14 +129,18 @@ export function discountManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error creating Discount.',
+        description: 'Error Membuat Diskon.',
       });
       console.error('Error creating inventory:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleUpdateDiscount = async (id: string, values) => {
+  const handleUpdateDiscount = async (id: string, values, setIsProcessing) => {
+    setIsProcessing(true);
+
     try {
       const discountRes = await fetch(
         `${API_BASE_URL}/dashboard/discounts/${id}`,
@@ -138,14 +179,14 @@ export function discountManagementAPI() {
 
       if (discountRes.ok) {
         toast({
-          description: 'Discount Updated Successfully !',
+          description: 'Diskon Berhasil Diperbarui !',
         });
         console.log('Discount Updated Successfully: ', discountData);
         return true;
       } else {
         toast({
           variant: 'destructive',
-          description: 'Failed to Create Discount.',
+          description: 'Gagal Memperbarui Diskon.',
         });
         console.error(
           'Failed to update Discount:',
@@ -156,14 +197,17 @@ export function discountManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error updating Discount.',
+        description: 'Error Memperbarui Diskon.',
       });
       console.error('Error updating Discount:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleDeleteDiscount = async (id: string) => {
+  const handleDeleteDiscount = async (id: string, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       const discountRes = await fetch(
         `${API_BASE_URL}/dashboard/discounts/${id}`,
@@ -176,14 +220,14 @@ export function discountManagementAPI() {
 
       if (discountRes.ok) {
         toast({
-          description: 'Discount Deleted Successfully !',
+          description: 'Diskon Berhasil Dihapus !',
         });
         console.log('Discount deleted successfully:', discountData);
         return true;
       } else {
         toast({
           variant: 'destructive',
-          description: 'Failed to Delete Discount.',
+          description: 'Gagal Menghapus Diskon.',
         });
         console.error(
           'Failed to delete Discount:',
@@ -194,10 +238,12 @@ export function discountManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error deleting Discount.',
+        description: 'Error Menghapus Diskon.',
       });
       console.error('Error deleting inventory:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
   return {

@@ -9,18 +9,31 @@ export default function productManagementAPI() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchProducts = async (pageIndex: number, pageSize: number) => {
+  const fetchProducts = async (
+    pageIndex: number,
+    pageSize: number,
+    search: string,
+    category: string = '',
+    status: string = '',
+  ) => {
     setIsLoading(true);
     try {
       const page = pageIndex + 1;
-      const productRes = await fetch(
-        `${API_BASE_URL}/dashboard/products?page=${page}&take=${pageSize}`,
-        {
-          method: 'GET',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
+      let url = `${API_BASE_URL}/dashboard/products?page=${page}&take=${pageSize}`;
+
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (category && category !== 'all')
+        url += `&categoryId=${encodeURIComponent(category)}`;
+      if (status && status !== 'all')
+        url += `&status=${encodeURIComponent(status)}`;
+
+      // Include credentials for session/cookie authentication
+      const productRes = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
       const productData = await productRes.json();
 
       if (productRes.ok) {
@@ -40,7 +53,8 @@ export default function productManagementAPI() {
     }
   };
 
-  const handleCreateProduct = async (values) => {
+  const handleCreateProduct = async (values, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       const formData = new FormData();
 
@@ -67,13 +81,13 @@ export default function productManagementAPI() {
       if (productRes.ok) {
         console.log('product Created Successfully: ', productData);
         toast({
-          description: 'Product Created Successfully !',
+          description: 'Produk Berhasil Dibuat !',
         });
         return true;
       } else if (productRes.status === 400) {
         toast({
           variant: 'destructive',
-          description: 'Product already exist.',
+          description: 'Product Sudah Terdaftar. Gunakan Nama Produk Lain !',
         });
         console.error(
           'Failed to create Product: Duplicate Product Error',
@@ -83,7 +97,7 @@ export default function productManagementAPI() {
       } else {
         toast({
           variant: 'destructive',
-          description: 'Failed to Create Product.',
+          description: 'Gagal Membuat Produk.',
         });
         console.error(
           'Failed to Create Product:',
@@ -94,14 +108,17 @@ export default function productManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error creating product.',
+        description: 'Error Membuat Produk.',
       });
       console.error('Error creating product:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleUpdateProduct = async (id: string, values) => {
+  const handleUpdateProduct = async (id: string, values, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       const formData = new FormData();
 
@@ -136,14 +153,14 @@ export default function productManagementAPI() {
 
       if (productRes.ok) {
         toast({
-          description: 'Product Updated Successfully !',
+          description: 'Produk Berhasil Diperbarui !',
         });
         console.log('Product Updated Successfully: ', productData);
         return true;
       } else {
         toast({
           variant: 'destructive',
-          description: 'Failed to Create Product.',
+          description: 'Gagal Memperbarui Produk.',
         });
         console.error(
           'Failed to Update Product:',
@@ -154,50 +171,59 @@ export default function productManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error Updating Product.',
+        description: 'Error Memperbarui Produk.',
       });
       console.error('Error Updating Product:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
+  // ─── lib/apis/dashboard/productManagement.api.ts ───
+  const handleDeleteProduct = async (id: string, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       const productRes = await fetch(
         `${API_BASE_URL}/dashboard/products/${id}`,
-        {
-          method: 'DELETE',
-        },
+        { method: 'DELETE' },
       );
-
       const productData = await productRes.json();
 
-      if (productRes.ok) {
-        toast({
-          description: 'Product Deleted Successfully !',
-        });
-        console.log('Product deleted successfully:', productData);
-        return true;
-      } else {
+      if (productRes.status === 409) {
+        // dependency error
         toast({
           variant: 'destructive',
-          description: 'Failed to Delete product.',
+          description:
+            'Gagal Menghapus Produk: Ada Inventaris yang bergantung terhadap produk ini. Hapus semua inventaris yang berkaitan dengan produk ini untuk melanjutkan.',
+          // Cannot delete product: there are inventory records tied to it. Remove inventory entries first.
         });
-        console.error(
-          'Failed to delete product:',
-          productData.message || 'Unknown error',
-        );
         return false;
       }
+
+      if (!productRes.ok) {
+        // generic failure
+        toast({
+          variant: 'destructive',
+          description: 'Gagal Menghapus Produk.',
+        });
+        return false;
+      }
+
+      // success
+      toast({ description: 'Produk Berhasil Dihapus !' });
+      return true;
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error deleting product.',
+        description: 'Error Menghapus Produk.',
       });
-      console.error('Error deleting product:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
+
   return {
     products,
     isLoading,

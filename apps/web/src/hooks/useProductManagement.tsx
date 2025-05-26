@@ -25,7 +25,6 @@ import {
   ColumnDef,
   ColumnFiltersState,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
@@ -45,10 +44,18 @@ export default function UseProductManagement() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pageCount, setPageCount] = useState(1);
-  const [previews, setPreviews] = useState<string[]>([]); 
-  const [mainIndex, setMainIndex] = useState<number>(0); 
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [mainIndex, setMainIndex] = useState<number>(0);
   const [isDetailMode, setIsDetailMode] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<
+    'all' | 'Stok Tersedia' | 'Stok Rendah' | 'Stok Habis'
+  >('');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
   const { data: session, isPending: isSessionLoading } = useSession();
+
   const user = session?.user;
 
   const {
@@ -63,8 +70,20 @@ export default function UseProductManagement() {
   const { categories, fetchCategories } = categoryManagementAPI();
 
   const fetchProducts = useCallback(
-    (pageIndex: number, pageSize: number) => {
-      return apiFetchProducts(pageIndex, pageSize).then((json) => {
+    (
+      pageIndex: number,
+      pageSize: number,
+      searchTerm: string,
+      category: string,
+      status: string,
+    ) => {
+      return apiFetchProducts(
+        pageIndex,
+        pageSize,
+        searchTerm,
+        category,
+        status,
+      ).then((json) => {
         if (json?.pagination) {
           setPageCount(json.pagination.totalPages);
         }
@@ -75,8 +94,29 @@ export default function UseProductManagement() {
   );
 
   useEffect(() => {
-    fetchProducts(pagination.pageIndex, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    fetchProducts(
+      pagination.pageIndex,
+      pagination.pageSize,
+      debouncedSearchTerm,
+      selectedCategory, 
+      selectedStatus,
+    );
+  }, [
+    pagination.pageIndex,
+    pagination.pageSize,
+    debouncedSearchTerm,
+    selectedCategory,
+    selectedStatus,
+  ]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPagination((p) => ({ ...p, pageIndex: 0 })); // reset **once** after typing stops
+    }, 1000); // ← 300ms debounce
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchCategories(0, 50);
@@ -94,23 +134,33 @@ export default function UseProductManagement() {
       kategoriId: '',
       isActive: true,
       image: [],
-      keptImages: [], 
+      keptImages: [],
       mainIndex: 0,
     },
     validationSchema: getValidationSchema(),
     onSubmit: async (values, { resetForm }) => {
       let success = false;
       if (isEditMode && editingProductId) {
-        success = await handleUpdateProduct(editingProductId, values);
+        success = await handleUpdateProduct(
+          editingProductId,
+          values,
+          setIsProcessing,
+        );
       } else {
-        success = await handleCreateProduct(values);
+        success = await handleCreateProduct(values, setIsProcessing);
       }
       if (success) {
         resetForm();
         const newSku = genRandomString().slice(0, 8);
         formik.setFieldValue('sku', newSku, false);
         setDialogOpen(false);
-        fetchProducts(pagination.pageIndex, pagination.pageSize);
+        fetchProducts(
+          pagination.pageIndex,
+          pagination.pageSize,
+          debouncedSearchTerm,
+          selectedCategory,
+          selectedStatus,
+        );
       }
     },
   });
@@ -138,7 +188,6 @@ export default function UseProductManagement() {
         },
       },
       { accessorKey: 'name', header: 'Produk' },
-      // { accessorKey: 'description', header: 'Deskripsi' },
       {
         accessorKey: 'category',
         header: 'Kategori',
@@ -318,7 +367,7 @@ export default function UseProductManagement() {
                     <AlertDialogCancel>Batal</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
-                        handleDeleteProduct(product.id);
+                        handleDeleteProduct(product.id, setIsProcessing);
                       }}
                     >
                       Hapus
@@ -342,80 +391,52 @@ export default function UseProductManagement() {
     state: {
       sorting,
       pagination,
-      columnFilters,
       columnVisibility,
-      globalFilter,
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _col, filter) => {
-      const search = String(filter).toLowerCase();
-      const product = row.original;
-
-      const nameMatch = product.name?.toLowerCase().includes(search);
-      const descriptionMatch = product.description
-        ?.toLowerCase()
-        .includes(search);
-      const skuMatch = product.sku?.toLowerCase().includes(search);
-      const priceMatch = String(product.price).includes(search);
-      const weightMatch = String(product.weight).includes(search);
-      const categoryNameMatch = product.category?.name
-        ?.toLowerCase()
-        .includes(search);
-
-      const totalInventory =
-        product.inventory?.reduce((sum, inv) => sum + inv.quantity, 0) ?? 0;
-      const inventoryMatch = totalInventory.toString().includes(search); // now searchable
-
-      const statusValue = row.getValue('status');
-      const statusMatch = String(statusValue ?? '')
-        .toLowerCase()
-        .includes(search);
-
-      return (
-        nameMatch ||
-        descriptionMatch ||
-        skuMatch ||
-        priceMatch ||
-        weightMatch ||
-        categoryNameMatch ||
-        inventoryMatch || 
-        statusMatch
-      );
-    },
-
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setGlobalFilter(e.target.value);
+    setSearchTerm(e.target.value);
   };
 
   const handleStatusFilter = (value: string) => {
-    if (value === 'all') table.getColumn('status')?.setFilterValue(undefined);
-    else table.getColumn('status')?.setFilterValue(value);
+    setSelectedStatus(
+      value as 'all' | 'Stok Tersedia' | 'Stok Rendah' | 'Stok Habis',
+    );
+
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
   const handleCategoryFilter = (value: string) => {
-    if (value === 'all') {
-      table.getColumn('category')?.setFilterValue(undefined);
-    } else {
-      table.getColumn('category')?.setFilterValue(value);
-    }
+    setSelectedCategory(value);
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
-
-  const handleDeleteProduct = async (id: string) => {
-    const ok = await apiDeleteProduct(id);
+  const handleDeleteProduct = async (id: string, setIsProcessing) => {
+    const ok = await apiDeleteProduct(id, setIsProcessing);
     if (ok) {
-      await fetchProducts(pagination.pageIndex, pagination.pageSize);
+      await fetchProducts(
+        pagination.pageIndex,
+        pagination.pageSize,
+        debouncedSearchTerm,
+        selectedCategory,
+        selectedStatus,
+      );
     }
     return ok;
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory(''); // Set back to 'all'
+    setSelectedStatus('');
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
   return {
@@ -451,5 +472,10 @@ export default function UseProductManagement() {
     setIsDetailMode,
     isSessionLoading,
     user,
+    selectedStatus,
+    clearAllFilters,
+    searchTerm,
+    selectedCategory,
+    isProcessing,
   };
 }

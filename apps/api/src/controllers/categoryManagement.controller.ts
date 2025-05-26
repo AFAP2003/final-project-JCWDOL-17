@@ -1,4 +1,5 @@
 import categoryManagementService from '@/services/categoryManagement.service';
+import { Prisma } from '@prisma/client';
 import { Request, Response, NextFunction } from 'express';
 
 class CategoryManagementController {
@@ -6,9 +7,11 @@ class CategoryManagementController {
     try {
       const page = parseInt(req.query.page as string, 10) || 1;
       const take = parseInt(req.query.take as string, 10) || 10;
+      const search = (req.query.search as string) ?? '';
       const { total, data } = await categoryManagementService.listAllCategories(
         page,
         take,
+        search,
       );
 
       res.status(200).send({
@@ -76,6 +79,17 @@ class CategoryManagementController {
         data,
       });
     } catch (error) {
+      // foreign-key violation: some Product rows still reference this category
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        return res.status(409).send({
+          success: false,
+          message:
+            'Cannot delete category: there are products tied to it. Remove those first.',
+        });
+      }
       next(error);
     }
   }

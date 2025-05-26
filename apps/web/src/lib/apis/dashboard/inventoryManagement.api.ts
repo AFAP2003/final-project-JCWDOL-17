@@ -9,19 +9,36 @@ export function inventoryManagementAPI() {
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchInventories = async (pageIndex: number, pageSize: number) => {
+  const fetchInventories = async (
+    pageIndex: number,
+    pageSize: number,
+    search = '',
+    store = '',
+    category = '',
+    status = '',
+  ) => {
     setIsLoading(true);
     try {
       const page = pageIndex + 1;
 
-      const inventoryRes = await fetch(
-        `${API_BASE_URL}/dashboard/inventories?page=${page}&take=${pageSize}`,
-        {
-          method: 'GET',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
+      let url = `${API_BASE_URL}/dashboard/inventories?page=${page}&take=${pageSize}`;
+
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (store && store !== 'all')
+        url += `&storeId=${encodeURIComponent(store)}`;
+      if (category && category !== 'all')
+        url += `&categoryId=${encodeURIComponent(category)}`;
+      if (status && status !== 'all')
+        url += `&status=${encodeURIComponent(status)}`;
+
+      console.log('API URL:', url); // Debug log
+
+      const inventoryRes = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
       const inventoryData = await inventoryRes.json();
 
       if (inventoryRes.ok) {
@@ -41,16 +58,16 @@ export function inventoryManagementAPI() {
     }
   };
 
-  const handleCreateInventory = async (values) => {
+  const handleCreateInventory = async (values, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       let quantity;
       if (values.tambah) {
         quantity = Number(values.tambah);
       } else if (values.kurangi) {
-       
         quantity = Math.max(0, values.sekarang - Number(values.kurangi));
       } else {
-        quantity = 0; 
+        quantity = 0;
       }
       const inventoryRes = await fetch(
         `${API_BASE_URL}/dashboard/inventories`,
@@ -74,13 +91,13 @@ export function inventoryManagementAPI() {
       if (inventoryRes.ok) {
         console.log('inventory Created Successfully: ', inventoryData);
         toast({
-          description: 'inventory Created Successfully !',
+          description: 'Inventaris Berhasil Dibuat !',
         });
         return true;
       } else {
         toast({
           variant: 'destructive',
-          description: 'Failed to Create inventory.',
+          description: 'Inventaris Gagal Dibuat.',
         });
         console.error(
           'Failed to create inventory:',
@@ -91,14 +108,17 @@ export function inventoryManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error creating inventory.',
+        description: 'Error Membuat Inventaris.',
       });
       console.error('Error creating inventory:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleUpdateInventory = async (id, values) => {
+  const handleUpdateInventory = async (id, values, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       console.log('Starting inventory update for ID:', id);
       console.log('Update values:', values);
@@ -146,14 +166,14 @@ export function inventoryManagementAPI() {
 
       if (inventoryRes.ok) {
         toast({
-          description: 'Inventory Updated Successfully!',
+          description: 'Inventaris Berhasil Diperbarui!',
         });
         return true;
       } else {
         const errorMessage = inventoryData.message || 'Unknown error';
         toast({
           variant: 'destructive',
-          description: `Failed to update inventory: ${errorMessage}`,
+          description: `Gagal Memperbarui Inventaris: ${errorMessage}`,
         });
         console.error('Failed to update inventory:', errorMessage);
         return false;
@@ -161,14 +181,17 @@ export function inventoryManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: `Error updating inventory: ${error.message || String(error)}`,
+        description: `Error Memperbarui Inventaris: ${error.message || String(error)}`,
       });
       console.error('Error updating inventory:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleDeleteInventory = async (id: string) => {
+  const handleDeleteInventory = async (id: string, setIsProcessing) => {
+    setIsProcessing(true);
     try {
       const inventoryRes = await fetch(
         `${API_BASE_URL}/dashboard/inventories/${id}`,
@@ -181,14 +204,14 @@ export function inventoryManagementAPI() {
 
       if (inventoryRes.ok) {
         toast({
-          description: 'inventory Deleted Successfully !',
+          description: 'inventaris Berhasil Dihapus!',
         });
         console.log('inventory deleted successfully:', inventoryData);
         return true;
       } else {
         toast({
           variant: 'destructive',
-          description: 'Failed to Delete inventory.',
+          description: 'Gagal Menghapus Inventaris.',
         });
         console.error(
           'Failed to delete inventory:',
@@ -199,10 +222,12 @@ export function inventoryManagementAPI() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        description: 'Error deleting inventory.',
+        description: 'Error Menghapus Inventaris.',
       });
       console.error('Error deleting inventory:', error);
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
   return {

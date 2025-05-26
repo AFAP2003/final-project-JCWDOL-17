@@ -141,18 +141,49 @@ class ReportManagementRepository {
   }
 
   async getStockReport(
-    page: number = 1,
-    take: number = 10,
+    page = 1,
+    take = 10,
     year: number,
     month: number,
     storeId: string | 'all',
   ) {
+    // 1) build date range
     const start = new Date(Date.UTC(year, month - 1, 1));
     const end = new Date(Date.UTC(year, month, 1));
 
-    const { skip, take: realTake } = pagination(page, take);
+    // 2) build store filter
+    const storeFilter = storeId !== 'all' ? { inventory: { storeId } } : {};
 
-    // Load inventories scoped to the store (or all)
+    // 3) total products (no pagination needed for count)
+    const totalProducts = await prismaclient.inventory.count({
+      where: storeId !== 'all' ? { storeId } : {},
+    });
+
+    // 4) summary aggregates (across all inventories)
+    const [addedAgg, removedAgg] = await Promise.all([
+      prismaclient.stockJournal.aggregate({
+        _sum: { quantity: true },
+        where: {
+          ...storeFilter,
+          type: 'ADDITION',
+          createdAt: { gte: start, lt: end },
+        },
+      }),
+      prismaclient.stockJournal.aggregate({
+        _sum: { quantity: true },
+        where: {
+          ...storeFilter,
+          type: 'SUBTRACTION',
+          createdAt: { gte: start, lt: end },
+        },
+      }),
+    ]);
+
+    const stockAdded = addedAgg._sum.quantity || 0;
+    const stockRemoved = removedAgg._sum.quantity || 0;
+
+    // 5) fetch the paginated details page
+    const { skip, take: realTake } = pagination(page, take);
     const inventories = await prismaclient.inventory.findMany({
       where: storeId !== 'all' ? { storeId } : {},
       include: { product: true },
@@ -160,41 +191,28 @@ class ReportManagementRepository {
       take: realTake,
     });
 
-    const totalProducts = await prismaclient.inventory.count({
-      where: storeId !== 'all' ? { storeId } : {},
-    });
+    // get IDs of just this page
+    const pageIds = inventories.map((inv) => inv.id);
 
-    const inventoryIds = inventories.map((inv) => inv.id);
-
-    // Now get journals for these inventories, filtered by storeId through related inventory
+    // pull ONLY this page’s journals to compute opening/closing balances per item
     const [periodJournals, beforeJournals] = await Promise.all([
       prismaclient.stockJournal.findMany({
         where: {
-          inventoryId: { in: inventoryIds },
+          inventoryId: { in: pageIds },
           createdAt: { gte: start, lt: end },
-          ...(storeId !== 'all' ? { inventory: { storeId } } : {}),
         },
-        select: {
-          inventoryId: true,
-          quantity: true,
-          type: true,
-        },
+        select: { inventoryId: true, quantity: true, type: true },
       }),
       prismaclient.stockJournal.findMany({
         where: {
-          inventoryId: { in: inventoryIds },
+          inventoryId: { in: pageIds },
           createdAt: { lt: start },
-          ...(storeId !== 'all' ? { inventory: { storeId } } : {}),
         },
-        select: {
-          inventoryId: true,
-          quantity: true,
-          type: true,
-        },
+        select: { inventoryId: true, quantity: true, type: true },
       }),
     ]);
 
-    // Helper to accumulate additions/subtractions per inventoryId
+    // helper to roll up added/removed
     function accumulate(
       journals: { inventoryId: string; quantity: number; type: string }[],
     ) {
@@ -211,13 +229,12 @@ class ReportManagementRepository {
     const periodMap = accumulate(periodJournals);
     const beforeMap = accumulate(beforeJournals);
 
+    // build the details rows
     const details = inventories.map((inv) => {
       const { added: pA = 0, removed: pR = 0 } = periodMap[inv.id] || {};
       const { added: bA = 0, removed: bR = 0 } = beforeMap[inv.id] || {};
-
       const opening = bA - bR;
       const closing = opening + (pA - pR);
-
       return {
         product: inv.product.name,
         opening,
@@ -226,14 +243,6 @@ class ReportManagementRepository {
         closing,
       };
     });
-
-    const stockAdded = periodJournals
-      .filter((j) => j.type === 'ADDITION')
-      .reduce((sum, j) => sum + j.quantity, 0);
-
-    const stockRemoved = periodJournals
-      .filter((j) => j.type === 'SUBTRACTION')
-      .reduce((sum, j) => sum + j.quantity, 0);
 
     return {
       total: totalProducts,

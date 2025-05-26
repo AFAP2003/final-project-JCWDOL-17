@@ -7,12 +7,20 @@ class DiscountManagementController {
     try {
       const page = parseInt(req.query.page as string, 10) || 1;
       const take = parseInt(req.query.take as string, 10) || 10;
+      const search = (req.query.search as string) ?? '';
+      const type = (req.query.type as string) ?? '';
+      const valueType = (req.query.valueType as string) ?? '';
+      const status = (req.query.status as string) ?? '';
       const { user } = getSession(req);
       const adminId = user.role === 'ADMIN' ? user.id : undefined;
       const { total, data } = await discountManagementService.listAllDiscounts(
         page,
         take,
         adminId,
+        search,
+        type,
+        valueType,
+        status,
       );
 
       res.status(200).send({

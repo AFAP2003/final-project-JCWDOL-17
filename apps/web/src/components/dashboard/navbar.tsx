@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, Menu } from 'lucide-react';
+import { ChevronDown, Menu,LogOut } from 'lucide-react';
 
 type NavbarProps = {
   onToggleSidebar: () => void;
@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage, } from '@/components/ui/avatar';
 import { signOut, useSession } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation';
 

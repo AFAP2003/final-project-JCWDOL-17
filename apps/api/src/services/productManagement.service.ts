@@ -2,11 +2,21 @@ import { CreateProductDTO } from '@/interfaces/productManagement.interface';
 import productManagementRepository from '@/repositories/productManagement.repository';
 
 class ProductManagementService {
-  async listAllProducts(page = 1, take = 10, adminId?: string) {
+  async listAllProducts(
+    page = 1,
+    take = 10,
+    adminId?: string,
+    search = '',
+    categoryId = '',
+    status = '',
+  ) {
     return await productManagementRepository.getProducts(
       page,
       take,
-      adminId as any,
+      adminId,
+      search,
+      categoryId,
+      status,
     );
   }
 

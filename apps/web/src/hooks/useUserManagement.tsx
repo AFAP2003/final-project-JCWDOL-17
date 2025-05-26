@@ -24,7 +24,6 @@ import {
   SortingState,
   VisibilityState,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
@@ -37,7 +36,6 @@ export function useUserManagement() {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -46,6 +44,15 @@ export function useUserManagement() {
   const [previews, setPreviews] = useState<string[]>([]);
   const [mainIndex, setMainIndex] = useState<number>(0);
   const [isDetailMode, setIsDetailMode] = useState(false);
+  const [selectedUserRole, setSelectedUserRole] = useState<
+    'all' | 'SUPER' | 'ADMIN' | 'USER'
+  >('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [selectedVerification, setSelectedVerification] = useState<
+    'all' | 'true' | 'false'
+  >('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const {
     users,
@@ -58,8 +65,20 @@ export function useUserManagement() {
   const { stores, fetchStores } = storeManagementAPI();
 
   const fetchUsers = useCallback(
-    (pageIndex: number, pageSize: number) => {
-      return apiFetchUsers(pageIndex, pageSize).then((json) => {
+    (
+      pageIndex: number,
+      pageSize: number,
+      searchTerm: string,
+      role: string,
+      verified: string,
+    ) => {
+      return apiFetchUsers(
+        pageIndex,
+        pageSize,
+        searchTerm,
+        role,
+        verified,
+      ).then((json) => {
         if (json?.pagination) {
           setPageCount(json.pagination.totalPages);
         }
@@ -70,15 +89,37 @@ export function useUserManagement() {
   );
 
   useEffect(() => {
-    fetchUsers(pagination.pageIndex, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
-
-  useEffect(() => {
     fetchStores();
   }, []);
+
+  // 1) debounce the raw searchTerm
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPagination((p) => ({ ...p, pageIndex: 0 })); // reset **once** after typing stops
+    }, 1000); // ← 300ms debounce
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchUsers(
+      pagination.pageIndex,
+      pagination.pageSize,
+      debouncedSearchTerm,
+      selectedUserRole, // Use selectedUserRole directly since it now includes 'all'
+      selectedVerification,
+    );
+  }, [
+    pagination.pageIndex,
+    pagination.pageSize,
+    debouncedSearchTerm,
+    selectedUserRole,
+    selectedVerification,
+  ]);
   const formik = useFormik({
     initialValues: {
-      image: null as FileList | null,
+      image: null,
       nama: '',
       email: '',
       password: '',
@@ -87,19 +128,32 @@ export function useUserManagement() {
       kode_rujukan: '',
       role: 'ADMIN',
       verifikasi: false,
+      telepon: '',
+      gender: '',
+      tglLahir: '',
     },
     validationSchema: getValidationSchema(isEditMode),
     onSubmit: async (values, { resetForm }) => {
       let success = false;
       if (isEditMode && editingUserId) {
-        success = await handleUpdateUser(editingUserId, values);
+        success = await handleUpdateUser(
+          editingUserId,
+          values,
+          setIsProcessing,
+        );
       } else {
-        success = await handleCreateUser(values);
+        success = await handleCreateUser(values, setIsProcessing);
       }
       if (success) {
         resetForm();
         setDialogOpen(false);
-        fetchUsers(pagination.pageIndex, pagination.pageSize);
+        fetchUsers(
+          pagination.pageIndex,
+          pagination.pageSize,
+          debouncedSearchTerm,
+          selectedUserRole,
+          selectedVerification,
+        );
       }
     },
   });
@@ -122,43 +176,9 @@ export function useUserManagement() {
     },
     { accessorKey: 'name', header: 'Nama' },
     { accessorKey: 'email', header: 'Email' },
-    // {  header: 'Alamat (Utama)' ,
-
-    //   accessorFn: (row: any) => {
-    //     return row.addresses?.length > 0 ? row.addresses[0].address : '-';
-    //   }
-    // },
+  
     { accessorKey: 'role', header: 'Role' },
-    // {
-    //   accessorKey: 'gender',
-    //   header: 'Jenis Kelamin',
-    //   cell: ({ getValue }) => {
-    //     const gender = getValue();
-    //     return gender === 'MALE' ? 'Laki-laki' : gender === 'FEMALE' ? 'Perempuan' : '-';
-    //   },
-    // },
-    // {
-    //   accessorKey: 'phone',
-    //   header: 'Telepon',
-    //   cell: ({ getValue }) => {
-    //     const phone = getValue()
-    //     return phone ?`+${getValue()}` : '-'
-    //   }
-    // },
-    // {
-    //   accessorKey: 'dateOfBirth',
-    //   header: 'Tanggal Lahir',
-    //   cell: ({ getValue }) =>
-    //   {
-    //     const value = getValue()
-    //     if (!value){
-    //       return '-'
-    //     }
 
-    //     return  new Date(getValue<string>()).toLocaleDateString('id-ID')
-
-    //   }
-    // },
     {
       header: 'Toko',
 
@@ -166,11 +186,7 @@ export function useUserManagement() {
         return row.original.store?.name ?? '-';
       },
     },
-    // { accessorKey: 'referralCode',
-    //    header: 'Kode Rujukan',
-    //   cell:({getValue})=>{
-    //     return getValue() || '-'}
-    //   },
+   
     {
       id: 'verifikasi',
       header: 'Verifikasi',
@@ -198,55 +214,48 @@ export function useUserManagement() {
                 <MoreHorizontal className="w-5 h-5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-40 rounded-md shadow-lg bg-white">
-                <DropdownMenuCheckboxItem
-                  onCheckedChange={() => {
-                    setIsEditMode(true);
-                    setEditingUserId(user.id);
-                    setDialogOpen(true);
-                    formik.setValues({
-                      gambar: user.image || '',
-                      nama: user.name || '',
-                      email: user.email || '',
-                      password: '', // don't pre-fill password for security
-                      alamat: user.alamat || '',
-                      toko: user.storeId || '',
-                      kode_rujukan: user.referralCode || '',
-                      role: user.role || '',
-                      verifikasi: !!user.emailVerified,
-                    });
-                    setPreviews(user.image ? [user.image] : []);
-                  }}
-                >
-                  Edit
-                </DropdownMenuCheckboxItem>
+                {user.role == 'ADMIN' && (
+                  <>
+                    <DropdownMenuCheckboxItem
+                      onCheckedChange={() => {
+                        setIsEditMode(true);
+                        setEditingUserId(user.id);
+                        setDialogOpen(true);
+                        formik.setValues({
+                          gambar: user.image || '',
+                          nama: user.name || '',
+                          email: user.email || '',
+                          password: '',
+                          alamat: user.alamat || '',
+                          toko: user.storeId || '',
+                          kode_rujukan: user.referralCode || '',
+                          role: user.role || '',
+                          verifikasi: !!user.emailVerified,
+                        });
+                        setPreviews(user.image ? [user.image] : []);
+                      }}
+                    >
+                      Edit
+                    </DropdownMenuCheckboxItem>
+                  </>
+                )}
+                {/* ✅ Always show Lihat Detail */}
                 <DropdownMenuCheckboxItem
                   onCheckedChange={() => {
                     setIsEditMode(false);
                     setIsDetailMode(true);
                     formik.setValues({
-                      // keep the file input empty — previews handle the old image
                       image: null,
-
-                      // basic fields
                       nama: user.name ?? '',
                       email: user.email ?? '',
-                      password: '', // never pre-fill passwords
-
-                      // address (takes the first one as “utama”)
+                      password: '',
                       alamat: user.addresses?.[0]?.address ?? '',
-
-                      // store
-                      toko: user.managedStore?.id ?? '',
-
-                      // referral
+                      toko: user.store?.id ?? '',
                       kode_rujukan: user.referralCode ?? '',
                       role: user.role ?? 'USER',
                       verifikasi: Boolean(user.emailVerified),
-
-                      // the “extra” detail-only fields
                       telepon: user.phone ?? '-',
                       gender: user.gender ?? '-',
-                      // for a <Input type="date" />, format as YYYY-MM-DD
                       tglLahir: user.dateOfBirth
                         ? new Date(user.dateOfBirth)
                             .toISOString()
@@ -254,25 +263,30 @@ export function useUserManagement() {
                         : '',
                     });
                     setPreviews(user.image ? [user.image] : []);
-
                     setDialogOpen(true);
                   }}
                 >
                   Lihat Detail
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  className="text-red-600"
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      // Close dropdown and open alert manually
-                      setTimeout(() => setIsAlertOpen(true), 100);
-                    }
-                  }}
-                >
-                  Delete
-                </DropdownMenuCheckboxItem>
+                {user.role == 'ADMIN' && (
+                  <>
+                    <DropdownMenuCheckboxItem
+                      className="text-red-600"
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setTimeout(() => setIsAlertOpen(true), 100);
+                        }
+                      }}
+                    >
+                      Delete
+                    </DropdownMenuCheckboxItem>
+                    {/* ❌ Hide Edit & Delete if row user is ADMIN */}
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Confirmation Dialog for Delete */}
             <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -286,7 +300,7 @@ export function useUserManagement() {
                   <AlertDialogCancel>Batal</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
-                      handleDeleteUser(user.id);
+                      handleDeleteUser(user.id, setIsProcessing);
                     }}
                   >
                     Hapus
@@ -308,63 +322,49 @@ export function useUserManagement() {
     state: {
       sorting,
       pagination,
-      columnFilters,
       columnVisibility,
-      globalFilter,
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _columnId, filterValue) => {
-      const searchText = String(filterValue).toLowerCase();
-      const original = row.original;
-
-      const name = original.name?.toLowerCase() ?? '';
-      const email = original.email?.toLowerCase() ?? '';
-      const role = original.role?.toLowerCase() ?? '';
-      const referralCode = original.referralCode?.toLowerCase() ?? '';
-      const toko = original.managedStore?.name?.toLowerCase() ?? '';
-      const verifikasi = original.emailVerified
-        ? 'terverifikasi'
-        : 'belum terverifikasi';
-
-      return [name, email, role, referralCode, toko, verifikasi].some((field) =>
-        field.includes(searchText),
-      );
-    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setGlobalFilter(e.target.value);
+    setSearchTerm(e.target.value);
   };
-
-  const handleVerificationFilter = (value: string) => {
-    if (value === 'all') {
-      table.getColumn('verifikasi')?.setFilterValue(undefined);
-    } else if (value === 'true') {
-      table.getColumn('verifikasi')?.setFilterValue(true);
-    } else if (value === 'false') {
-      table.getColumn('verifikasi')?.setFilterValue(false);
-    }
-  };
+  console.log('Current selectedUserRole:', selectedUserRole); // Add this line to debug
 
   const handleRoleFilter = (val: string) => {
-    if (val === 'all') table.getColumn('role')?.setFilterValue(undefined);
-    else table.getColumn('role')?.setFilterValue(val); // ⬅︎ new
+    setSelectedUserRole(val as 'all' | 'SUPER' | 'ADMIN' | 'USER');
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
-
-  const handleDeleteUser = async (id: string) => {
-    const ok = await apiDeleteUser(id);
+  const handleVerificationFilter = (val: string) => {
+    setSelectedVerification(val as 'all' | 'true' | 'false');
+    setPagination((p) => ({ ...p, pageIndex: 0 })); // Reset to first page when filtering
+  };
+  const handleDeleteUser = async (id: string, setIsProcessing) => {
+    const ok = await apiDeleteUser(id, setIsProcessing);
     if (ok) {
-      await fetchUsers(pagination.pageIndex, pagination.pageSize);
+      await fetchUsers(
+        pagination.pageIndex,
+        pagination.pageSize,
+        debouncedSearchTerm,
+        selectedUserRole,
+        selectedVerification,
+      );
     }
     return ok;
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setSelectedUserRole(''); // Set back to 'all'
+    setSelectedVerification('');
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
   return {
@@ -395,5 +395,11 @@ export function useUserManagement() {
     setMainIndex,
     isDetailMode,
     setIsDetailMode,
+    selectedUserRole,
+    searchTerm,
+    clearAllFilters,
+    selectedVerification,
+    isProcessing,
+    setIsProcessing,
   };
 }

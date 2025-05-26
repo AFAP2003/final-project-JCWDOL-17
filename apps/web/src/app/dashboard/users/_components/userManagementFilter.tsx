@@ -16,40 +16,72 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Eye } from 'lucide-react';
+import { Eye, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { User } from '@/lib/interfaces/userManagement.interface';
 import { flexRender, Table } from '@tanstack/react-table';
 
 interface UserManagementFilterProps {
-  globalFilter: string;
   handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleVerificationFilter: (value: string) => void;
   table: Table<User>;
   handleRoleFilter: (value: string) => void;
+  searchTerm: string;
+  selectedUserRole: 'all' | 'SUPER' | 'ADMIN' | 'USER'; 
+  selectedVerification: 'all' | 'true' | 'false';
+  clearAllFilters: () => void;
 }
 
 export default function UserManagementFilter({
-  globalFilter,
   handleSearchChange,
   handleVerificationFilter,
   table,
   handleRoleFilter,
+  searchTerm,
+  selectedUserRole,
+  selectedVerification,
+  clearAllFilters,
 }: UserManagementFilterProps) {
+  // Check if any filters are active
+
   return (
-    <div className="mb-4 flex items-end justify-between gap-2 sm:gap-0">
-      <div className="flex gap-2">
-        <Input
-          placeholder="Cari..."
-          value={globalFilter}
-          onChange={handleSearchChange}
-          className="order-2 h-9 w-[140px] text-sm sm:w-[200px] sm:order-1"
-        />
+    <div className="mb-4 flex flex-col sm:flex-row items-end justify-between gap-2 sm:gap-0">
+      <div className="flex gap-2 w-full sm:w-auto">
+        <div className="relative w-full sm:w-auto">
+          <Input
+            placeholder="Cari..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="order-2 h-9 w-full sm:w-[200px] text-sm sm:order-1 pr-8"
+          />
+          {searchTerm && (
+            <button
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              onClick={() =>
+                handleSearchChange({
+                  target: { value: '' },
+                } as React.ChangeEvent<HTMLInputElement>)
+              }
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearAllFilters}
+          className="text-xs"
+        >
+          Atur Ulang Filter
+        </Button>
       </div>
-      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4">
-        <Select onValueChange={handleRoleFilter} defaultValue="all">
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Pilih Verifikasi" />
+
+      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
+        <Select onValueChange={handleRoleFilter} value={selectedUserRole}>
+          <SelectTrigger className="w-full sm:w-[150px]">
+            <SelectValue placeholder="Pilih Role" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -61,8 +93,12 @@ export default function UserManagementFilter({
             </SelectGroup>
           </SelectContent>
         </Select>
-        <Select onValueChange={handleVerificationFilter} defaultValue="all">
-          <SelectTrigger className="w-[150px]">
+
+        <Select
+          onValueChange={handleVerificationFilter}
+          value={selectedVerification}
+        >
+          <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue placeholder="Pilih Verifikasi" />
           </SelectTrigger>
           <SelectContent>
@@ -74,10 +110,11 @@ export default function UserManagementFilter({
             </SelectGroup>
           </SelectContent>
         </Select>
+
         <DropdownMenu modal={true}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              <Eye /> Lihat
+              <Eye className="mr-2 h-4 w-4" /> Lihat Kolom
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

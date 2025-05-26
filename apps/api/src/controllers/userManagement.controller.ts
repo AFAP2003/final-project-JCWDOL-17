@@ -8,9 +8,15 @@ class UserManagementController {
     try {
       const page = parseInt(req.query.page as string, 10) || 1;
       const take = parseInt(req.query.take as string, 10) || 10;
+      const search = (req.query.search as string) ?? '';
+      const role = (req.query.role as string) ?? '';
+      const verified = (req.query.verified as string) ?? '';
       const { total, data } = await userManagementService.listAllUsers(
         page,
         take,
+        search,
+        role,
+        verified,
       );
       res.status(200).send({
         success: true,

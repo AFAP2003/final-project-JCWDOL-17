@@ -26,7 +26,6 @@ import {
   ColumnDef,
   ColumnFiltersState,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
@@ -64,7 +63,14 @@ export default function UseInventoryManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDetailMode, setIsDetailMode] = useState(false);
   const [isDetailDropdown, setIsDetailDropdown] = useState(false);
+  const [searchTerm,setSearchTerm] = useState('')
+  const [debouncedSearchTerm,setDebouncedSearchTerm] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'Stok Tersedia' | 'Stok Rendah' | 'Stok Habis'>('');
+  const [selectedStore, setSelectedStore] = useState<'all' | string>('');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | string>('');
+  
   const { data: session, isPending: isSessionLoading } = useSession();
+  const [isProcessing,setIsProcessing] = useState(false)
   const user = session?.user;
   const columns = useMemo<ColumnDef<any>[]>(() => {
     const cols: ColumnDef<any>[] = [
@@ -234,7 +240,7 @@ export default function UseInventoryManagement() {
                     <AlertDialogCancel>Batal</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
-                        handleDeleteInventory(inventory.id);
+                        handleDeleteInventory(inventory.id,setIsProcessing);
                       }}
                     >
                       Hapus
@@ -252,8 +258,8 @@ export default function UseInventoryManagement() {
   }, [user?.role]);
 
   const fetchInventories = useCallback(
-    (pageIndex: number, pageSize: number) => {
-      return apiFetchInventories(pageIndex, pageSize).then((json) => {
+    (pageIndex: number, pageSize: number,searchTerm:string,store:string,category:string,status:string) => {
+      return apiFetchInventories(pageIndex, pageSize,searchTerm,store,category,status).then((json) => {
         if (json?.pagination) {
           setPageCount(json.pagination.totalPages);
         }
@@ -264,9 +270,19 @@ export default function UseInventoryManagement() {
   );
 
   useEffect(() => {
-    fetchInventories(pagination.pageIndex, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    fetchInventories(pagination.pageIndex, pagination.pageSize,debouncedSearchTerm,selectedStore,selectedCategory,selectedStatus);
+  }, [pagination.pageIndex, pagination.pageSize,debouncedSearchTerm,selectedStore,selectedCategory,selectedStatus]);
 
+   useEffect(() => {
+          const handler = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+                setPagination(p => ({ ...p, pageIndex: 0 })); // reset **once** after typing stops
+  
+          }, 1000);                // ← 300ms debounce
+  
+            return () => clearTimeout(handler);
+          }, [searchTerm]);
+          
   useEffect(() => {
     fetchStores();
     fetchCategories(0, 50);
@@ -294,21 +310,17 @@ export default function UseInventoryManagement() {
     validationSchema: getValidationSchema(),
 
     onSubmit: async (values, { resetForm }) => {
-      console.log('>>> 1. Formik onSubmit function reached START');
-      console.log('>>> 1a. Submitting values:', values);
 
       const selectedStoreId =
         user?.role === 'ADMIN'
           ? storeByAdmin?.id
           : values.toko || values.storeId || '';
-      console.log('>>> 1b. Selected Store ID:', selectedStoreId);
 
       const existingInv = inventories.find(
         (inv) =>
           String(inv.productId) === String(values.produk) &&
           String(inv.storeId) === String(selectedStoreId),
       );
-      console.log('>>> 2. Existing inventory found:', existingInv);
 
       let success = false;
       let inventoryIdToProcess = null; // Variable to hold the ID for update
@@ -317,24 +329,17 @@ export default function UseInventoryManagement() {
       // If we're explicitly in 'edit mode' (from clicking an edit button on the table)
       // AND we have a valid editingInventoryId from the context, use that.
       if (isEditMode && editingInventoryId) {
-        console.log(
-          '>>> 3a. EDIT mode branch active (from table edit button). Using ID:',
-          editingInventoryId,
-        );
+      
         inventoryIdToProcess = editingInventoryId;
       }
       // ELSE IF an existing inventory was found based on form selections (from '+' button)
       // This is the path for '+' button when an existing item is selected
       else if (existingInv) {
-        console.log(
-          '>>> 3b. EXISTING item selected (via + button). Using ID:',
-          existingInv.id,
-        );
+        
         inventoryIdToProcess = existingInv.id;
       }
       // ELSE it's a completely new item to be created
       else {
-        console.log('>>> 3c. CREATE NEW item.');
         const newQuantity =
           values.mode === 'tambah'
             ? Number(values.tambah || 0)
@@ -353,38 +358,28 @@ export default function UseInventoryManagement() {
           storeId: selectedStoreId,
           quantity: newQuantity,
           minStock: Number(values.minimal),
-        });
-        console.log('>>> 3c2. handleCreateInventory returned:', success);
+          
+        },setIsProcessing);
       }
       // --- END CRITICAL LOGIC CHANGE ---
 
       // --- Execute Update if an ID was determined for it ---
       if (inventoryIdToProcess) {
         // Only call update if an ID was set in the branches above
-        console.log(
-          '>>> 4a. Inventory ID to process (update):',
-          inventoryIdToProcess,
-        );
-        console.log('>>> 4b. Calling handleUpdateInventory...');
-        success = await handleUpdateInventory(inventoryIdToProcess, values);
-        console.log('>>> 4c. handleUpdateInventory AWAIT returned:', success);
+        
+        success = await handleUpdateInventory(inventoryIdToProcess, values,setIsProcessing);
       }
 
-      console.log(">>> 5. Checking 'success' variable:", success);
 
       if (success) {
-        console.log(
-          '>>> 6. Operation SUCCESS. Resetting form, closing dialog, and refetching data.',
-        );
+       
         resetForm();
         setDialogOpen(false);
-        await fetchInventories(pagination.pageIndex, pagination.pageSize);
-        console.log('>>> 7. fetchInventories call AWAITED.');
+        await fetchInventories(pagination.pageIndex, pagination.pageSize,debouncedSearchTerm,selectedStore,selectedCategory,selectedStatus);
       } else {
         console.log('>>> 6. Operation FAILED (success is false).');
       }
 
-      console.log('>>> 8. Formik onSubmit function reached END');
     },
   });
 
@@ -396,81 +391,55 @@ export default function UseInventoryManagement() {
     state: {
       sorting,
       pagination,
-      columnFilters,
       columnVisibility,
-      globalFilter,
     },
 
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _columnId, filterValue) => {
-      const searchText = String(filterValue).toLowerCase();
-
-      const inventory = row.original;
-
-      let status = '';
-      if (inventory.quantity === 0) {
-        status = 'Stok Habis';
-      } else if (inventory.quantity <= inventory.minStock) {
-        status = 'Stok Rendah';
-      } else {
-        status = 'Stok Tersedia';
-      }
-
-      const cellValues = [
-        String(inventory.id ?? ''),
-        String(inventory.product?.name ?? ''),
-        String(inventory.product?.category?.name ?? ''),
-        String(inventory.product?.price ?? ''),
-        String(inventory.store?.name ?? ''),
-        String(inventory.quantity ?? ''),
-        status,
-        new Date(inventory.updatedAt).toLocaleString('id-ID'),
-      ];
-      return cellValues.some((value) =>
-        value.toLowerCase().includes(searchText),
-      );
-    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setGlobalFilter(e.target.value);
+    setSearchTerm(e.target.value);
   };
 
   const handleStatusFilter = (value: string) => {
-    if (value === 'all') {
-      table.getColumn('status')?.setFilterValue(undefined);
-    } else {
-      table.getColumn('status')?.setFilterValue(value);
-    }
+   setSelectedStatus(value);
+  setPagination(p => ({ ...p, pageIndex: 0 }));
   };
 
   const handleStoreFilter = (value: string) => {
-    table
-      .getColumn('store')
-      ?.setFilterValue(value === 'all' ? undefined : value);
+  setSelectedStore(value);
+  setPagination(p => ({ ...p, pageIndex: 0 }));
   };
 
   const handleCategoryFilter = (value: string) => {
-    table
-      .getColumn('category')
-      ?.setFilterValue(value === 'all' ? undefined : value);
+  setSelectedCategory(value);
+  setPagination(p => ({ ...p, pageIndex: 0 }));
   };
 
-  const handleDeleteInventory = async (id: string) => {
-    const ok = await apiDeleteInventory(id);
+  const handleDeleteInventory = async (id: string,setIsProcessing) => {
+    const ok = await apiDeleteInventory(id,setIsProcessing);
     if (ok) {
-      await fetchInventories(pagination.pageIndex, pagination.pageSize);
+      await fetchInventories(pagination.pageIndex, pagination.pageSize,debouncedSearchTerm,selectedStore,selectedCategory,selectedStatus);
     }
     return ok;
   };
+
+
+  const clearAllFilters = () => {
+  setSearchTerm('');
+  setSelectedCategory('')
+  setSelectedStatus('')
+  setSelectedStore('')
+  setPagination(p => ({ ...p, pageIndex: 0 }));
+};
+
+
 
   return {
     table,
@@ -511,5 +480,14 @@ export default function UseInventoryManagement() {
     setIsDetailDropdown,
     fetchStoreByAdminId,
     storeByAdmin,
+    clearAllFilters,
+    searchTerm,
+    selectedStatus,
+    selectedCategory,
+    selectedStore,
+    setSelectedStatus,
+    setSelectedStore,
+    setSelectedCategory,
+    isProcessing
   };
 }

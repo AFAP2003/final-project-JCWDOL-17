@@ -17,6 +17,7 @@ import DiscountManagementForm from './_components/discountManagementForm';
 import DiscountManagementPagination from './_components/discountManagementPagination';
 import DiscountManagementskeleton from './_components/discountManagementSkeleton';
 import DiscountManagementTable from './_components/discountManagementTable';
+import OverlaySpinner from '@/components/overlay/loadingOverlay';
 
 export default function DiscountManagement() {
   const {
@@ -37,6 +38,12 @@ export default function DiscountManagement() {
     setEditingDiscountId,
     isDetailMode,
     setIsDetailMode,
+    clearAllFilters,
+    selectedType,
+    selectedValueType,
+    selectedStatus,
+    searchTerm,
+    isProcessing,
   } = UseDiscountManagement();
 
   if (isLoading) {
@@ -44,70 +51,77 @@ export default function DiscountManagement() {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col gap-6 p-4">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="sm:text-4xl text-2xl font-bold">Manajemen Diskon</h1>
+    <>
+      {isProcessing && <OverlaySpinner />}
+      <div className="min-h-screen w-full flex flex-col gap-6 p-4">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h1 className="sm:text-4xl text-2xl font-bold">Manajemen Diskon</h1>
 
-        {/* Dialog */}
-        <DiscountManagementForm
-          formik={formik}
-          stores={stores}
-          isEditMode={isEditMode}
-          dialogOpen={dialogOpen}
-          setDialogOpen={setDialogOpen}
-          setIsEditMode={setIsEditMode}
-          setEditingDiscountId={setEditingDiscountId}
-          isDetailMode={isDetailMode}
-          setIsDetailMode={setIsDetailMode}
-        />
-      </div>
-
-      {/* Column toggles (desktop) */}
-      <DropdownMenu modal={false}>
-        <div className="hidden lg:hidden md:flex justify-end">
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              <Eye /> Lihat
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Kolom</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {table
-              .getAllColumns()
-              .filter((col) => col.getCanHide())
-              .map((col) => (
-                <DropdownMenuCheckboxItem
-                  key={col.id}
-                  className="capitalize"
-                  checked={col.getIsVisible()}
-                  onCheckedChange={(v) => col.toggleVisibility(!!v)}
-                >
-                  {typeof col.columnDef.header === 'string'
-                    ? col.columnDef.header
-                    : flexRender(col.columnDef.header, col.getContext())}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
+          {/* Dialog */}
+          <DiscountManagementForm
+            formik={formik}
+            stores={stores}
+            isEditMode={isEditMode}
+            dialogOpen={dialogOpen}
+            setDialogOpen={setDialogOpen}
+            setIsEditMode={setIsEditMode}
+            setEditingDiscountId={setEditingDiscountId}
+            isDetailMode={isDetailMode}
+            setIsDetailMode={setIsDetailMode}
+          />
         </div>
-      </DropdownMenu>
 
-      {/* Filters row */}
-      <DiscountManagementFilter
-        globalFilter={globalFilter}
-        handleSearchChange={handleSearchChange}
-        handleStatusFilter={handleStatusFilter}
-        table={table}
-        handleTypeFilter={handleTypeFilter}
-        handleTypeValueFilter={handleTypeValueFilter}
-      />
+        {/* Column toggles (desktop) */}
+        <DropdownMenu modal={false}>
+          <div className="hidden lg:hidden md:flex justify-end">
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-auto">
+                <Eye /> Lihat
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Kolom</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table
+                .getAllColumns()
+                .filter((col) => col.getCanHide())
+                .map((col) => (
+                  <DropdownMenuCheckboxItem
+                    key={col.id}
+                    className="capitalize"
+                    checked={col.getIsVisible()}
+                    onCheckedChange={(v) => col.toggleVisibility(!!v)}
+                  >
+                    {typeof col.columnDef.header === 'string'
+                      ? col.columnDef.header
+                      : flexRender(col.columnDef.header, col.getContext())}
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </div>
+        </DropdownMenu>
 
-      {/* Table */}
-      <DiscountManagementTable table={table} columns={columns} />
+        {/* Filters row */}
+        <DiscountManagementFilter
+          handleSearchChange={handleSearchChange}
+          handleStatusFilter={handleStatusFilter}
+          table={table}
+          handleTypeFilter={handleTypeFilter}
+          handleTypeValueFilter={handleTypeValueFilter}
+          clearAllFilters={clearAllFilters}
+          selectedStatus={selectedStatus}
+          selectedType={selectedType}
+          selectedValueType={selectedValueType}
+          searchTerm={searchTerm}
+        />
 
-      {/* Pagination */}
-      <DiscountManagementPagination table={table} />
-    </div>
+        {/* Table */}
+        <DiscountManagementTable table={table} columns={columns} />
+
+        {/* Pagination */}
+        <DiscountManagementPagination table={table} />
+      </div>
+    </>
   );
 }

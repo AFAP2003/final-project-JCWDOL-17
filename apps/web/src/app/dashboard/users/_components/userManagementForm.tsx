@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { FormikProps } from 'formik';
-import { Eye, EyeOff,  Plus, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Plus, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { MyFormValues } from '@/validations/user.validation';
 import { genRandomString } from '@/lib/utils';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Store } from '@/lib/interfaces/storeManagement.interface';
 
 interface UserManagementFormProps {
@@ -54,6 +54,8 @@ export default function UserManagementForm({
   isDetailMode,
   setIsDetailMode,
 }: UserManagementFormProps) {
+  const [showAdminFields, setShowAdminFields] = useState(true);
+  const [showInfoFields, setShowInfoFields] = useState(true);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.currentTarget.files?.[0];
     if (!file) return;
@@ -64,6 +66,25 @@ export default function UserManagementForm({
     setMainIndex(0);
   };
 
+  useEffect(() => {
+    // When user selects a role that's not ADMIN or SUPER, hide the admin fields
+    if (formik.values.role && formik.values.role !== 'ADMIN') {
+      setShowAdminFields(false);
+    } else {
+      setShowAdminFields(true);
+    }
+  }, [formik.values.role]);
+
+  useEffect(() => {
+    if (
+      (formik.values.role && formik.values.role == 'SUPER') ||
+      formik.values.role == 'ADMIN'
+    ) {
+      setShowInfoFields(false);
+    } else {
+      setShowInfoFields(true);
+    }
+  });
   const [showPassword, setShowPassword] = useState(false);
   const handleGeneratePassword = () => {
     const pwd = genRandomString().slice(0, 12);
@@ -170,35 +191,37 @@ export default function UserManagementForm({
             )}
           </div>
 
-          {isDetailMode && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Jenis Kelamin</label>
-              <Input value={formik.values.gender} readOnly disabled />
-            </div>
-          )}
+          {isDetailMode && showInfoFields && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Jenis Kelamin</label>
+                <Input value={formik.values.gender} readOnly disabled />
+              </div>
 
-          {isDetailMode && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Telepon</label>
-              <Input value={formik.values.telepon} readOnly disabled />
-            </div>
-          )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Telepon</label>
+                <Input value={formik.values.telepon} readOnly disabled />
+              </div>
 
-          {isDetailMode && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tanggal Lahir</label>
-              <Input
-                value={
-                  formik.values.tglLahir
-                    ? new Date(formik.values.tglLahir).toLocaleDateString(
-                        'id-ID',
-                      )
-                    : '-'
-                }
-                readOnly
-                disabled
-              />
-            </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tanggal Lahir</label>
+                <Input
+                  value={
+                    formik.values.tglLahir
+                      ? new Date(formik.values.tglLahir).toLocaleDateString(
+                          'id-ID',
+                        )
+                      : '-'
+                  }
+                  readOnly
+                  disabled
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Alamat</label>
+                <Input value={formik.values.alamat} readOnly disabled />
+              </div>
+            </>
           )}
 
           <div className="space-y-2">
@@ -279,58 +302,67 @@ export default function UserManagementForm({
             )}
           </div>
 
-        
-          <div className="space-y-2">
-            <label htmlFor="toko" className="text-sm font-medium text-gray-700">
-              Toko
-            </label>
-            <Select
-              onValueChange={(value) => formik.setFieldValue('toko', value)}
-              value={formik.values.toko}
-              disabled={disabled}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih Toko" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Stores</SelectLabel>
-                  {stores.map((store) => (
-                    <SelectItem value={store.id} key={store.id}>
-                      {store.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            {formik.touched.toko && formik.errors.toko && (
-              <p className="text-xs text-red-600">{formik.errors.toko}</p>
-            )}
-          </div>
+          {showAdminFields && (
+            <>
+              <div className="space-y-2">
+                <label
+                  htmlFor="toko"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Toko
+                </label>
+                <Select
+                  onValueChange={(value) => formik.setFieldValue('toko', value)}
+                  value={formik.values.toko}
+                  disabled={disabled}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Pilih Toko" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Stores</SelectLabel>
+                      {stores.map((store) => (
+                        <SelectItem value={store.id} key={store.id}>
+                          {store.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {formik.touched.toko && formik.errors.toko && (
+                  <p className="text-xs text-red-600">{formik.errors.toko}</p>
+                )}
+              </div>
 
-          <div className="space-y-2">
-            <label htmlFor="role" className="text-sm font-medium text-gray-700">
-              Role
-            </label>
-            <Select
-              onValueChange={(value) => formik.setFieldValue('role', value)}
-              value={formik.values.role}
-              disabled={disabled}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Role</SelectLabel>
-                  <SelectItem value="ADMIN">Store Admin</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            {formik.touched.role && formik.errors.role && (
-              <p className="text-xs text-red-600">{formik.errors.role}</p>
-            )}
-          </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="role"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Role
+                </label>
+                <Select
+                  onValueChange={(value) => formik.setFieldValue('role', value)}
+                  value={formik.values.role}
+                  disabled={disabled}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Pilih Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Role</SelectLabel>
+                      <SelectItem value="ADMIN">Store Admin</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {formik.touched.role && formik.errors.role && (
+                  <p className="text-xs text-red-600">{formik.errors.role}</p>
+                )}
+              </div>
+            </>
+          )}
 
           <DialogFooter>
             <Button
