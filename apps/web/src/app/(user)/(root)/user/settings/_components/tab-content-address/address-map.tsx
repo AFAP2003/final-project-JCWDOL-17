@@ -35,7 +35,7 @@ export default function AddressMap(props: Props) {
 
       <div className="overflow-hidden rounded-lg relative space-y-6">
         <Map
-          className="h-[250px] aspect-auto"
+          className="sm:h-[360px] aspect-auto"
           initialPosition={props.initialPosition}
           onLocationChange={(pinned, isInitial) => {
             setPinnedLocation(pinned);
