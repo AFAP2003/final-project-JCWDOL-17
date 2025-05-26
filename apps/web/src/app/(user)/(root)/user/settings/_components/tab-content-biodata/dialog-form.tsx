@@ -1,7 +1,13 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -38,8 +44,6 @@ const FormSchema = z.object({
       /^[A-Za-z]+(?:[' -][A-Za-z]+)*$/,
       'Name can only contain letters, spaces, hyphens, and apostrophes',
     ),
-
-  email: z.string().email(),
 
   dateOfBirth: z
     .date()
@@ -184,7 +188,6 @@ export default function DialogForm(props: Props) {
       );
       form.setValue('gender', props.user.gender || undefined);
       form.setValue('phone', props.user.phone || undefined);
-      form.setValue('email', props.user.email);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, form]);
@@ -209,6 +212,9 @@ export default function DialogForm(props: Props) {
           margin: 0,
         }}
       >
+        <DialogTitle className="hidden" />
+        <DialogDescription className="hidden" />
+
         <div className="w-full relative px-2">
           <div className="flex w-full justify-between items-center mb-6">
             <h2 className="text-neutral-200 font-semibold">{props.label}</h2>
