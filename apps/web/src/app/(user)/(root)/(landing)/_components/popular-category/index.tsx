@@ -72,7 +72,11 @@ export default function PopularCategory() {
           {data.categories.map((category, idx) => (
             <SwiperSlide key={idx} className="mb-9">
               <div
-                onClick={() => router.push(`/search?category=${category.name}`)}
+                onClick={() =>
+                  router.push(
+                    `/search?category=${encodeURIComponent(category.name)}`,
+                  )
+                }
                 className="w-full flex items-center justify-center cursor-pointer"
               >
                 <div className="relative aspect-square size-32 flex items-center justify-center bg-neutral-200 rounded-full">
@@ -84,7 +88,11 @@ export default function PopularCategory() {
                 </div>
               </div>
               <div
-                onClick={() => router.push(`/search?category=${category.name}`)}
+                onClick={() =>
+                  router.push(
+                    `/search?category=${encodeURIComponent(category.name)}`,
+                  )
+                }
                 className="flex flex-col w-full items-center justify-center text-neutral-700 mt-1 gap-1 cursor-pointer"
               >
                 <p className="whitespace-nowrap line-clamp-1">
