@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Skeleton } from '../ui/skeleton';
-
 type SidebarProps = {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
@@ -37,15 +37,15 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   if (isPending) {
     return <Skeleton className="h-full w-full" />;
   }
+  const router = useRouter();
 
-  // 2) Define itemsToRender before you return your JSX:
-  const itemsToRender = sidebarItem.filter(item => {
-    // If store-admin, hide users + stores links:
-    if (session.user.role === 'ADMIN') {
-      return (
-        item.href !== '/dashboard/users' &&
-        item.href !== '/dashboard/stores'
-      );
+  const itemsToRender = sidebarItem.filter((item) => {
+    if (item.href === '/dashboard/stores' && session?.user.role === 'ADMIN') {
+      return false;
+    }
+
+    if (item.href === '/dashboard/users' && session?.user.role === 'ADMIN') {
+      return false;
     }
     return true;
   });
@@ -67,17 +67,23 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         />
 
         <div className="flex flex-col sm:gap-14 gap-6 mt-10">
-          {itemsToRender.map(item => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className="flex gap-4 text-black hover:bg-gray-100 p-4 rounded-md"
-            >
-              <item.icon className="w-5 h-5" />
-              {item.title}
-            </Link>
-          ))}
+          {itemsToRender.map((item) => {
+            const isStore = item.title === 'Toko';
+            return (
+              <Link
+                key={item.title}
+                className={cn(
+                  'flex gap-4 text-black hover:bg-gray-100 p-4 hover:rounded-md',
+                  isStore && session?.user.role !== 'SUPER' && 'hidden',
+                )}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)} // close sidebar on nav
+              >
+                <item.icon className="w-5 h-5" />
+                {item.title}
+              </Link>
+            );
+          })}
         </div>
       </div>
 

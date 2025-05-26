@@ -6,7 +6,7 @@ import {
   XCircle,
   AlertCircle,
 } from 'lucide-react';
-import { OrderStatus, OrderStatusConfig } from '../types/orders';
+import { OrderStatus, OrderStatusConfig } from '../interfaces/orders';
 
 export const orderStatusConfig: Record<OrderStatus, OrderStatusConfig> = {
   WAITING_PAYMENT: {

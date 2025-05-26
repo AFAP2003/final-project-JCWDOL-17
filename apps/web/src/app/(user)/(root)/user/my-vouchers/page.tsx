@@ -6,6 +6,7 @@ type Props = {
   searchParams: {
     query?: string;
     type?: string;
+    page?: string;
   };
 };
 
@@ -16,7 +17,11 @@ export default function MyVoucherPage({ searchParams }: Props) {
 
       <Separator className="my-6 mb-9 bg-neutral-800" />
 
-      <Content query={searchParams.query} type={searchParams.type} />
+      <Content
+        query={searchParams.query}
+        type={searchParams.type}
+        page={searchParams.page}
+      />
     </div>
   );
 }

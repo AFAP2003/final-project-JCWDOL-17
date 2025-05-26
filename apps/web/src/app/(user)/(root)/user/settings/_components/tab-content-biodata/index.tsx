@@ -4,18 +4,21 @@ import { Card } from '@/components/ui/card';
 import { useSession } from '@/lib/auth/client';
 import { format } from 'date-fns';
 import { redirect } from 'next/navigation';
+import { useIsClient } from 'usehooks-ts';
 import SectionHeading from '../section-heading';
 import DialogForm from './dialog-form';
+import DialogFormEmail from './dialog-form-email';
 import LoadingSkeleton from './loading-skeleton';
 import Profile from './profile';
 
 export default function TabContentBiodata() {
   const { data, isPending, refetch } = useSession();
+  const isClient = useIsClient();
 
-  if (isPending) return <LoadingSkeleton />;
+  if (isPending || !isClient) return <LoadingSkeleton />;
   if (!data) redirect('/auth/signin');
 
-  const { user } = data;
+  const user = data?.user;
 
   return (
     <Card className="p-6">
@@ -116,6 +119,9 @@ export default function TabContentBiodata() {
                       </span>
                     )}
                   </span>
+                  {user.signupMethod.includes('CREDENTIAL') && (
+                    <DialogFormEmail />
+                  )}
                 </div>
 
                 <div className="text-neutral-500 font-medium flex w-full items-center">

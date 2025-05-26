@@ -26,7 +26,7 @@ import { AxiosError } from 'axios';
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { FcGoogle } from 'react-icons/fc';
 import { SiDiscord } from 'react-icons/si';
@@ -66,6 +66,7 @@ type Props = {
 export default function SigninForm({ searchParams }: Props) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isRedirecting, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -91,7 +92,7 @@ export default function SigninForm({ searchParams }: Props) {
         return await apiclient.post('/auth/signin', {
           signinMethod: payload.method,
           role: 'USER',
-          callbackURL: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/`,
+          callbackURL: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/auth/signin/check-verified`,
           errorCallback: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/auth/signin`,
         });
       }
@@ -100,7 +101,7 @@ export default function SigninForm({ searchParams }: Props) {
         return await apiclient.post('/auth/signin', {
           signinMethod: payload.method,
           role: 'USER',
-          callbackURL: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/`,
+          callbackURL: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/auth/signin/check-verified`,
           errorCallback: `${process.env.NEXT_PUBLIC_BASE_FRONTEND_URL}/auth/signin`,
         });
       }
@@ -127,12 +128,16 @@ export default function SigninForm({ searchParams }: Props) {
     onSuccess: (response) => {
       if (response.data.signinMethod === 'CREDENTIAL') {
         form.reset();
-        router.push('/');
+        startTransition(() => {
+          router.push('/auth/signin/check-verified');
+        });
         return;
       }
 
       const url = response.data.url;
-      router.replace(url);
+      startTransition(() => {
+        router.replace(url);
+      });
     },
   });
 
@@ -142,7 +147,10 @@ export default function SigninForm({ searchParams }: Props) {
         "Your account isn't linked. Log in with your signup method to link it later in settings.",
       variant: 'destructive',
     });
-    router.push('/auth/signin');
+
+    startTransition(() => {
+      router.push('/auth/signin');
+    });
   }
 
   return (
@@ -247,11 +255,11 @@ export default function SigninForm({ searchParams }: Props) {
               <Button
                 type="submit"
                 className="w-full gap-2 transition-all"
-                disabled={isPending}
+                disabled={isPending || isRedirecting}
                 size="lg"
               >
-                Sign In With Email
-                {isPending ? (
+                {isRedirecting ? 'Redirecting ' : 'Sign In With Email'}
+                {isPending || isRedirecting ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 ) : (
                   <ArrowRight className="h-4 w-4" />
@@ -273,7 +281,7 @@ export default function SigninForm({ searchParams }: Props) {
 
           <div className="grid grid-cols-2 gap-4">
             <Button
-              disabled={isPending}
+              disabled={isPending || isRedirecting}
               onClick={() =>
                 signin({
                   method: 'GOOGLE',
@@ -286,6 +294,7 @@ export default function SigninForm({ searchParams }: Props) {
               <span>Google</span>
             </Button>
             <Button
+              disabled={isPending || isRedirecting}
               onClick={() =>
                 signin({
                   method: 'DISCORD',

@@ -49,7 +49,7 @@ export class ShippingService {
         nearestStoreResult.distance,
         Number(shippingMethod.baseCost),
       );
-      let serviceDetails = null;
+      let serviceDetails: any = null;
       let calculationMethod = 'distance';
 
       if (
@@ -185,7 +185,7 @@ export class ShippingService {
           response.data.data.length > 0
         ) {
           const locations = response.data.data;
-          let bestMatch = null;
+          let bestMatch: any = null;
 
           bestMatch = locations.find(
             (loc: any) =>

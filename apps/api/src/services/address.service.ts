@@ -35,7 +35,7 @@ export class AddressService {
     // const city = await this.locationService.cityGetByName(dto.city);
 
     if (dto.isPrimary) {
-      const oldDefault = await prismaclient.address.findUnique({
+      const oldDefault = await prismaclient.address.findFirst({
         where: {
           isDefault: true,
           userId: session.user.id,
@@ -47,7 +47,7 @@ export class AddressService {
             id: oldDefault.id,
           },
           data: {
-            isDefault: null,
+            isDefault: false,
           },
         });
       }
@@ -60,7 +60,7 @@ export class AddressService {
         province: dto.province,
         city: dto.city,
         postalCode: dto.postalCode,
-        isDefault: dto.isPrimary ? true : null,
+        isDefault: dto.isPrimary,
         latitude: dto.latitude,
         longitude: dto.longitude,
         phone: dto.phone,
@@ -87,7 +87,7 @@ export class AddressService {
     if (!address) throw new NotFoundError();
 
     if (dto.isPrimary) {
-      const oldDefault = await prismaclient.address.findUnique({
+      const oldDefault = await prismaclient.address.findFirst({
         where: {
           isDefault: true,
           userId: session.user.id,
@@ -99,7 +99,7 @@ export class AddressService {
             id: oldDefault.id,
           },
           data: {
-            isDefault: null,
+            isDefault: false,
           },
         });
       }
@@ -119,7 +119,7 @@ export class AddressService {
         province: dto.province,
         city: dto.city,
         postalCode: dto.postalCode,
-        isDefault: dto.isPrimary ? true : null,
+        isDefault: dto.isPrimary,
         latitude: dto.latitude,
         longitude: dto.longitude,
         phone: dto.phone,
@@ -168,7 +168,7 @@ export class AddressService {
       a."userId" = ${session.user.id} AND
       a."isActive" = true
       ${searchterm}
-    ORDER BY a."createdAt" DESC
+    ORDER BY a."isDefault" DESC, a."createdAt" DESC
     OFFSET ${(dto.page - 1) * dto.pageSize}
     LIMIT ${dto.pageSize}`;
 
@@ -209,6 +209,7 @@ export class AddressService {
       },
       data: {
         isActive: false,
+        isDefault: false,
       },
     });
   };

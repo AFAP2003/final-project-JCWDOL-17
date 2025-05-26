@@ -14,6 +14,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
 import { apiclient } from '@/lib/apiclient';
 import { refetchNow } from '@/lib/tanstack-query';
@@ -60,7 +66,7 @@ export const columns: ColumnDef<DataColumnType>[] = [
   {
     accessorKey: 'address',
     enableGlobalFilter: true,
-    size: 500,
+    size: 320,
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
 
@@ -80,7 +86,22 @@ export const columns: ColumnDef<DataColumnType>[] = [
       );
     },
     cell: ({ row }) => {
-      return <div className="line-clamp-1">{row.getValue('address')}</div>;
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <div className="line-clamp-1">{row.getValue('address')}</div>
+            </TooltipTrigger>
+            <TooltipContent
+              className="max-sm:max-w-[280px]"
+              align="center"
+              side="bottom"
+            >
+              <div className="">{row.getValue('address')}</div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
     },
   },
   {

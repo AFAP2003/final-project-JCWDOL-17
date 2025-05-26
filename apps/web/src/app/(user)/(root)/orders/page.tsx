@@ -1,11 +1,19 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
+import MaxWidthWrapper from '@/components/max-width-wrapper';
+import { OrderStatusBadge } from '@/components/order-status-badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Pagination,
   PaginationContent,
@@ -15,29 +23,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { OrderStatusBadge } from '@/components/order-status-badge';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import {
-  AlertCircle,
-  ChevronRight,
-  Package,
-  Search,
-  XCircle,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrders } from '@/context/order-provider';
 import { useSession } from '@/lib/auth/client';
-import MaxWidthWrapper from '@/components/max-width-wrapper';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { AlertCircle, ChevronRight, Package, Search } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function Orders() {
   const { data: session } = useSession();
@@ -58,7 +51,7 @@ export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
-  const [orderToCancel, setOrderToCancel] = useState(null);
+  const [orderToCancel, setOrderToCancel] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
@@ -79,7 +72,7 @@ export default function Orders() {
   };
 
   // Handle order cancellation
-  const openCancelModal = (order) => {
+  const openCancelModal = (order: any) => {
     setOrderToCancel(order);
     setCancelModalOpen(true);
   };
@@ -242,7 +235,7 @@ export default function Orders() {
                           <div className="mt-2 mb-3">
                             <h3 className="font-medium mb-2">Order Summary:</h3>
                             <div className="space-y-2">
-                              {order.items.slice(0, 2).map((item) => (
+                              {order.items.slice(0, 2).map((item: any) => (
                                 <div
                                   key={item.id}
                                   className="flex justify-between"
@@ -433,7 +426,7 @@ export default function Orders() {
                 </div>
               </div>
 
-              <Alert variant="warning" className="mb-4">
+              <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Warning</AlertTitle>
                 <AlertDescription>

@@ -4,4 +4,5 @@ export enum VerificationIdentifier {
   ResetPassword = 'ResetPassword',
   NewPassword = 'NewPassword',
   AnonymusSignin = 'AnonymusSignin',
+  ResetEmail = 'ResetEmail',
 }

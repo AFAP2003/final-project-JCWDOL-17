@@ -151,6 +151,7 @@ export default function LinkAccount({ session }: Props) {
         }
         cooldownTime={cooldownTime}
         rawCooldownTime={rawCooldownTime}
+        // restartCooldown={restartCooldown}
       />
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -158,7 +159,7 @@ export default function LinkAccount({ session }: Props) {
           <DialogTitle className="text-lg font-semibold">
             Konfirmasi Ubah Password
           </DialogTitle>
-          <DialogDescription className="text-sm text-neutral-300 mt-2">
+          <DialogDescription className="text-base text-neutral-300 mt-2">
             Demi keamanan, membuat atau mengubah password akan mengeluarkanmu
             dari semua sesi aktif. Lanjutkan?
           </DialogDescription>

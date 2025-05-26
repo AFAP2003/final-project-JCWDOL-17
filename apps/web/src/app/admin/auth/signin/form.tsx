@@ -33,7 +33,8 @@ import {
   MailCheckIcon,
 } from 'lucide-react';
 import Link from 'next/link';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import PanelLeft from './panel-left';
@@ -54,17 +55,12 @@ const formSchema = z.object({
 });
 
 type Props = {
-  role?: string;
+  role: 'ADMIN' | 'SUPER';
 };
 
 export default function SigninForm(props: Props) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { cooldownTime, rawCooldownTime, restartCooldown } = useCooldown(120);
-  const [loginRole, setLoginRole] = useState<'ADMIN' | 'SUPER'>(() => {
-    if (props.role === 'super') return 'SUPER';
-    if (props.role === 'admin') return 'ADMIN';
-    return 'ADMIN';
-  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -79,7 +75,7 @@ export default function SigninForm(props: Props) {
       return await apiclient.post('/auth/signin/confirm', {
         ...payload,
         signinMethod: 'CREDENTIAL',
-        role: loginRole,
+        role: props.role,
       });
     },
     onError: (error: AxiosError) => {
@@ -128,9 +124,8 @@ export default function SigninForm(props: Props) {
             <Signin
               form={form}
               isPending={isPending}
-              loginRole={loginRole}
+              loginRole={props.role}
               onSignin={signin}
-              setLoginRole={setLoginRole}
             />
           </div>
         </Card>
@@ -152,7 +147,7 @@ type SigninProps = {
   onSignin: (payload: z.infer<typeof formSchema>) => any;
   isPending: boolean;
   loginRole: 'ADMIN' | 'SUPER';
-  setLoginRole: Dispatch<SetStateAction<'ADMIN' | 'SUPER'>>;
+  // setLoginRole: Dispatch<SetStateAction<'ADMIN' | 'SUPER'>>;
 };
 
 export function Signin({
@@ -160,9 +155,10 @@ export function Signin({
   onSignin,
   isPending,
   loginRole,
-  setLoginRole,
+  // setLoginRole,
 }: SigninProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="flex size-full items-center justify-center grow">
@@ -176,9 +172,9 @@ export function Signin({
             <button
               onClick={() => {
                 if (loginRole === 'ADMIN') {
-                  setLoginRole('SUPER');
+                  router.push('/admin/auth/signin?role=SUPER');
                 } else {
-                  setLoginRole('ADMIN');
+                  router.push('/admin/auth/signin?role=ADMIN');
                 }
               }}
               className="font-medium text-primary underline-offset-4 underline"

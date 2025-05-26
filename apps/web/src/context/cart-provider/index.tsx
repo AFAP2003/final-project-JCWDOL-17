@@ -43,7 +43,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const { data: session } = useSession();
 
   const fetchCart = async () => {
-    if (!session) {
+    if (!session?.user) {
       setItems([]);
       setTotalItems(0);
       setSubtotal(0);
@@ -81,7 +81,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
-    if (session) {
+    if (session?.user) {
       fetchCart();
     } else {
       setItems([]);
@@ -89,10 +89,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       setSubtotal(0);
       setIsLoading(false);
     }
-  }, [session]);
+  }, [session?.user]);
 
   const addToCart = async (productId: string, quantity: number) => {
-    if (!session) {
+    if (!session?.user) {
       toast({
         description: 'Please login to add items to your cart',
         variant: 'destructive',
@@ -117,7 +117,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const updateCartItem = async (itemId: string, quantity: number) => {
-    if (!session) return;
+    if (!session?.user) return;
 
     try {
       setIsLoading(true);
@@ -136,7 +136,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const removeFromCart = async (itemId: string) => {
-    if (!session) return;
+    if (!session?.user) return;
 
     try {
       setIsLoading(true);
@@ -154,7 +154,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const clearCart = async () => {
-    if (!session) return;
+    if (!session?.user) return;
 
     try {
       setIsLoading(true);

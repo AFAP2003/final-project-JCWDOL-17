@@ -1,5 +1,8 @@
 import { AccountLinkDTO } from '@/dtos/account-link.dto';
+import { CheckPasswordDTO } from '@/dtos/check-password.dto';
+import { ConfirmEmailDTO } from '@/dtos/confirm-email.dto';
 import { ForgotPasswordDTO } from '@/dtos/forgot-password.dto';
+import { ResendConfirmEmailDTO } from '@/dtos/resend-confirm-email.dto';
 import { ResetPasswordDTO } from '@/dtos/reset-password.dto';
 import { RevokeSessionDTO } from '@/dtos/revoke-session.dto';
 import { SigninCredConfirmDTO, SigninDTO } from '@/dtos/signin.dto';
@@ -211,6 +214,70 @@ export class AuthController {
           url: result.url,
         });
       }
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  checkPassword = async (req: Request, res: Response) => {
+    const session = getSession(req);
+    const { data: dto, error } = CheckPasswordDTO.safeParse(req.body);
+    if (error) {
+      throw new UnprocessableEntityError(formatZodError(error));
+    }
+
+    try {
+      const match = await this.authService.checkPassword(dto, session.user.id);
+      res.json({
+        message: match ? 'Password match' : 'Password not match',
+        match: match,
+      });
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  confirmEmail = async (req: Request, res: Response) => {
+    const { data: dto, error } = ConfirmEmailDTO.safeParse(req.body);
+    if (error) {
+      throw new UnprocessableEntityError(formatZodError(error));
+    }
+
+    try {
+      const result = await this.authService.confirmEmail(dto, req);
+      if (result?.withPassword) {
+        const { headers } = result;
+        headers.forEach((value, key) => {
+          res.setHeader(key, value);
+        });
+      }
+      res.json(result);
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        const err = error as Error;
+        throw new InternalSeverError(err);
+      }
+      throw error;
+    }
+  };
+
+  resendConfirmEmail = async (req: Request, res: Response) => {
+    const { data: dto, error } = ResendConfirmEmailDTO.safeParse(req.body);
+    if (error) {
+      throw new UnprocessableEntityError(formatZodError(error));
+    }
+
+    try {
+      const result = await this.authService.resendConfirmEmail(dto);
+      res.json(result);
     } catch (error) {
       if (!(error instanceof ApiError)) {
         const err = error as Error;

@@ -22,6 +22,7 @@ import OrderDetailModal from './_component/orderDetailModal';
 import PaymentConfirmationModal from './_component/paymentConfirmationModal';
 import ShipOrderModal from './_component/shipOrderModal';
 import CancelOrderModal from './_component/cancelOrderModal';
+import { Order } from '@/lib/interfaces/orders';
 
 export default function OrderManagement() {
   const {
@@ -36,7 +37,7 @@ export default function OrderManagement() {
 
   const { stores, fetchStores } = storeManagementAPI();
 
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderDetailOpen, setOrderDetailOpen] = useState(false);
   const [paymentConfirmationOpen, setPaymentConfirmationOpen] = useState(false);
   const [shipOrderOpen, setShipOrderOpen] = useState(false);
@@ -60,7 +61,7 @@ export default function OrderManagement() {
     pageSize: 10,
   });
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<Order>[] = [
     {
       accessorKey: 'orderNumber',
       header: 'Order Number',
@@ -170,22 +171,22 @@ export default function OrderManagement() {
     [],
   );
 
-  const handleViewOrder = (order) => {
+  const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setOrderDetailOpen(true);
   };
 
-  const handleConfirmPayment = (order) => {
+  const handleConfirmPayment = (order: Order) => {
     setSelectedOrder(order);
     setPaymentConfirmationOpen(true);
   };
 
-  const handleShipOrderModal = (order) => {
+  const handleShipOrderModal = (order: Order) => {
     setSelectedOrder(order);
     setShipOrderOpen(true);
   };
 
-  const handleCancelOrderModal = (order) => {
+  const handleCancelOrderModal = (order: Order) => {
     setSelectedOrder(order);
     setCancelOrderOpen(true);
   };
@@ -290,7 +291,6 @@ export default function OrderManagement() {
         <h1 className="sm:text-4xl text-2xl font-bold">Manajemen Pesanan</h1>
       </div>
 
-      {/* Filter row */}
       <OrderManagementFilter
         globalFilter={globalFilter}
         handleSearchChange={handleSearchChange}
@@ -301,7 +301,6 @@ export default function OrderManagement() {
         warehouses={warehousesForFilter}
       />
 
-      {/* Main table */}
       <OrderManagementTable
         table={table}
         columns={columns}
@@ -311,14 +310,12 @@ export default function OrderManagement() {
         onCancelOrder={handleCancelOrderModal}
       />
 
-      {/* Pagination */}
       <OrderManagementPagination
         table={table}
         pagination={pagination}
         setPagination={setPagination}
       />
 
-      {/* Modals */}
       <OrderDetailModal
         order={selectedOrder}
         open={orderDetailOpen}
@@ -341,10 +338,7 @@ export default function OrderManagement() {
         order={selectedOrder}
         open={shipOrderOpen}
         onOpenChange={setShipOrderOpen}
-        onShip={onShipOrder}
-        checkStock={onCheckStock}
         isPending={actionsLoading}
-        isCheckingStock={stockCheckLoading}
         onSuccess={() => {
           setShipOrderOpen(false);
           fetchOrders(pagination.pageIndex, pagination.pageSize);

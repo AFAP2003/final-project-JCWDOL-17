@@ -53,26 +53,34 @@ export class CartService {
       );
     }
 
+    const product = await prismaclient.product.findUnique({
+      where: { id: dto.productId, isActive: true },
+    });
+
+    if (!product) {
+      throw new BadRequestError('Product not found or inactive');
+    }
+
+    await this.validateProductStock(dto.productId, dto.quantity);
+
     const cart = await this.findOrCreateCart(userId);
     const itemfound = cart.items.find((c) => c.productId === dto.productId);
-    if (!itemfound) {
-      return await prismaclient.cartItem.create({
-        data: {
-          quantity: dto.quantity,
-          cartId: cart.id,
-          productId: dto.productId,
-        },
+    if (itemfound) {
+      const newQuantity = itemfound.quantity + dto.quantity;
+      await this.validateProductStock(dto.productId, newQuantity);
+
+      return await prismaclient.cartItem.update({
+        where: { id: itemfound.id },
+        data: { quantity: newQuantity },
         include: { product: true },
       });
     }
 
-    return await prismaclient.cartItem.update({
-      where: {
-        id: itemfound.id,
-        productId: itemfound.productId,
-      },
+    return await prismaclient.cartItem.create({
       data: {
         quantity: dto.quantity,
+        cartId: cart.id,
+        productId: dto.productId,
       },
       include: { product: true },
     });
@@ -139,4 +147,29 @@ export class CartService {
 
     return cart.items.reduce((total, item) => total + item.quantity, 0);
   };
+
+  private async validateProductStock(
+    productId: string,
+    requestedQuantity: number,
+  ) {
+    const totalStock = await prismaclient.inventory.aggregate({
+      where: {
+        productId,
+        store: { isActive: true },
+      },
+      _sum: {
+        quantity: true,
+      },
+    });
+
+    const availableStock = totalStock._sum.quantity || 0;
+
+    if (availableStock < requestedQuantity) {
+      throw new BadRequestError(
+        `Insufficient stock. Only ${availableStock} items available.`,
+      );
+    }
+
+    return availableStock;
+  }
 }

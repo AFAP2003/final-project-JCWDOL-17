@@ -25,6 +25,7 @@ export const auth = betterAuth({
     generateId: (opt) => {
       return uuid();
     },
+    useSecureCookies: false,
   },
 
   user: {

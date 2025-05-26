@@ -1,13 +1,11 @@
 'use client';
 
-import UserManagementskeleton from './_components/userManagementSkeleton';
-import UserManagementTable from './_components/userManagementTable';
+import { useUserManagement } from '@/hooks/useUserManagement';
 import UserManagementFilter from './_components/userManagementFilter';
 import UserManagementForm from './_components/userManagementForm';
 import UserManagementPagination from './_components/userManagementPagination';
-import { useUserManagement } from '@/hooks/useUserManagement';
-import { useSession } from '@/lib/auth/client';
 import OverlaySpinner from '@/components/overlay/loadingOverlay';
+import UserManagementskeleton from './_components/userManagementSkeleton';
 
 export default function UserManagement() {
   const {
@@ -42,7 +40,7 @@ export default function UserManagement() {
   if (isLoading) {
     return <UserManagementskeleton />;
   }
-  const { user } = session;
+  const user = session?.user as any;
   return (
     <>
       {isProcessing && <OverlaySpinner />}

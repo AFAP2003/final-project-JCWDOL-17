@@ -23,12 +23,17 @@ export default function Content(props: Props) {
   const { data: session } = useSession();
 
   const fetch = useQuery({
-    queryKey: ['all:voucher', props],
+    queryKey: [
+      'all:voucher',
+      props.query,
+      props.type,
+      props.page,
+      session?.user.id,
+    ],
     queryFn: async () => {
       const q = qs.stringify(props);
-
       const { data } = await apiclient.get<GetAllVoucherResponse>(
-        `/voucher/me?${q}&pageSize=6`,
+        q ? `/voucher/me?${q}&pageSize=4` : '/voucher/me?pageSize=2',
       );
       return data;
     },
@@ -53,7 +58,7 @@ export default function Content(props: Props) {
                 ))}
               </div>
             ) : (
-              <div className="size-full flex items-center justify-center text-neutral-400 min-h-[calc(100vh-350px)]">
+              <div className="size-full flex items-center justify-center text-neutral-400 h-full">
                 <div className="flex flex-col items-center justify-center gap-2">
                   <div className="text-base font-medium text-center">
                     🫢 Oops!
@@ -73,7 +78,7 @@ export default function Content(props: Props) {
         )}
 
         {!fetch.isError && fetch.isPending && (
-          <div className="size-full flex items-center justify-center text-neutral-400 min-h-[calc(100vh-350px)]">
+          <div className="size-full flex items-center justify-center text-neutral-400 h-full">
             <div className="flex flex-col items-center justify-center gap-1">
               <Loader2Icon className="animate-spin size-7" />
               <div className="text-sm italic">Tunggu sebentar ya...</div>

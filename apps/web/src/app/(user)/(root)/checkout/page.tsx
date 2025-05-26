@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useCart } from '@/context/cart-provider';
 import { useCheckout } from '@/context/checkout-provider';
+import { toast } from '@/hooks/use-toast';
 import { useSession } from '@/lib/auth/client';
 import { PaymentMethod } from '@/lib/enums';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -38,7 +39,6 @@ import {
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { toast } from '@/hooks/use-toast';
 
 export default function Checkout() {
   const router = useRouter();
@@ -73,6 +73,8 @@ export default function Checkout() {
     setVoucherCode,
     handleSubmit,
     applyVoucher,
+    setAppliedVoucher,
+    setVoucherDiscount,
   } = useCheckout();
 
   const selectedAddress = addresses.find(
@@ -148,7 +150,6 @@ export default function Checkout() {
       <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Delivery Address Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -214,8 +215,6 @@ export default function Checkout() {
             )}
           </CardContent>
         </Card>
-
-        {/* Nearest Store Card */}
         {nearestStore && (
           <Card>
             <CardHeader>
@@ -244,7 +243,6 @@ export default function Checkout() {
           </Card>
         )}
 
-        {/* Error and Warning Alerts */}
         {shippingError && (
           <Alert variant="default">
             <AlertTriangle className="h-4 w-4" />
@@ -269,8 +267,6 @@ export default function Checkout() {
               </AlertDescription>
             </Alert>
           )}
-
-        {/* Shipping Method Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -345,7 +341,6 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
-        {/* Voucher Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -414,7 +409,9 @@ export default function Checkout() {
                 <div className="flex justify-between text-xs text-green-700 mt-2 pt-2 border-t border-green-200">
                   <span>
                     Valid until:{' '}
-                    {new Date(appliedVoucher.validUntil).toLocaleDateString()}
+                    {new Date(
+                      appliedVoucher.validUntil as any,
+                    ).toLocaleDateString()}
                   </span>
                   <Button
                     type="button"
@@ -437,7 +434,6 @@ export default function Checkout() {
             </div>
           )}
         </Card>
-        {/* Payment Method Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -500,7 +496,6 @@ export default function Checkout() {
           </CardContent>
         </Card>
 
-        {/* Order Notes Card */}
         <Card>
           <CardHeader>
             <CardTitle>Order Notes (Optional)</CardTitle>
@@ -515,8 +510,6 @@ export default function Checkout() {
             />
           </CardContent>
         </Card>
-
-        {/* Order Summary Card */}
         <Card>
           <CardHeader>
             <CardTitle>Order Summary</CardTitle>

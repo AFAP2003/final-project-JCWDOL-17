@@ -26,7 +26,7 @@ import { AxiosError } from 'axios';
 import { ArrowRight, Eye, EyeOff, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import AuthLogo from '../../../../../components/auth-logo';
@@ -59,6 +59,8 @@ export default function SetPasswordForm(props: Props) {
     },
   });
 
+  const [isRedirecting, startTransition] = useTransition();
+
   const { mutate: signup, isPending } = useMutation({
     mutationFn: async (payload: z.infer<typeof formSchema>) => {
       const { data } = await apiclient.post('/auth/signup', {
@@ -78,7 +80,9 @@ export default function SetPasswordForm(props: Props) {
           description: 'Invalid or expired token, please sign up again!',
           variant: 'destructive',
         });
-        router.push('/auth/signup');
+        startTransition(() => {
+          router.push('/auth/signup');
+        });
         return;
       }
 
@@ -94,7 +98,9 @@ export default function SetPasswordForm(props: Props) {
         description: 'Success creating account, please continue on sign in',
       });
       form.reset();
-      router.push('/auth/signin');
+      startTransition(() => {
+        router.push('/auth/signin');
+      });
     },
   });
 
@@ -161,11 +167,11 @@ export default function SetPasswordForm(props: Props) {
               <Button
                 type="submit"
                 className="mt-6 w-full gap-2"
-                disabled={isPending}
+                disabled={isPending || isRedirecting}
                 size="lg"
               >
-                Create My Account
-                {isPending ? (
+                {isRedirecting ? 'Redirecting ' : 'Create My Account'}
+                {isPending || isRedirecting ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 ) : (
                   <ArrowRight className="h-4 w-4" />

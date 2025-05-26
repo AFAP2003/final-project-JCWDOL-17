@@ -103,7 +103,7 @@ export class ShippingMethodController {
       }
 
       const { user } = getSessionUser(req);
-      if (user.role !== 'ADMIN' && user.role !== 'SUPER') {
+      if (user.role !== ('ADMIN' as any) && user.role !== ('SUPER' as any)) {
         throw new BadRequestError('Only admins can update shipping methods');
       }
 
@@ -140,7 +140,7 @@ export class ShippingMethodController {
       const { id } = req.params;
 
       const { user } = getSessionUser(req);
-      if (user.role !== 'ADMIN' && user.role !== 'SUPER') {
+      if (user.role !== ('ADMIN' as any) && user.role !== ('SUPER' as any)) {
         throw new BadRequestError('Only admins can delete shipping methods');
       }
 

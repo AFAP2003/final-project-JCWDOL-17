@@ -8,12 +8,11 @@ import { useSession } from '@/lib/auth/client';
 import { GetAllAddressResponse } from '@/lib/types/get-all-address-response';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import { Plus } from 'lucide-react';
+import { Loader2Icon, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useDebounceValue, useIsClient } from 'usehooks-ts';
-import AddressCard from './address-card';
+import AddressList from './address-list';
 import DialogForm from './dialog-form';
-import LoadingSkeleton from './loading-skeleton';
 import SearchBox from './search-box';
 
 export default function TabContentAddress() {
@@ -79,7 +78,16 @@ export default function TabContentAddress() {
     enabled: !!session?.user,
   });
 
-  if (getPending) return <LoadingSkeleton />;
+  if (getPending) {
+    return (
+      <Card className="size-full flex items-center justify-center text-neutral-400 min-h-[calc(100vh-380px)]">
+        <div className="flex flex-col items-center justify-center gap-1">
+          <Loader2Icon className="animate-spin size-7" />
+          <div className="text-sm italic">Tunggu sebentar ya...</div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <>
@@ -97,7 +105,7 @@ export default function TabContentAddress() {
       )}
 
       <Card className="p-6">
-        <div className="w-full min-h-[485px]">
+        <div className="w-full min-h-[485px] flex flex-col">
           <div className="flex sm:flex-row flex-col-reverse w-full justify-between mb-8 gap-6 sm:gap-12">
             <SearchBox search={search} setSearch={setSearch} />
             <Button
@@ -112,7 +120,7 @@ export default function TabContentAddress() {
             </Button>
           </div>
 
-          <div className="py-6">
+          <div className="py-3 grow grid">
             {addresses?.length === 0 && !dbSearch && (
               <div className="w-full h-[370px] flex items-center">
                 <div className="text-neutral-400 italic text-center text-base max-w-sm mx-auto">
@@ -130,29 +138,38 @@ export default function TabContentAddress() {
               </div>
             )}
 
-            <div className="space-y-6">
+            {addresses && addresses.length > 0 && (
+              <AddressList
+                addresses={addresses}
+                disabled={deletePending}
+                onEdit={(address) => {
+                  setInitialValue({
+                    ...address,
+                    addressId: address.id,
+                    isPrimary: address.isDefault ? true : false,
+                  });
+                  setOpenDialog(true);
+                  setAction('update');
+                }}
+                onDelete={(address) => {
+                  deleteAddress({
+                    addressId: address.id,
+                  });
+                }}
+                pageSize={2}
+              />
+            )}
+
+            {/* <div className="space-y-6">
               {addresses?.map((address, idx) => (
                 <AddressCard
                   disabled={deletePending}
                   key={address.id}
                   address={address}
-                  onEdit={(address) => {
-                    setInitialValue({
-                      ...address,
-                      addressId: address.id,
-                      isPrimary: address.isDefault ? true : false,
-                    });
-                    setOpenDialog(true);
-                    setAction('update');
-                  }}
-                  onDelete={(address) => {
-                    deleteAddress({
-                      addressId: address.id,
-                    });
-                  }}
+
                 />
               ))}
-            </div>
+            </div> */}
           </div>
         </div>
       </Card>

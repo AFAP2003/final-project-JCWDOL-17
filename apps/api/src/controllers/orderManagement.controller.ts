@@ -1,6 +1,6 @@
-import { ApiError, BadRequestError, InternalSeverError } from '@/errors';
+import { ApiError, InternalSeverError } from '@/errors';
 import orderManagementService from '@/services/orderManagement.service';
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 class OrderManagementController {
   async getOrders(req: Request, res: Response, next: NextFunction) {
@@ -98,9 +98,13 @@ class OrderManagementController {
 
   async cancelOrder(req: Request, res: Response, next: NextFunction) {
     try {
-      const { orderId, reason } = req.body;
+      const { orderId, reason, adminId } = req.body;
 
-      const data = await orderManagementService.cancelOrder(orderId, reason);
+      const data = await orderManagementService.cancelOrder(
+        orderId,
+        adminId,
+        reason,
+      );
 
       res.status(200).send({
         success: true,

@@ -1,7 +1,7 @@
 import {
+  BASE_FRONTEND_URL,
   MIDTRANS_CLIENT_KEY,
   MIDTRANS_SERVER_KEY,
-  BASE_FRONTEND_URL,
 } from '@/config';
 import { BadRequestError, NotFoundError } from '@/errors';
 import { prismaclient } from '@/prisma';
@@ -9,10 +9,9 @@ import { OrderStatus, PaymentMethod, PaymentStatus } from '@prisma/client';
 import axios from 'axios';
 import { addHours } from 'date-fns';
 import {
-  MidtransItem,
   MidtransCustomer,
+  MidtransItem,
   MidtransPaymentRequest,
-  MidtransTransactionDetails,
 } from '../types/midtrans.type';
 
 export class PaymentService {
@@ -54,7 +53,7 @@ export class PaymentService {
         name: `Shipping (${order.shippingMethod})`,
       });
 
-      if (order.discount > 0) {
+      if (order.discount.toNumber() > 0) {
         items.push({
           id: 'discount',
           price: -Number(order.discount),

@@ -1,9 +1,16 @@
+import { auth } from '@/auth';
+import { BASE_FRONTEND_URL } from '@/config';
 import { UserUpdateBioDTO } from '@/dtos/user-update-bio-dto';
+import { UserUpdateEmailDTO } from '@/dtos/user-update-email.dto';
+import { AuthEmailType } from '@/enums/auth-email-type';
 import { NotFoundError } from '@/errors';
 import { prismaclient } from '@/prisma';
 import { z } from 'zod';
+import { SMTPService } from './smtp.service';
 
 export class UserService {
+  private smtpService = new SMTPService();
+
   getByEmail = async (email: string) => {
     const user = await prismaclient.user.findUnique({
       where: {
@@ -67,6 +74,43 @@ export class UserService {
       },
     });
     return { user: updated };
+  };
+
+  updateEmail = async (
+    dto: z.infer<typeof UserUpdateEmailDTO>,
+    userId: string,
+  ) => {
+    const user = await prismaclient.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) throw new NotFoundError();
+
+    await prismaclient.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        email: dto.newEmail,
+        emailVerified: false,
+      },
+    });
+
+    const { url } = await this.smtpService.sendAuthEmail({
+      type: AuthEmailType.ResetEmail,
+      data: {
+        baseCallback: `${BASE_FRONTEND_URL}/auth/confirm-email`,
+        receiverEmail: user.email,
+        userId: user.id,
+        password: dto.password,
+      },
+    });
+
+    const ctx = await auth.$context;
+    await ctx.internalAdapter.deleteSessions(userId); // remove all session
+
+    return { url };
   };
 
   getAvailableAdmin = async () => {

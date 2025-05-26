@@ -18,18 +18,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage, } from '@/components/ui/avatar';
 import { signOut, useSession } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation';
-import { Skeleton } from '../ui/skeleton';
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
-    const { data: session, isPending } = useSession();
-    if (isPending) {
-    return (
-       <div></div>
-
-    );
+  const { data: session, isPending, refetch } = useSession();
+  if (isPending) {
+    return <div></div>;
   }
- const { user } = session;
- const router = useRouter()
+  const user = session?.user;
+  const router = useRouter();
 
   return (
     <nav className="flex items-center h-[50px] px-4 sm:px-10 border-b bg-white justify-between sm:justify-end">
@@ -51,11 +47,14 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             <AvatarFallback>AU</AvatarFallback>
           </Avatar> */}
           <Avatar className="h-8 w-8">
-            {session?.user.image ? (
-              <AvatarImage src={session?.user.image} alt={session?.user.name} />
+            {session?.user?.image ? (
+              <AvatarImage
+                src={session?.user?.image}
+                alt={session?.user?.name}
+              />
             ) : (
               <AvatarFallback>
-                {session?.user.name
+                {session?.user?.name
                   .split(' ')
                   .map((w) => w[0])
                   .join('')
@@ -63,11 +62,17 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               </AvatarFallback>
             )}
           </Avatar>
-           <div className="text-left">
+          <div className="text-left">
             {/* <div className="text-sm font-medium leading-none">Admin User</div>
             <div className="text-xs text-muted-foreground">Super Admin</div> */}
-            <div className="text-sm font-medium leading-none">{user.name}</div>
-            <div className="text-xs text-muted-foreground">{user.role == 'SUPER'?'Super Admin':user.role == 'ADMIN'?'Store Admin':user.role}</div>
+            <div className="text-sm font-medium leading-none">{user?.name}</div>
+            <div className="text-xs text-muted-foreground">
+              {user?.role == 'SUPER'
+                ? 'Super Admin'
+                : user?.role == 'ADMIN'
+                  ? 'Store Admin'
+                  : user?.role}
+            </div>
           </div>
           <ChevronDown className="h-4 w-4 text-muted-foreground ml-2" />
         </DropdownMenuTrigger>
@@ -75,13 +80,16 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuLabel>Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-[#ef4444]" onClick={async()=>{
-            await signOut()
-            router.push('/admin/auth/signin')
-          
-          }}>
-            <LogOut className="h-8 w-8"/>
-
+          <DropdownMenuItem
+            className="text-[#ef4444]"
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              await signOut();
+              refetch();
+              router.push('/admin/auth/signin');
+            }}
+          >
             Log out
           </DropdownMenuItem>
         </DropdownMenuContent>

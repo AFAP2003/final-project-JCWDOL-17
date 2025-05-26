@@ -1,0 +1,188 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>
+      New Email Confirmation
+    </title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        background-color: #f4f4f4;
+        color: #333333;
+        box-sizing: border-box;
+        line-height: 1.6;
+      }
+      ul {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+      }
+
+      li {
+        padding: none;
+       }
+
+    /* -------------------------- LOGO CLASS -------------------------- */
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .logo-icon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        width: 40px;
+        height: 40px;
+        background-color: #333333;
+      }
+
+      .logo-icon {
+        width: 30%;
+        text-align: center;
+        position: relative;
+        left: -6px;
+      }
+
+      .logo-text{
+        font-weight: 700;
+        font-size: 26px;
+      }
+
+      /* ------------------------- Content Class ------------------------ */
+      .header {
+        font-size: 18px;
+        margin: 0px;
+      }
+     
+     .footer {
+        font-size: 12px;
+        color: #999999;
+     }
+
+      .list-bold-container {
+        padding-left: 20px;
+        font-weight: 700;
+      }
+      .list-bold-container li {
+        display: flex;
+        gap: 1rem;
+      }
+
+      .list-bold-item {
+        display: flex;
+      }
+      .list-bold-item :first-child {
+        width: 100px;
+      }
+
+      .list-bold-value {
+        font-weight: 400;
+      }
+
+      .button-link {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        margin: 20px 0px;
+      }
+
+      .button-link a {
+        text-decoration: none;
+        background-color: #333333;
+        color: #f4f4f4;
+        border-radius: 0.5rem;
+        padding: 8px 16px;
+        font-weight: 500;
+        font-size: 16px;
+      }
+      /* ------------------------- UTILITY CLASS ------------------------ */
+
+      .sparator {
+        border-top: 1px solid #e0e0e0;
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+
+      .link {
+        text-decoration-line: underline;
+        text-underline-offset: 4px;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container' role='document'>
+      <div class='logo-container'>
+        <img
+          src='https://res.cloudinary.com/dx6hmxiv3/image/upload/v1747288217/finpro-go-grocery/app-logo-black_xpieug.png'
+          class='logo-icon'
+        />
+      </div>
+
+      <div class='sparator'></div>
+
+      <div class='content' role='main'>
+        <h1 class='header'>
+          Confirm Your Email
+        </h1>
+        <p>
+          Hello {{receiver}},
+        </p>
+        <p>
+          We received a request to setting up new email for account ID #{{
+            userId
+          }}. Click the button below to proceed:
+        </p>
+
+        <div class='button-link'>
+          <a href='{{url}}'>
+            Confirm My Email
+          </a>
+        </div>
+
+        <p>
+          If you did not request this, you can safely ignore this email.
+        </p>
+        <p>
+          For security reasons, this link will expire in {{expiredAt}}.
+        </p>
+        <p>
+          Thanks,
+        </p>
+        <p>
+          Gogrocery Team
+        </p>
+      </div>
+
+      <div class='sparator'></div>
+
+      <div class='footer'>
+        <p>
+          Have any questions? feel free to contact our support team at
+          <span style='font-style:italic; font-weight:700'>
+            support.gogrocery@gmail.com
+          </span>
+        </p>
+        <p>
+          &copy; {{currentYear}} App. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

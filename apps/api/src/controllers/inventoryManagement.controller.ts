@@ -134,7 +134,7 @@ class InventoryManagementController {
       // Update the inventory
       const data = await inventoryManagementService.updateInventoryById(
         id,
-        { minStock },
+        { minStock } as any,
         addQuantity,
         subtractQuantity,
       );

@@ -25,6 +25,7 @@ export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 export const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 export const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
 export const REDIS_URL = process.env.REDIS_URL || '';
+export const REDIS_STACK_URL = process.env.REDIS_STACK_URL || '';
 export const RAJA_ONGKIR_BASE_URL = process.env.RAJA_ONGKIR_BASE_URL;
 export const RAJA_ONGKIR_API = process.env.RAJA_ONGKIR_API || '';
 export const RAPID_API_KEY = process.env.RAPID_API_KEY || '';

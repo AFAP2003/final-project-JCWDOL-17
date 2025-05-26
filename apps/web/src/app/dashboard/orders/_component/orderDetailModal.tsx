@@ -12,46 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import Image from 'next/image';
-import { formatCurrency } from '@/lib/utils';
-
-// Status badge styling
-const statusStyles = {
-  WAITING_PAYMENT: { variant: 'outline', label: 'Menunggu Pembayaran' },
-  WAITING_PAYMENT_CONFIRMATION: {
-    variant: 'secondary',
-    label: 'Menunggu Konfirmasi',
-  },
-  PROCESSING: { variant: 'default', label: 'Diproses' },
-  SHIPPED: { variant: 'info', label: 'Dikirim' },
-  CONFIRMED: { variant: 'success', label: 'Selesai' },
-  CANCELLED: { variant: 'destructive', label: 'Dibatalkan' },
-};
-
-// Payment status badge styling
-const paymentStatusStyles = {
-  PENDING: { variant: 'outline', label: 'Tertunda' },
-  PAID: { variant: 'success', label: 'Lunas' },
-  FAILED: { variant: 'destructive', label: 'Gagal' },
-  REFUNDED: { variant: 'warning', label: 'Dikembalikan' },
-};
-
-function getImageUrl(filepath: string) {
-  if (filepath.startsWith('http')) {
-    return filepath;
-  }
-
-  if (filepath.startsWith('/')) {
-    return filepath;
-  }
-
-  return `/${filepath}`;
-}
-
-interface OrderDetailModalProps {
-  order: any;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+import { formatCurrency, getImageUrl } from '@/lib/utils';
+import { paymentStatusStyles, statusStyles } from '@/lib/constants/order';
+import { OrderDetailModalProps, OrderItem } from '@/lib/interfaces/orders';
+import { PaymentStatus, OrderStatus } from '@/lib/enums';
 
 export default function OrderDetailModal({
   order,
@@ -60,14 +24,12 @@ export default function OrderDetailModal({
 }: OrderDetailModalProps) {
   if (!order) return null;
 
-  // Helper to render status badge
-  const renderStatusBadge = (status) => {
+  const renderStatusBadge = (status: OrderStatus) => {
     const style = statusStyles[status] || { variant: 'default', label: status };
     return <Badge variant={style.variant}>{style.label}</Badge>;
   };
 
-  // Helper to render payment status badge
-  const renderPaymentStatusBadge = (status) => {
+  const renderPaymentStatusBadge = (status: PaymentStatus) => {
     const style = paymentStatusStyles[status] || {
       variant: 'default',
       label: status,
@@ -83,7 +45,7 @@ export default function OrderDetailModal({
           <DialogDescription>
             <div className="flex justify-between items-center">
               <span>
-                Dibuat pada{' '}
+                Dibuat pada
                 {format(new Date(order.createdAt), 'dd MMMM yyyy, HH:mm', {
                   locale: id,
                 })}
@@ -94,9 +56,7 @@ export default function OrderDetailModal({
             </div>
           </DialogDescription>
         </DialogHeader>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          {/* Customer Information */}
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Informasi Pelanggan</h3>
             <div className="space-y-2">
@@ -107,35 +67,33 @@ export default function OrderDetailModal({
                 <span className="font-medium">Email:</span> {order.user?.email}
               </div>
               <div>
-                <span className="font-medium">No. Telepon:</span>{' '}
+                <span className="font-medium">No. Telepon:</span>
                 {order.recipientPhone}
               </div>
             </div>
           </div>
-
-          {/* Shipping Information */}
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Informasi Pengiriman</h3>
             <div className="space-y-2">
               <div>
-                <span className="font-medium">Penerima:</span>{' '}
+                <span className="font-medium">Penerima:</span>
                 {order.recipientName}
               </div>
               <div>
-                <span className="font-medium">Alamat:</span>{' '}
-                {order.shippingAddress}
+                <span className="font-medium">Alamat:</span>
+                {order.shippingAddress.toString()}
               </div>
               <div>
-                <span className="font-medium">Kota:</span> {order.city},{' '}
+                <span className="font-medium">Kota:</span> {order.city},
                 {order.province} {order.postalCode}
               </div>
               <div>
-                <span className="font-medium">Metode:</span>{' '}
+                <span className="font-medium">Metode:</span>
                 {order.shippingMethod}
               </div>
               {order.trackingNumber && (
                 <div>
-                  <span className="font-medium">Nomor Resi:</span>{' '}
+                  <span className="font-medium">Nomor Resi:</span>
                   {order.trackingNumber}
                 </div>
               )}
@@ -145,30 +103,27 @@ export default function OrderDetailModal({
 
         <Separator className="my-4" />
 
-        {/* Payment Information */}
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Informasi Pembayaran</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <div>
-                <span className="font-medium">Metode Pembayaran:</span>{' '}
+                <span className="font-medium">Metode Pembayaran:</span>
                 {order.paymentMethod}
               </div>
               <div>
-                <span className="font-medium">Status Pembayaran:</span>{' '}
+                <span className="font-medium">Status Pembayaran:</span>
                 {renderPaymentStatusBadge(order.paymentStatus)}
               </div>
               {order.expiresAt && (
                 <div>
-                  <span className="font-medium">Kedaluwarsa pada:</span>{' '}
+                  <span className="font-medium">Kedaluwarsa pada:</span>
                   {format(new Date(order.expiresAt), 'dd MMMM yyyy, HH:mm', {
                     locale: id,
                   })}
                 </div>
               )}
             </div>
-
-            {/* Payment Proof */}
             {order.paymentProofs && order.paymentProofs.length > 0 && (
               <div className="space-y-2">
                 <div className="font-medium">Bukti Pembayaran:</div>
@@ -194,14 +149,11 @@ export default function OrderDetailModal({
             )}
           </div>
         </div>
-
         <Separator className="my-4" />
-
-        {/* Order Items */}
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Item Pesanan</h3>
           <div className="space-y-4">
-            {order.items.map((item) => (
+            {order.items.map((item: OrderItem) => (
               <div
                 key={item.id}
                 className="flex items-center space-x-4 p-2 border rounded-md"
@@ -233,7 +185,6 @@ export default function OrderDetailModal({
             ))}
           </div>
 
-          {/* Order Summary */}
           <div className="mt-6 space-y-2">
             <div className="flex justify-between">
               <span>Subtotal</span>
@@ -256,8 +207,6 @@ export default function OrderDetailModal({
             </div>
           </div>
         </div>
-
-        {/* Order Notes */}
         {order.notes && (
           <>
             <Separator className="my-4" />
@@ -267,8 +216,6 @@ export default function OrderDetailModal({
             </div>
           </>
         )}
-
-        {/* Order History */}
         <Separator className="my-4" />
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Riwayat Status</h3>
@@ -279,7 +226,7 @@ export default function OrderDetailModal({
                 className="flex justify-between items-center text-sm"
               >
                 <div className="flex items-center gap-2">
-                  {renderStatusBadge(status)}
+                  {renderStatusBadge(status as OrderStatus)}
                 </div>
                 <span>
                   {format(new Date(date), 'dd MMMM yyyy, HH:mm', {

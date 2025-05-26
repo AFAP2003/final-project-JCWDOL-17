@@ -1,19 +1,18 @@
 import { cn } from '@/lib/utils';
-import { ControllerRenderProps } from 'react-hook-form';
 import { FormItem, FormMessage } from '../ui/form';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 
 type Props =
   | {
-      field: ControllerRenderProps<any>;
+      field: any;
       id: string;
       label: string;
       showCount: false;
       inputClass?: string;
     }
   | {
-      field: ControllerRenderProps<any>;
+      field: any;
       id: string;
       label: string;
       showCount: true;

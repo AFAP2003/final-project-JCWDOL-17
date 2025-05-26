@@ -35,6 +35,16 @@ export class AuthRouter {
       asynchandler(this.controller.resetPassword),
     );
 
+    this.router.post(
+      '/confirm-email',
+      asynchandler(this.controller.confirmEmail),
+    );
+
+    this.router.post(
+      '/resend-confirm-email',
+      asynchandler(this.controller.resendConfirmEmail),
+    );
+
     this.router.get(
       '/sessions',
       withAuthentication,
@@ -57,6 +67,12 @@ export class AuthRouter {
       '/accounts/link',
       withAuthentication,
       asynchandler(this.controller.accountLink),
+    );
+
+    this.router.post(
+      '/check-password',
+      withAuthentication,
+      asynchandler(this.controller.checkPassword),
     );
   }
 

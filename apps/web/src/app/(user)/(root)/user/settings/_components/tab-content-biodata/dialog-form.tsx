@@ -17,6 +17,7 @@ import { apiclient } from '@/lib/apiclient';
 import { currentDate } from '@/lib/datetime';
 import { parseBasicObjZodError } from '@/lib/parse-zod-error';
 import { Session } from '@/lib/types/session';
+import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
@@ -37,6 +38,8 @@ const FormSchema = z.object({
       /^[A-Za-z]+(?:[' -][A-Za-z]+)*$/,
       'Name can only contain letters, spaces, hyphens, and apostrophes',
     ),
+
+  email: z.string().email(),
 
   dateOfBirth: z
     .date()
@@ -97,8 +100,13 @@ type Props =
       user: Session['user'];
       refetchSession: () => void;
       label: string;
-      field: Extract<keyof z.infer<typeof FormSchema>, 'name' | 'phone'>;
+      field: Extract<
+        keyof z.infer<typeof FormSchema>,
+        'name' | 'phone' | 'email'
+      >;
       inputType: 'STRING';
+      triggerClass?: string;
+      description?: string;
     }
   | {
       user: Session['user'];
@@ -106,6 +114,8 @@ type Props =
       label: string;
       field: Extract<keyof z.infer<typeof FormSchema>, 'dateOfBirth'>;
       inputType: 'DATE';
+      triggerClass?: string;
+      description?: string;
     }
   | {
       user: Session['user'];
@@ -115,6 +125,8 @@ type Props =
       inputType: 'RADIO';
       values: string[];
       default: string;
+      triggerClass?: string;
+      description?: string;
     };
 
 export default function DialogForm(props: Props) {
@@ -172,13 +184,14 @@ export default function DialogForm(props: Props) {
       );
       form.setValue('gender', props.user.gender || undefined);
       form.setValue('phone', props.user.phone || undefined);
+      form.setValue('email', props.user.email);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, form]);
 
   return (
     <Dialog defaultOpen={open} open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger className={cn(props.triggerClass)} asChild>
         <Button
           disabled={isPending}
           variant="ghost"
@@ -198,12 +211,18 @@ export default function DialogForm(props: Props) {
       >
         <div className="w-full relative px-2">
           <div className="flex w-full justify-between items-center mb-6">
-            <h2 className="text-neutral-200 font-semibold ">{props.label}</h2>
+            <h2 className="text-neutral-200 font-semibold">{props.label}</h2>
             <X
               onClick={() => setOpen(false)}
               className="size-4 text-neutral-200 cursor-pointer"
             />
           </div>
+
+          {props.description && (
+            <div className="text-base text-neutral-300 mb-9">
+              {props.description}
+            </div>
+          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit((data) => saveEdit(data))}>
@@ -274,7 +293,7 @@ export default function DialogForm(props: Props) {
                   className="bg-neutral-600 hover:bg-neutral-600 text-neutral-200 hover:text-neutral-300 border-none border shadow-sm"
                   type="submit"
                 >
-                  Save Changes
+                  Simpan Perubahan
                 </Button>
               </div>
             </form>

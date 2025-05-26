@@ -10,7 +10,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { cn } from '@/lib/utils';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import qs from 'query-string';
 
 type Props = {
@@ -27,6 +27,7 @@ type Props = {
 export default function PaginationButton({ metadata, className }: Props) {
   const searchparams = useSearchParams();
   const pathname = usePathname();
+  const router = useRouter();
 
   if (!metadata) return null;
   if (metadata.totalRecord === 0) return null;
@@ -39,9 +40,15 @@ export default function PaginationButton({ metadata, className }: Props) {
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious
-            href={`${pathname}?${generateQuery(searchparams.toString(), currentPage - 1)}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              router.push(
+                `${pathname}?${generateQuery(searchparams.toString(), currentPage - 1)}`,
+              );
+            }}
             className={cn(
-              'hover:bg-neutral-50 hover:text-neutral-700',
+              'hover:bg-neutral-50 hover:text-neutral-700 cursor-pointer',
               disabledClass(currentPage === firstPage),
             )}
           />
@@ -52,7 +59,7 @@ export default function PaginationButton({ metadata, className }: Props) {
             {page === null && <PaginationEllipsis />}
             {page !== null && (
               <PaginationLink
-                href={`${pathname}?${generateQuery(searchparams.toString(), page)}`}
+                // href={`${pathname}?${generateQuery(searchparams.toString(), page)}`}
                 isActive={currentPage === page}
                 className="hover:bg-neutral-100 hover:text-neutral-700 bg-neutral-50"
               >
@@ -64,9 +71,15 @@ export default function PaginationButton({ metadata, className }: Props) {
 
         <PaginationItem>
           <PaginationNext
-            href={`${pathname}?${generateQuery(searchparams.toString(), currentPage + 1)}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              router.push(
+                `${pathname}?${generateQuery(searchparams.toString(), currentPage + 1)}`,
+              );
+            }}
             className={cn(
-              'hover:bg-neutral-50 hover:text-neutral-700',
+              'hover:bg-neutral-50 hover:text-neutral-700 cursor-pointer',
               disabledClass(currentPage === lastPage),
             )}
           />

@@ -22,6 +22,7 @@ export default function Content() {
   });
 
   if (isPending) return <ContentSkeleton />;
+  if (!data) return <ContentSkeleton />;
 
   const datacolumn: DataColumnType[] =
     data?.stores.map((store) => {
