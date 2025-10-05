@@ -45,8 +45,8 @@ export default function UserManagementFilter({
   // Check if any filters are active
 
   return (
-    <div className="mb-4 flex flex-col sm:flex-row items-end justify-between gap-2 sm:gap-0">
-      <div className="flex gap-2 w-full sm:w-auto">
+    <div className="mb-4 flex flex-row items-end justify-between gap-2 sm:gap-0">
+        <div className="flex  flex-col-reverse gap-4 w-full sm:w-auto lg:flex lg:flex-row lg:gap-4">
         <div className="relative w-full sm:w-auto">
           <Input
             placeholder="Cari..."
@@ -138,6 +138,7 @@ export default function UserManagementFilter({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      
     </div>
   );
 }

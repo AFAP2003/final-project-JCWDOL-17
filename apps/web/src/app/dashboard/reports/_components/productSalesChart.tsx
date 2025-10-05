@@ -56,7 +56,7 @@ export default function ProductSalesChart({
   return (
     <ChartContainer
       config={chartConfig}
-      className="w-full h-[500px] rounded-xl border bg-white px-6 py-4 shadow-sm"
+      className="w-full min-h-[500px] rounded-xl border bg-white sm:px-6 px-4 py-4 shadow-sm"
     >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Penjualan Terlaris</h2>
@@ -83,6 +83,7 @@ export default function ProductSalesChart({
             </Select>
           )}
 
+          <div className='flex justify-end'>
           <Select
             defaultValue={month}
             onValueChange={(value) => onMonthChange(value)}
@@ -115,6 +116,9 @@ export default function ProductSalesChart({
             </SelectContent>
           </Select>
 
+          </div>
+          
+          <div className='flex justify-end'>
           <Select
             defaultValue={year}
             onValueChange={(value) => onYearChange(value)}
@@ -138,6 +142,8 @@ export default function ProductSalesChart({
               </SelectGroup>
             </SelectContent>
           </Select>
+          </div>
+          
         </div>
       </div>
 

@@ -142,7 +142,7 @@ export default function InventoryManagementForm({
           Perbarui Stok
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] sm:max-h-full overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[95%] sm:w-full sm:max-h-full overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isDetailMode
@@ -330,7 +330,7 @@ export default function InventoryManagementForm({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col-reverse sm:flex gap-2">
             <Button
               variant="outline"
               onClick={() => {

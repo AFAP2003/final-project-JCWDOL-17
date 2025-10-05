@@ -110,7 +110,7 @@ export default function DiscountManagementForm({
         </DialogTrigger>
       )}
 
-      <DialogContent className="max-h-[90vh] bg-white overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[95%] sm:w-full bg-white overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isDetailMode
@@ -309,35 +309,7 @@ export default function DiscountManagementForm({
             )}
           </div>
 
-          {/* <div>
-            <label className="mb-1 block text-sm font-medium">
-              Kode Voucher
-            </label>
-            <Input
-              name="kode_voucher"
-              placeholder="Opsional"
-              {...formik.getFieldProps('kode_voucher')}
-            />
-          </div> */}
-
-          {/* <div>
-            <label className="mb-1 block text-sm font-medium">
-              Batas Penggunaan
-            </label>
-            <Input
-              name="batas_penggunaan"
-              type="number"
-              placeholder="Masukkan batas penggunaan"
-              value={formik.values.batas_penggunaan}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}            />
-            {formik.touched.batas_penggunaan &&
-              formik.errors.batas_penggunaan && (
-                <p className="text-xs text-red-600">
-                  {formik.errors.batas_penggunaan}
-                </p>
-              )}
-          </div> */}
+      
 
           <div>
             <label className="mb-1 block text-sm font-medium">

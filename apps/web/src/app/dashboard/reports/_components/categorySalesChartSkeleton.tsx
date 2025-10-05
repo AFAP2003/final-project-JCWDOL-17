@@ -17,16 +17,22 @@ export default function CategorySalesChartSkeleton() {
          <CardTitle>
           <Skeleton className="h-6 w-40" />
         </CardTitle>
-        <div className='flex gap-4'>
+        <div className='sm:flex sm:gap-4 flex-col gap-2'>
              {/* Year selector placeholder */}
         {user.role=='SUPER'&&(
         <Skeleton className="h-8 w-32" />
 
         )}
-        <Skeleton className="h-8 w-20" />
+        <div className='flex justify-end'>
+        <Skeleton className="h-8 w-20 mt-2" />
+
+        </div>
+
+        <div className='flex justify-end mt-2'>
 
          {/* Year selector placeholder */}
          <Skeleton className="h-8 w-20" />
+         </div>
         </div>
        
        </div>

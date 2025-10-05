@@ -18,9 +18,12 @@ export default function AllSalesChartSkeleton() {
             <Skeleton className="h-6 w-28" />
           </CardTitle>
           {/* Year selector placeholder */}
-          <div className="flex gap-4">
-            {user.role == 'SUPER' && <Skeleton className="h-8 w-20" />}
-            <Skeleton className="h-8 w-20" />
+          <div className="sm:flex sm:gap-4 flex-col ">
+            {user.role == 'SUPER' && <Skeleton className="h-8 w-32" />}
+            <div className='flex justify-end'>
+            <Skeleton className="h-8 w-20 mt-2 " />
+
+            </div>
           </div>
         </div>
       </CardHeader>

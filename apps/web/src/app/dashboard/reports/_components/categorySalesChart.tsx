@@ -73,7 +73,7 @@ export default function CategorySalesChart({
   return (
     <ChartContainer
       config={{ total: { label: 'Penjualan per Kategori', color: '#2563eb' } }}
-      className="w-full h-[500px] rounded-xl border bg-white px-6 py-10 shadow-sm"
+      className="w-full h-[500px] rounded-xl border bg-white sm:px-6 sm:py-10 pb-40 px-4 pt-4 sm:pt-0 sm:pb-0 shadow-sm"
     >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Penjualan per Kategori</h2>
@@ -97,7 +97,8 @@ export default function CategorySalesChart({
             </Select>
           )}
 
-          <Select
+          <div className='flex justify-end'>
+              <Select
             defaultValue={month}
             onValueChange={(value) => onMonthChange(value)}
           >
@@ -128,8 +129,10 @@ export default function CategorySalesChart({
               </SelectGroup>
             </SelectContent>
           </Select>
-
-          <Select
+          </div>
+          
+          <div className='flex justify-end'>
+              <Select
             defaultValue={year}
             onValueChange={(value) => onYearChange(value)}
           >
@@ -152,6 +155,8 @@ export default function CategorySalesChart({
               </SelectGroup>
             </SelectContent>
           </Select>
+          </div>
+          
         </div>
       </div>
 

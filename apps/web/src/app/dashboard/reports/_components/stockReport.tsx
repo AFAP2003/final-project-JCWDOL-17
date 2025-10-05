@@ -81,7 +81,7 @@ export default function StockReport({
     <>
       <ChartContainer
         config={chartConfig}
-        className="w-full sm:h-[250px] h-[450px] rounded-xl border bg-white sm:px-6 py-4 shadow-sm p-4"
+        className="w-full sm:h-[250px] h-[500px] rounded-xl border bg-white sm:px-6 py-4 shadow-sm p-4"
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Ringkasan Stok</h2>
@@ -107,6 +107,7 @@ export default function StockReport({
                 </SelectContent>
               </Select>
             )}
+            <div className='flex justify-end'>
             <Select
               defaultValue={month}
               onValueChange={(value) => onMonthChange(value)}
@@ -138,8 +139,10 @@ export default function StockReport({
                 </SelectGroup>
               </SelectContent>
             </Select>
-
-            <Select
+            </div>
+            
+            <div className='flex justify-end'>
+              <Select
               defaultValue={year}
               onValueChange={(value) => onYearChange(value)}
             >
@@ -155,6 +158,8 @@ export default function StockReport({
                 </SelectGroup>
               </SelectContent>
             </Select>
+            </div>
+            
           </div>
         </div>
 

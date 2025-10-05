@@ -22,7 +22,7 @@ export default function ProductManagementskeleton() {
 
         {user.role == 'SUPER' && <Skeleton className="h-10 w-36 " />}
         </div>
-       <div className='lg:hidden flex gap-4 '>
+       <div className='lg:hidden flex flex-col gap-6'>
         <Skeleton className="h-10 w-36 " />
 
         {user.role == 'SUPER' && <Skeleton className="h-10 w-36 " />}

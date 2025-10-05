@@ -144,7 +144,7 @@ export default function ProductManagementForm({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-h-[90vh] sm:max-h-full overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[95%] sm:w-full sm:max-h-full overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditMode ? 'Edit Produk' : 'Tambah Produk Baru'}

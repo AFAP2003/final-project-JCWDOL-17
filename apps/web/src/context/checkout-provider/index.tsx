@@ -396,6 +396,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
   ): void => {
     if (typeof window === 'undefined') return;
 
+
     const invokeSnap = () => {
       (window as any).snap.pay(token, {
         onSuccess: () => handlePaymentSuccess(orderId),
@@ -404,7 +405,7 @@ export const CheckoutProvider: React.FC<{ children: React.ReactNode }> = ({
         onClose: () => handlePaymentClose(orderId),
       });
     };
-
+      
     if ((window as any).snap) {
       invokeSnap();
     } else {

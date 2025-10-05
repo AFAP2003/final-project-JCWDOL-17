@@ -62,12 +62,13 @@ export default function AllSalesChart({
   return (
     <ChartContainer
       config={chartConfig}
-      className="w-full h-[500px] rounded-xl border bg-white px-6 py-4 shadow-sm"
+      className="w-full h-[500px] rounded-xl border bg-white px-6 pb-16 pt-4 sm:py-4 sm:px-0 sm:pt-0 shadow-sm"
     >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Penjualan</h2>
         <div className="flex gap-4">
-          {user.role == 'SUPER' && (
+       <div className='sm:flex flex-col gap-4'>
+           {user.role == 'SUPER' && (
             <Select value={selectedStore} onValueChange={setSelectedStore}>
               <SelectTrigger className="w-[130px]">
                 <SelectValue />
@@ -85,12 +86,13 @@ export default function AllSalesChart({
               </SelectContent>
             </Select>
           )}
-
+          <div className='flex justify-end'>
           <Select
             defaultValue={year}
             onValueChange={(value) => onYearChange(value)}
+            
           >
-            <SelectTrigger className="w-[100px]">
+            <SelectTrigger className="w-[100px] mt-2 sm:mt-0 ">
               <SelectValue placeholder={year} />
             </SelectTrigger>
             <SelectContent>
@@ -109,6 +111,9 @@ export default function AllSalesChart({
               </SelectGroup>
             </SelectContent>
           </Select>
+          </div>
+         
+       </div>
         </div>
       </div>
       <BarChart

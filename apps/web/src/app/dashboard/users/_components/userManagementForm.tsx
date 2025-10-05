@@ -122,7 +122,7 @@ export default function UserManagementForm({
           Tambah User
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] sm:max-h-full overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[95%] sm:w-full sm:max-h-full overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isDetailMode
@@ -258,7 +258,7 @@ export default function UserManagementForm({
                 type="button"
                 size="sm"
                 variant="secondary"
-                className={`${isDetailMode ? 'hidden' : 'block'}  h-7 px-2 `}
+                className={`${isDetailMode ? 'hidden' : 'block'}  h-7 px-2 flex`}
                 onClick={handleGeneratePassword}
                 title="Generate & copy password"
                 disabled={disabled}

@@ -17,13 +17,21 @@ export default function ProductSalesChartSkeleton() {
           <CardTitle>
             <Skeleton className="h-6 w-40" />
           </CardTitle>
-          <div className="flex gap-4">
+          <div className="sm:flex sm:gap-4 flex-col gap-2">
             {/* Year selector placeholder */}
+
             {user.role == 'SUPER' && <Skeleton className="h-8 w-32" />}
 
+            <div className='flex justify-end mt-2'>
+                <Skeleton className="h-8 w-20" />
+
+            </div>
+
+            <div className='flex justify-end mt-2'>
             <Skeleton className="h-8 w-20" />
+
+            </div>
             {/* Year selector placeholder */}
-            <Skeleton className="h-8 w-20" />
           </div>
         </div>
         {Array.from({ length: 10 }).map((_, idx) => (

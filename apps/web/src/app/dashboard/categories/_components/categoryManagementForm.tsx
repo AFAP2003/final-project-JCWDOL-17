@@ -72,7 +72,7 @@ export default function CategoryManagementForm({
         </DialogTrigger>
       )}
 
-      <DialogContent>
+      <DialogContent className='max-w-[95%]'>
         <DialogHeader>
           <DialogTitle>
             {isDetailMode
@@ -128,7 +128,7 @@ export default function CategoryManagementForm({
           </div>
 
           <DialogFooter
-            className={`${isDetailMode} ? 'hidden' : 'block' flex justify-end`}
+            className={`${isDetailMode} ? 'hidden' : 'block' flex justify-end gap-2 sm:gap-0`}
           >
             <Button
               variant="outline"
